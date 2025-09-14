@@ -29,11 +29,11 @@ export const router = createBrowserRouter([
         element: <DashboardTwo />,
       },
       {
-        path: "/clients",
+        path: "/cli",
         element: <ClientManagement />,
       },
       {
-        path: "/cli",
+        path: "/clients",
         element: <CustomerManagement />,
       },
       {

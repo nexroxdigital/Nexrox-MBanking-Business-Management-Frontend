@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router";
 import { ToastContainer } from "react-toastify";
-import Navbar from "./components/shared/Navbar/Navbar2";
+import Navbar from "./components/shared/Navbar/Navbar";
 
 const Layouts = () => {
   const { pathname } = useLocation();
@@ -12,7 +12,7 @@ const Layouts = () => {
 
   return (
     <div>
-      {/* <Navbar /> */}
+      {/* Navbar */}
       <Navbar />
 
       <Outlet />
