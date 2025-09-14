@@ -9,6 +9,10 @@
   --color-dark-clr: #141a22;
   --color-card-clr: #1f2630;
   --color-hover-clr: #0d121a;
+  --color-gradient-clr: linear-gradient(270deg, #862c8a 0%, #009c91 100%);
+  --color-card-bg: #f8f8f8;
+  --color-body-bg: #f5f5f5;
+  --color-dark-card-bg: #5a185e;
 }
 
 input:-webkit-autofill {
@@ -25,5 +29,3 @@ input:-webkit-autofill {
 html {
   scroll-behavior: smooth;
 }
-
- 

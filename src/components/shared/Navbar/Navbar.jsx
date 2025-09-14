@@ -33,8 +33,8 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-2">
+    <nav className="bg-[#f5f5f5] sticky z-50 top-0 dark:bg-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
+      <div className=" container mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center space-x-3">
@@ -42,7 +42,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <div className="ml-10 flex items-baseline space-x-1">
               {navItems.map((item) => {
                 const IconComponent = item.icon;
@@ -69,7 +69,7 @@ const Navbar = () => {
             {/* Theme Toggle */}
             <ThemeToggle />
 
-            <div className="hidden md:flex">
+            <div className="hidden lg:flex">
               <GradientButton
                 label="Login"
                 onClick={() => alert("Login clicked!")}
@@ -80,7 +80,7 @@ const Navbar = () => {
             {/* Mobile Menu Button */}
             <button
               onClick={toggleMenu}
-              className="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+              className="lg:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? (
@@ -94,7 +94,7 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         <div
-          className={`md:hidden transition-all duration-700 ease-in-out ${
+          className={`lg:hidden transition-all duration-700 ease-in-out ${
             isMenuOpen
               ? "min-h-96 opacity-100 mb-5"
               : "max-h-0 min-h-0 opacity-0"
