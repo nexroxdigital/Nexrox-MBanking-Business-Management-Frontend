@@ -7,6 +7,7 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import DashboardTwo from "../pages/DashboardTwo/DashbaordTwo";
 import Reports from "../pages/Reports/Reports";
 import ReportsTwo from "../pages/Reports2/Reports2";
+import SettingsPage from "../pages/Settings/Settings";
 import Transactions from "../pages/Transactions/Transactions";
 
 export const router = createBrowserRouter([
@@ -50,6 +51,10 @@ export const router = createBrowserRouter([
       {
         path: "/reports2",
         element: <ReportsTwo />,
+      },
+      {
+        path: "/settings",
+        element: <SettingsPage />,
       },
     ],
   },
