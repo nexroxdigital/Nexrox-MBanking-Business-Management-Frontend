@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   CreditCard,
@@ -19,7 +20,6 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-
 const ClientPage = () => {
   const [currentPage, setCurrentPage] = useState("list"); // 'list', 'profile', 'add', 'edit'
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -727,7 +727,11 @@ Thank you for using MobiPay Banking Hub!`;
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredCustomers.map((customer) => (
-                <tr
+                <motion.tr
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
                   key={customer.id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
@@ -796,7 +800,7 @@ Thank you for using MobiPay Banking Hub!`;
                       </button>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>

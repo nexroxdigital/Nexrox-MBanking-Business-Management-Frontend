@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+
 const QuickActionButton = ({
   title,
   description,
@@ -5,7 +7,11 @@ const QuickActionButton = ({
   color,
   onClick,
 }) => (
-  <button
+  <motion.button
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.2 }}
+    transition={{ duration: 0.6, ease: "easeOut" }}
     onClick={onClick}
     className="w-full cursor-pointer bg-card-bg hover:bg-purple-200 dark:bg-gray-800 dark:hover:bg-dark-card-bg rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 text-left group"
   >
@@ -22,7 +28,7 @@ const QuickActionButton = ({
         </p>
       </div>
     </div>
-  </button>
+  </motion.button>
 );
 
 export default QuickActionButton;

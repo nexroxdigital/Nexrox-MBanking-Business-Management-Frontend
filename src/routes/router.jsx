@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router";
+import ErrorPage from "../components/Error/Error";
 import Layouts from "../Layouts";
 import ClientPage from "../pages/ClientPage/ClientPage";
 import CompanyManagement from "../pages/CompanyManagement/CompanyManagement";
@@ -12,14 +13,10 @@ export const router = createBrowserRouter([
   {
     path: "/",
     Component: Layouts,
-    errorElement: <h1>this is error page</h1>,
+    errorElement: <ErrorPage />,
     children: [
       {
-        index: true,
-        element: <h1>this is home page</h1>,
-      },
-      {
-        path: "/dashboard",
+        path: "/",
         element: <Dashboard />,
       },
       {

@@ -20,6 +20,8 @@ import {
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 
+import { motion } from "framer-motion";
+
 const Transactions = () => {
   const [currentView, setCurrentView] = useState("list"); // 'list', 'add', 'edit'
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -607,7 +609,11 @@ const Transactions = () => {
                 const StatusIcon = statusConfig.icon;
 
                 return (
-                  <tr
+                  <motion.tr
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.2 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
                     key={transaction.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
@@ -699,7 +705,7 @@ const Transactions = () => {
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 );
               })}
             </tbody>

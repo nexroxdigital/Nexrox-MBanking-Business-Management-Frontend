@@ -1,6 +1,8 @@
+import { motion } from "framer-motion";
+
 import {
-    Bar,
-    BarChart,
+  Bar,
+  BarChart,
   CartesianGrid,
   Cell,
   Line,
@@ -15,7 +17,13 @@ import {
 
 export const DailyTransactionTrends = ({ dailyTrendData }) => {
   return (
-    <div className="bg-card-bg dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="bg-card-bg dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+    >
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Daily Transaction Trends
       </h3>
@@ -54,13 +62,19 @@ export const DailyTransactionTrends = ({ dailyTrendData }) => {
           </LineChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 export const CompanyWiseBreakdown = ({ companyData }) => {
   return (
-    <div className="bg-card-bg dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="bg-card-bg dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+    >
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Company-wise Breakdown
       </h3>
@@ -114,13 +128,19 @@ export const CompanyWiseBreakdown = ({ companyData }) => {
           </div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 export const MonthlyProfitLostChart = ({ monthlyProfitData }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8"
+    >
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Monthly Profit/Loss Trend
       </h3>
@@ -147,6 +167,6 @@ export const MonthlyProfitLostChart = ({ monthlyProfitData }) => {
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </motion.div>
   );
 };

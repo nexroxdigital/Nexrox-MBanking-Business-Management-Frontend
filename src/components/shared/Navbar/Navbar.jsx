@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, NavLink } from "react-router";
 import { useTheme } from "../../../context/ThemeContext/ThemeContext";
 import ThemeToggle from "../../ThemeToggle/ThemeToggle";
 import GradientButton from "../Button/GradientButton";
@@ -24,7 +24,7 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { name: "Dashboard", icon: Home, href: "/dashboard" },
+    { name: "Dashboard", icon: Home, href: "/" },
     { name: "Clients", icon: Users, href: "/clients" },
     { name: "Transactions", icon: CreditCard, href: "/transactions" },
     { name: "Reports", icon: FileText, href: "/reports" },
@@ -37,7 +37,7 @@ const Navbar = () => {
       <div className=" container mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3">
             <img className="h-10 w-28" src="/logosnit.jpg" alt="" />
           </Link>
 
@@ -47,18 +47,27 @@ const Navbar = () => {
               {navItems.map((item) => {
                 const IconComponent = item.icon;
                 return (
-                  <Link
+                  <NavLink
                     key={item.name}
                     to={item.href}
-                    className="relative flex items-center space-x-2 px-3 py-2 rounded-lg text-base font-medium text-gray-700 
-             hover:text-purple-950 dark:text-gray-300 dark:hover:text-purple-400 
-             hover:bg-purple-100 dark:hover:bg-gray-800 transition-all duration-200
-             after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 
-             after:bg-purple-600 after:transition-all after:duration-300 hover:after:w-full"
+                    className={({ isActive }) =>
+                      `
+      relative flex items-center space-x-2 px-3 py-2 rounded-lg text-base font-medium
+      text-gray-700 hover:text-purple-950 dark:text-gray-300 dark:hover:text-purple-400
+      transition-all duration-200
+      after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px]
+      after:bg-purple-600 after:transition-all after:duration-300
+      ${
+        isActive
+          ? "after:w-full bg-purple-100 dark:bg-gray-800 text-purple-950 dark:text-purple-400"
+          : "after:w-0 hover:after:w-full hover:bg-purple-100 dark:hover:bg-gray-800"
+      }
+    `
+                    }
                   >
                     <IconComponent className="w-4 h-4" />
                     <span>{item.name}</span>
-                  </Link>
+                  </NavLink>
                 );
               })}
             </div>
