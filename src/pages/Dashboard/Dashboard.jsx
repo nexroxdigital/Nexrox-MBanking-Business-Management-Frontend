@@ -6,25 +6,17 @@ import {
   CreditCard,
   FileText,
   Plus,
-  TrendingDown,
   TrendingUp,
   Users,
   Wallet,
 } from "lucide-react";
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+  CompanyWiseBreakdown,
+  DailyTransactionTrends,
+  MonthlyProfitLostChart,
+} from "./Charts";
+import QuickActionButton from "./QuickActionButton";
+import StatCard from "./StatCard";
 
 const Dashboard = () => {
   // Sample data
@@ -51,71 +43,6 @@ const Dashboard = () => {
     { month: "May", profit: 38000, loss: 3100 },
     { month: "Jun", profit: 45000, loss: 4800 },
   ];
-
-  const StatCard = ({
-    title,
-    value,
-    change,
-    changeType,
-    icon: Icon,
-    gradient,
-  }) => (
-    <div className="bg-card-bg hover:bg-purple-200 dark:hover:bg-dark-card-bg dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-lg ${gradient}`}>
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        <div
-          className={`flex items-center space-x-1 text-sm ${
-            changeType === "positive"
-              ? "text-green-600 dark:text-green-400"
-              : changeType === "negative"
-              ? "text-red-600 dark:text-red-400"
-              : "text-gray-500"
-          }`}
-        >
-          {changeType === "positive" && <TrendingUp className="w-4 h-4" />}
-          {changeType === "negative" && <TrendingDown className="w-4 h-4" />}
-          <span>{change}</span>
-        </div>
-      </div>
-      <div>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-          {value}
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
-      </div>
-    </div>
-  );
-
-  const QuickActionButton = ({
-    title,
-    description,
-    icon: Icon,
-    color,
-    onClick,
-  }) => (
-    <button
-      onClick={onClick}
-      className="w-full cursor-pointer bg-card-bg hover:bg-purple-200 dark:bg-gray-800 dark:hover:bg-dark-card-bg rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 text-left group"
-    >
-      <div className="flex items-center space-x-4">
-        <div
-          className={`p-3 rounded-lg ${color} group-hover:scale-110 transition-transform duration-200`}
-        >
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <h4 className="font-semibold text-gray-900 dark:text-white">
-            {title}
-          </h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {description}
-          </p>
-        </div>
-      </div>
-    </button>
-  );
 
   return (
     <div className="min-h-screen mt-5  bg-gray-100 dark:bg-gray-900 ">
@@ -230,140 +157,14 @@ const Dashboard = () => {
       <div className="container mx-auto mt-5 p-4 sm:px-6 lg:px-8 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Daily Transaction Trends */}
-          <div className="bg-card-bg dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Daily Transaction Trends
-            </h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dailyTrendData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#374151"
-                    opacity={0.3}
-                  />
-                  <XAxis dataKey="time" stroke="#6B7280" />
-                  <YAxis stroke="#6B7280" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1F2937",
-                      border: "none",
-                      borderRadius: "8px",
-                      color: "#fff",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="amount"
-                    stroke="url(#gradient)"
-                    strokeWidth={3}
-                    dot={{ fill: "#862C8A", strokeWidth: 2, r: 6 }}
-                    activeDot={{ r: 8, fill: "#009C91" }}
-                  />
-                  <defs>
-                    <linearGradient
-                      id="gradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="0%"
-                    >
-                      <stop offset="0%" stopColor="#862C8A" />
-                      <stop offset="100%" stopColor="#009C91" />
-                    </linearGradient>
-                  </defs>
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          <DailyTransactionTrends dailyTrendData={dailyTrendData} />
 
           {/* Company-wise Breakdown */}
-          <div className="bg-card-bg dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Company-wise Breakdown
-            </h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={companyData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {companyData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value, name, props) => [
-                      `₹${props.payload.amount.toLocaleString()}`,
-                      props.payload.name,
-                    ]}
-                    contentStyle={{
-                      backgroundColor: "#862C8A",
-                      border: "none",
-                      borderRadius: "8px",
-                      color: "#f5f5f5",
-                    }}
-                    itemStyle={{
-                      color: "#f5f5f5", // text inside tooltip rows
-                    }}
-                    labelStyle={{
-                      color: "#f5f5f5", // label text (top)
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center space-x-6 mt-4">
-              {companyData.map((company) => (
-                <div key={company.name} className="flex items-center space-x-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: company.color }}
-                  ></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {company.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <CompanyWiseBreakdown companyData={companyData} />
         </div>
 
         {/* Monthly Profit/Loss Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Monthly Profit/Loss Trend
-          </h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyProfitData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#374151"
-                  opacity={0.3}
-                />
-                <XAxis dataKey="month" stroke="#6B7280" />
-                <YAxis stroke="#6B7280" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1F2937",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "#fff",
-                  }}
-                />
-                <Bar dataKey="profit" fill="#862C8A" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="loss" fill="#009C91" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <MonthlyProfitLostChart monthlyProfitData={monthlyProfitData} />
       </div>
     </div>
   );
