@@ -13,7 +13,7 @@ import {
   Wallet,
   XCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -29,30 +29,14 @@ import {
   YAxis,
 } from "recharts";
 import * as XLSX from "xlsx";
+import { useTheme } from "../../context/ThemeContext/ThemeContext";
 
 const CompanyManagement = () => {
-  const [isDark, setIsDark] = useState(false);
+  const { theme } = useTheme();
   const [selectedCompany, setSelectedCompany] = useState("bKash");
   const [dateRange, setDateRange] = useState("today");
   const [filterType, setFilterType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-
-  // Check for dark mode
-  useEffect(() => {
-    const checkDarkMode = () => {
-      const darkMode = document.documentElement.classList.contains("dark");
-      setIsDark(darkMode);
-    };
-
-    checkDarkMode();
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
 
   // Company data
   const companies = {
@@ -369,7 +353,7 @@ const CompanyManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-screen container mx-auto sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -481,10 +465,10 @@ const CompanyManagement = () => {
                 <YAxis className="stroke-gray-500 dark:stroke-gray-400" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: isDark ? "#1F2937" : "#FFFFFF",
-                    border: isDark ? "none" : "1px solid #E5E7EB",
+                    backgroundColor: theme === "dark" ? "#1F2937" : "#FFFFFF",
+                    border: theme === "dark" ? "none" : "1px solid #E5E7EB",
                     borderRadius: "8px",
-                    color: isDark ? "#fff" : "#374151",
+                    color: theme === "dark" ? "#fff" : "#374151",
                   }}
                 />
                 <Line
@@ -529,10 +513,10 @@ const CompanyManagement = () => {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: isDark ? "#1F2937" : "#FFFFFF",
-                    border: isDark ? "none" : "1px solid #E5E7EB",
+                    backgroundColor: theme === "dark" ? "#1F2937" : "#FFFFFF",
+                    border: theme === "dark" ? "none" : "1px solid #E5E7EB",
                     borderRadius: "8px",
-                    color: isDark ? "#fff" : "#374151",
+                    color: theme === "dark" ? "#fff" : "#374151",
                   }}
                 />
               </RechartsPieChart>
@@ -573,10 +557,10 @@ const CompanyManagement = () => {
               <YAxis className="stroke-gray-500 dark:stroke-gray-400" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: isDark ? "#1F2937" : "#FFFFFF",
-                  border: isDark ? "none" : "1px solid #E5E7EB",
+                  backgroundColor: theme === "dark" ? "#1F2937" : "#FFFFFF",
+                  border: theme === "dark" ? "none" : "1px solid #E5E7EB",
                   borderRadius: "8px",
-                  color: isDark ? "#fff" : "#374151",
+                  color: theme === "dark" ? "#fff" : "#374151",
                 }}
               />
               <Bar

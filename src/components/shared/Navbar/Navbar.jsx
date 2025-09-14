@@ -27,7 +27,7 @@ const Navbar = () => {
     { name: "Dashboard", icon: Home, href: "/dashboard" },
     { name: "Clients", icon: Users, href: "/clients" },
     { name: "Transactions", icon: CreditCard, href: "/transactions" },
-    { name: "Reports", icon: FileText, href: "/reports2" },
+    { name: "Reports", icon: FileText, href: "/reports" },
     { name: "Company", icon: TrendingUp, href: "/company" },
     { name: "Settings", icon: Settings, href: "/settings" },
   ];

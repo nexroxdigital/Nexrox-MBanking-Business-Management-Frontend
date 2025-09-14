@@ -16,7 +16,7 @@ import {
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 
-const CustomerManagement = () => {
+const ClientManagement = () => {
   const [isDark, setIsDark] = useState(false);
   const [currentPage, setCurrentPage] = useState("list"); // 'list' or 'profile'
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -780,10 +780,10 @@ const CustomerManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-screen bg-gray-50 container mx-auto sm:px-6 lg:px-8 dark:bg-gray-900 p-4 md:p-6">
       {currentPage === "list" ? <CustomerListPage /> : <CustomerProfilePage />}
     </div>
   );
 };
 
-export default CustomerManagement;
+export default ClientManagement;

@@ -21,7 +21,6 @@ import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 
 const Transactions = () => {
-  const [isDark, setIsDark] = useState(false);
   const [currentView, setCurrentView] = useState("list"); // 'list', 'add', 'edit'
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,23 +34,6 @@ const Transactions = () => {
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedTransactions, setSelectedTransactions] = useState([]);
-
-  // Check for dark mode
-  useEffect(() => {
-    const checkDarkMode = () => {
-      const darkMode = document.documentElement.classList.contains("dark");
-      setIsDark(darkMode);
-    };
-
-    checkDarkMode();
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
 
   // Sample transaction data
   const transactions = [
@@ -1083,7 +1065,7 @@ const Transactions = () => {
 
   // Render based on current view
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-screen container mx-auto sm:px-6 lg:px-8 md:p-6 bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
       {currentView === "list" && <TransactionListView />}
       {currentView === "add" && <TransactionForm />}
       {currentView === "edit" && <TransactionForm isEdit={true} />}

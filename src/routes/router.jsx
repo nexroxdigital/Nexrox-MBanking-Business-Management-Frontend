@@ -1,12 +1,10 @@
 import { createBrowserRouter } from "react-router";
 import Layouts from "../Layouts";
-import CustomerManagement from "../pages/ClientManagement/Clie";
-import ClientManagement from "../pages/ClientManagement/ClientManagement";
+import ClientPage from "../pages/ClientPage/ClientPage";
 import CompanyManagement from "../pages/CompanyManagement/CompanyManagement";
 import Dashboard from "../pages/Dashboard/Dashboard";
-import DashboardTwo from "../pages/DashboardTwo/DashbaordTwo";
 import Reports from "../pages/Reports/Reports";
-import ReportsTwo from "../pages/Reports2/Reports2";
+import Reports222 from "../pages/Reports222/Reports";
 import SettingsPage from "../pages/Settings/Settings";
 import Transactions from "../pages/Transactions/Transactions";
 
@@ -25,16 +23,8 @@ export const router = createBrowserRouter([
         element: <Dashboard />,
       },
       {
-        path: "/dashboard2",
-        element: <DashboardTwo />,
-      },
-      {
-        path: "/cli",
-        element: <ClientManagement />,
-      },
-      {
         path: "/clients",
-        element: <CustomerManagement />,
+        element: <ClientPage />,
       },
       {
         path: "/company",
@@ -49,9 +39,10 @@ export const router = createBrowserRouter([
         element: <Reports />,
       },
       {
-        path: "/reports2",
-        element: <ReportsTwo />,
+        path: "/reports222",
+        element: <Reports222 />,
       },
+
       {
         path: "/settings",
         element: <SettingsPage />,
