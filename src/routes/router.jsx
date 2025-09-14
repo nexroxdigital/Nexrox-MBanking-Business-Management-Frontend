@@ -5,6 +5,7 @@ import ClientManagement from "../pages/ClientManagement/ClientManagement";
 import CompanyManagement from "../pages/CompanyManagement/CompanyManagement";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import DashboardTwo from "../pages/DashboardTwo/DashbaordTwo";
+import Transactions from "../pages/Transactions/Transactions";
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
       {
         path: "/company",
         element: <CompanyManagement />,
+      },
+      {
+        path: "/transactions",
+        element: <Transactions />,
       },
     ],
   },
