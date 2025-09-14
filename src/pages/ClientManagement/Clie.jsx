@@ -1,4 +1,3 @@
-import jsPDF from "jspdf";
 import "jspdf-autotable";
 import {
   ArrowLeft,
@@ -17,7 +16,7 @@ import {
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 
-const ClientManagement = () => {
+const CustomerManagement = () => {
   const [isDark, setIsDark] = useState(false);
   const [currentPage, setCurrentPage] = useState("list"); // 'list' or 'profile'
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -169,41 +168,159 @@ const ClientManagement = () => {
   };
 
   const exportToPDF = (customer) => {
-    const doc = new jsPDF();
+    // Create HTML content for PDF
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Customer Transaction Report</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            color: #333; 
+          }
+          .header { 
+            color: #862C8A; 
+            border-bottom: 2px solid #862C8A; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px; 
+          }
+          .customer-info { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+          }
+          .customer-info h3 { 
+            margin: 0 0 10px 0; 
+            color: #862C8A; 
+          }
+          .info-row { 
+            margin: 5px 0; 
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+          }
+          th, td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: left; 
+          }
+          th { 
+            background: #862C8A; 
+            color: white; 
+            font-weight: bold; 
+          }
+          tr:nth-child(even) { 
+            background: #f2f2f2; 
+          }
+          .status-completed { 
+            color: #28a745; 
+            font-weight: bold; 
+          }
+          .status-pending { 
+            color: #ffc107; 
+            font-weight: bold; 
+          }
+          .company-bkash { 
+            color: #E91E63; 
+            font-weight: bold; 
+          }
+          .company-rocket { 
+            color: #9C27B0; 
+            font-weight: bold; 
+          }
+          .company-nagad { 
+            color: #FF9800; 
+            font-weight: bold; 
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Customer Transaction Report</h1>
+          <p>Generated on ${new Date().toLocaleDateString()}</p>
+        </div>
+        
+        <div class="customer-info">
+          <h3>Customer Information</h3>
+          <div class="info-row"><strong>Name:</strong> ${customer.name}</div>
+          <div class="info-row"><strong>Phone:</strong> ${customer.phone}</div>
+          <div class="info-row"><strong>Address:</strong> ${
+            customer.address
+          }</div>
+          <div class="info-row"><strong>Total Transactions:</strong> ${
+            customer.totalTransactions
+          }</div>
+          <div class="info-row"><strong>Net Balance:</strong> ₹${customer.netBalance.toLocaleString()}</div>
+        </div>
 
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(134, 44, 138); // Purple color
-    doc.text("Customer Transaction Report", 20, 20);
+        <h3>Transaction History</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Company</th>
+              <th>Amount</th>
+              <th>Fee</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${customer.transactions
+              .map(
+                (t) => `
+              <tr>
+                <td>${new Date(t.date).toLocaleDateString()}</td>
+                <td>${t.type}</td>
+                <td class="company-${t.company.toLowerCase()}">${t.company}</td>
+                <td>₹${t.amount.toLocaleString()}</td>
+                <td>₹${t.fee}</td>
+                <td class="status-${t.status.toLowerCase()}">${t.status}</td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+        
+        <div style="margin-top: 30px; text-align: center; color: #666; font-size: 12px;">
+          <p>MobiPay Banking Hub - Customer Transaction Report</p>
+        </div>
+      </body>
+      </html>
+    `;
 
-    // Customer info
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Customer: ${customer.name}`, 20, 35);
-    doc.text(`Phone: ${customer.phone}`, 20, 45);
-    doc.text(`Address: ${customer.address}`, 20, 55);
-    doc.text(`Net Balance: ₹${customer.netBalance.toLocaleString()}`, 20, 65);
+    // Create a new window and write the HTML content
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
 
-    // Transaction table
-    const tableData = customer.transactions.map((t) => [
-      t.date,
-      t.type,
-      t.company,
-      `₹${t.amount.toLocaleString()}`,
-      `₹${t.fee}`,
-      t.status,
-    ]);
-
-    doc.autoTable({
-      startY: 75,
-      head: [["Date", "Type", "Company", "Amount", "Fee", "Status"]],
-      body: tableData,
-      theme: "grid",
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [134, 44, 138] },
-    });
-
-    doc.save(`${customer.name}-transactions.pdf`);
+      // Wait for content to load then trigger print dialog
+      printWindow.onload = () => {
+        printWindow.print();
+        // Close the window after printing (user can cancel this)
+        printWindow.onafterprint = () => {
+          printWindow.close();
+        };
+      };
+    } else {
+      // Fallback: download as HTML file if popup is blocked
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${customer.name}-transactions.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   const exportToExcel = (customer) => {
@@ -669,4 +786,4 @@ const ClientManagement = () => {
   );
 };
 
-export default ClientManagement;
+export default CustomerManagement;

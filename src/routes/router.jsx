@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import Layouts from "../Layouts";
+import CustomerManagement from "../pages/ClientManagement/Clie";
 import ClientManagement from "../pages/ClientManagement/ClientManagement";
 import CompanyManagement from "../pages/CompanyManagement/CompanyManagement";
 import Dashboard from "../pages/Dashboard/Dashboard";
@@ -26,6 +27,10 @@ export const router = createBrowserRouter([
       {
         path: "/clients",
         element: <ClientManagement />,
+      },
+      {
+        path: "/cli",
+        element: <CustomerManagement />,
       },
       {
         path: "/company",
