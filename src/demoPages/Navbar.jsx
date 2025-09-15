@@ -1,6 +1,5 @@
 import { Lock, Menu, X } from "lucide-react";
 
-import ThemeToggle from "../components/ThemeToggle/ThemeToggle";
 import GradientButton from "../components/shared/Button/GradientButton";
 
 const Navbar = ({ toggleMenu, isMenuOpen }) => {
@@ -10,7 +9,7 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <a href="#" className="flex items-center space-x-3">
-            <img className="h-10 w-28" src="/logosnit.jpg" alt="" />
+            <img className="h-14 w-32" src="/Ai.png" alt="" />
           </a>
 
           {/* Theme Toggle & Mobile Menu Button */}
