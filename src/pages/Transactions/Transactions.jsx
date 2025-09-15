@@ -23,7 +23,7 @@ import * as XLSX from "xlsx";
 import { motion } from "framer-motion";
 
 const Transactions = () => {
-  const [currentView, setCurrentView] = useState("list"); // 'list', 'add', 'edit'
+  const [currentView, setCurrentView] = useState("list");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
