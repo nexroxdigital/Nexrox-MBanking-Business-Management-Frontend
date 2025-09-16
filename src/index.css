@@ -23,6 +23,13 @@ input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0px 1000px #9a9881 inset !important;
 }
 
+/* remove dropdown from number input */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .dark input:-webkit-autofill {
   box-shadow: 0 0 0px 1000px #171010 inset !important;
   -webkit-box-shadow: 0 0 0px 1000px #171010 inset !important;

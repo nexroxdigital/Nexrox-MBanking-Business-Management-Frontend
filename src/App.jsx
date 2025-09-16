@@ -109,11 +109,12 @@ function seedDemo() {
     {
       id: cid1,
       name: "Rahim Traders",
+      number: "00928373232",
       payments: [
         { id: uid("pay"), date: todayISO(), amount: 3000, note: "advance" },
       ],
     },
-    { id: cid2, name: "Mita Store", payments: [] },
+    { id: cid2, name: "Mita Store", number: "01928373232", payments: [] },
   ];
   const state = {
     transactions: [t1, t2],

@@ -10,7 +10,7 @@ export default function Settings({ ctx }) {
     channel: "Bkash",
     kind: "Agent",
   });
-  const [sms, setSms] = useState(state.sms);
+
   const [adjustOpenId, setAdjustOpenId] = useState(null);
   const [adjustValue, setAdjustValue] = useState("");
 
@@ -37,11 +37,9 @@ export default function Settings({ ctx }) {
     };
   }, []);
 
-  useEffect(() => setSms(state.sms), [state.sms]);
-
   const openAdjust = (id) => {
     setAdjustOpenId(id);
-    setAdjustValue(""); // reset each time
+    setAdjustValue("");
   };
 
   // submit
@@ -102,12 +100,6 @@ export default function Settings({ ctx }) {
     dispatch({ type: "SAVE", payload: next });
   }
 
-  function adjustNumber(id) {
-    const v = prompt("ম্যানুয়াল অ্যাডজাস্ট (৳, +/−)");
-    const delta = Number(v || 0);
-    doAdjust(id, delta);
-  }
-
   // keep this helper in your component
   const doAdjust = (id, delta) => {
     const nextNums = state.numbers.map((n) =>
@@ -127,22 +119,6 @@ export default function Settings({ ctx }) {
     };
     dispatch({ type: "SAVE", payload: next });
   };
-
-  function saveSms() {
-    const next = {
-      ...state,
-      sms,
-      logs: [
-        ...state.logs,
-        {
-          id: uid("log"),
-          ts: new Date().toISOString(),
-          msg: `SMS সেটিংস আপডেট`,
-        },
-      ],
-    };
-    dispatch({ type: "SAVE", payload: next });
-  }
 
   const balances = computeBalances(state.numbers, state.transactions);
 

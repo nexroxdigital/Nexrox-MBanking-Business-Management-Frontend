@@ -1,15 +1,57 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { clamp2, computeClientStats, fmtBDT, todayISO, uid } from "./utils";
 
 export default function Clients({ ctx }) {
   const { state, dispatch } = ctx;
-  const [newClient, setNewClient] = useState("");
+  const [newClient, setNewClient] = useState({
+    name: "",
+    number: "",
+  });
   const [selected, setSelected] = useState(null);
   const computed = useMemo(() => computeClientStats(state), [state]);
+  const [payModalOpen, setPayModalOpen] = useState(false);
+  const [payClientId, setPayClientId] = useState(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [payNote, setPayNote] = useState("");
+
+  // open from button
+  const openPayModal = (clientId) => {
+    setPayClientId(clientId);
+    setPayAmount("");
+    setPayNote("");
+    setPayModalOpen(true);
+  };
+
+  const closePayModal = () => {
+    setPayModalOpen(false);
+    setPayClientId(null);
+    setPayAmount("");
+    setPayNote("");
+  };
+
+  // submit (same data rules as your original: amount must be > 0 after clamp2)
+  const submitPayModal = () => {
+    const amount = clamp2(payAmount);
+    if (!amount || amount <= 0) return; // keep same behavior: do nothing if invalid
+    addPayment(payClientId, amount, payNote || "");
+    closePayModal();
+  };
+
+  // esc to close
+  useEffect(() => {
+    const onEsc = (e) => e.key === "Escape" && closePayModal();
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, []);
 
   function addClient() {
-    if (!newClient.trim()) return;
-    const c = { id: uid("client"), name: newClient.trim(), payments: [] };
+    if (!newClient.name.trim() || !newClient.number) return;
+    const c = {
+      id: uid("client"),
+      name: newClient.name.trim(),
+      number: newClient.number,
+      payments: [],
+    };
     const next = {
       ...state,
       clients: [...state.clients, c],
@@ -23,15 +65,10 @@ export default function Clients({ ctx }) {
       ],
     };
     dispatch({ type: "SAVE", payload: next });
-    setNewClient("");
+    setNewClient({ name: "", number: "" });
   }
 
-  function addPayment(clientId) {
-    const amt = prompt("পেমেন্ট (৳)");
-    const amount = clamp2(amt);
-    if (!amount || amount <= 0) return;
-    const note = prompt("নোট (ঐচ্ছিক)") || "";
-
+  function addPayment(clientId, amount, note = "") {
     const clients = state.clients.map((c) => {
       if (c.id !== clientId) return c;
       const p = { id: uid("pay"), date: todayISO(), amount, note };
@@ -54,15 +91,22 @@ export default function Clients({ ctx }) {
     dispatch({ type: "SAVE", payload: next });
   }
 
-  const rows = state.clients.map((c) => ({
-    id: c.id,
-    name: c.name,
-    totalSell: computed.byClient[c.id]?.sell || 0,
-    paid: (c.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0),
-    due:
-      (computed.byClient[c.id]?.sell || 0) -
-      (c.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0),
-  }));
+  const rows = state.clients.map((c) => {
+    const totalSell = computed.byClient[c.id]?.sell || 0;
+    const paid = (c.payments || []).reduce(
+      (s, p) => s + Number(p.amount || 0),
+      0
+    );
+    const due = Math.max(0, totalSell - paid);
+
+    return {
+      id: c.id,
+      name: c.name,
+      totalSell,
+      paid,
+      due,
+    };
+  });
 
   const selClient = state.clients.find((c) => c.id === selected);
   const selTx = state.transactions
@@ -83,15 +127,29 @@ export default function Clients({ ctx }) {
           <h3 className="font-semibold text-white tracking-wide text-sm sm:text-base">
             ক্লায়েন্ট তালিকা
           </h3>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex flex-col md:flex-row gap-2 w-full sm:w-auto">
             <input
               className="flex-1 sm:flex-none px-2 sm:px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border border-white/60 focus:border-white focus:ring-2 focus:ring-white/60 transition text-sm"
               placeholder="নতুন ক্লায়েন্ট"
-              value={newClient}
-              onChange={(e) => setNewClient(e.target.value)}
+              value={newClient.name}
+              type="text"
+              onChange={(e) =>
+                setNewClient((prev) => ({ ...prev, name: e.target.value }))
+              }
             />
+
+            <input
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border border-white/60 focus:border-white focus:ring-2 focus:ring-white/60 transition text-sm"
+              placeholder="মোবাইল নম্বর"
+              value={newClient.number}
+              type="number"
+              onChange={(e) =>
+                setNewClient((prev) => ({ ...prev, number: e.target.value }))
+              }
+            />
+
             <button
-              className="px-2 sm:px-3 py-2 rounded-xl text-white shadow-sm hover:shadow transition text-sm whitespace-nowrap"
+              className="px-5 md:px-3 py-2 rounded-xl text-white shadow-sm hover:shadow transition text-sm whitespace-nowrap self-center"
               style={{
                 background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
               }}
@@ -158,7 +216,7 @@ export default function Clients({ ctx }) {
                   </div>
                   <button
                     className="px-3 py-1.5 rounded-lg border text-gray-700 hover:bg-white transition text-xs"
-                    onClick={() => addPayment(r.id)}
+                    onClick={() => openPayModal(r.id)}
                     style={{
                       borderImageSlice: 1,
                       borderImageSource:
@@ -258,7 +316,7 @@ export default function Clients({ ctx }) {
                     <td className="py-3 px-4 text-right rounded-r-xl">
                       <button
                         className="px-3 py-1.5 rounded-lg border text-gray-700 hover:bg-white transition relative"
-                        onClick={() => addPayment(r.id)}
+                        onClick={() => openPayModal(r.id)}
                         style={{
                           borderImageSlice: 1,
                           borderImageSource:
@@ -292,6 +350,110 @@ export default function Clients({ ctx }) {
               </tbody>
             </table>
           </div>
+
+          {payModalOpen && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center">
+              {/* Dialog */}
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Add payment"
+                className="relative w-full max-w-sm mx-4 rounded-2xl shadow-xl border bg-white"
+                style={{
+                  borderImageSlice: 1,
+                  borderImageSource:
+                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Gradient top bar */}
+                <div
+                  className="h-1 w-full rounded-t-2xl"
+                  style={{
+                    background:
+                      "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                  }}
+                />
+
+                <div className="p-4">
+                  <h4 className="font-medium text-gray-900">পেমেন্ট অ্যাড</h4>
+                  <p className="text-xs text-gray-500 mt-1">
+                    পরিমাণ দিন (৳). ধনাত্মক সংখ্যা হতে হবে।
+                  </p>
+
+                  <div className="mt-4 grid gap-3">
+                    <div>
+                      <label className="text-xs text-gray-600 mb-1 block">
+                        পরিমাণ (৳)
+                      </label>
+                      <input
+                        autoFocus
+                        type="number"
+                        inputMode="decimal"
+                        step="any"
+                        className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none focus:outline-none border-none"
+                        style={{
+                          borderImageSlice: 1,
+                          borderImageSource:
+                            "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                        }}
+                        placeholder="যেমন: 500"
+                        value={payAmount}
+                        onChange={(e) => setPayAmount(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") submitPayModal();
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-gray-600 mb-1 block">
+                        নোট (ঐচ্ছিক)
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none"
+                        style={{
+                          borderImageSlice: 1,
+                          borderImageSource:
+                            "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                          borderWidth: "1px",
+                          borderStyle: "solid",
+                        }}
+                        placeholder="যেমন: মার্চেন্ট পেমেন্ট"
+                        value={payNote}
+                        onChange={(e) => setPayNote(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                        onClick={closePayModal}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="px-4 py-2 rounded-lg text-white shadow-sm hover:shadow transition disabled:opacity-50"
+                        onClick={submitPayModal}
+                        disabled={!clamp2(payAmount) || clamp2(payAmount) <= 0} // same rule as original
+                        style={{
+                          background:
+                            "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                        }}
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -339,7 +501,7 @@ export default function Clients({ ctx }) {
               </div>
 
               {/* Timeline list */}
-              <ul className="mt-4 space-y-3 max-h-72 overflow-auto pr-2 text-sm">
+              <ul className="mt-4 space-y-3 h-full overflow-auto pr-2 text-sm">
                 {selTx.map((t) => (
                   <li
                     key={t.id}
