@@ -16,7 +16,6 @@ export default function Transactions({ ctx }) {
     channel: "",
     type: "",
     dateFrom: daysAgo(30),
-    dateTo: todayISO(),
   });
   const [form, setForm] = useState({
     date: todayISO(),
@@ -56,6 +55,10 @@ export default function Transactions({ ctx }) {
   }, [form.amount, form.channel, form.type, form.numberType]);
 
   const filtered = useMemo(() => {
+    const dateTo = todayISO();
+  
+    console.log("filter", filter.dateFrom);
+
     return state.transactions
       .filter((t) => {
         if (filter.q) {
@@ -65,8 +68,11 @@ export default function Transactions({ ctx }) {
         }
         if (filter.channel && t.channel !== filter.channel) return false;
         if (filter.type && t.type !== filter.type) return false;
+
+        // assuming t.date is an ISO date string ("YYYY-MM-DD" or full ISO)
         if (filter.dateFrom && t.date < filter.dateFrom) return false;
-        if (filter.dateTo && t.date > filter.dateTo) return false;
+        if (t.date > dateTo) return false; // ✅ auto-clamped to today
+
         return true;
       })
       .sort((a, b) => b.date.localeCompare(a.date));
