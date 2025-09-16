@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { MdDeleteOutline } from "react-icons/md";
+import Swal from "sweetalert2";
 import { clamp2, computeClientStats, fmtBDT, todayISO, uid } from "./utils";
 
 export default function Clients({ ctx }) {
@@ -113,6 +115,62 @@ export default function Clients({ ctx }) {
     .filter((t) => t.clientId === selected)
     .sort((a, b) => b.date.localeCompare(a.date));
 
+  // delete client handler
+  function deleteClient(clientId) {
+    const client = state.clients.find((c) => c.id === clientId);
+
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: `${client?.name || "এই ক্লায়েন্ট"} ডিলিট হয়ে যাবে!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const nextClients = state.clients.filter((c) => c.id !== clientId);
+        const nextTx = state.transactions.map((t) =>
+          t.clientId === clientId
+            ? {
+                ...t,
+                clientId: null,
+                clientName: t.clientName || client?.name || "(Deleted Client)",
+              }
+            : t
+        );
+
+        // log + dispatch
+        const next = {
+          ...state,
+          clients: nextClients,
+          transactions: nextTx,
+          logs: [
+            ...state.logs,
+            {
+              id: uid("log"),
+              ts: new Date().toISOString(),
+              msg: `ক্লায়েন্ট ডিলিট: ${client?.name ?? clientId}`,
+            },
+          ],
+        };
+        dispatch({ type: "SAVE", payload: next });
+
+        // clear selection
+        if (selected === clientId) setSelected(null);
+
+        Swal.fire({
+          title: "ডিলিট হয়েছে!",
+          text: "ক্লায়েন্ট সফলভাবে ডিলিট করা হয়েছে।",
+          icon: "success",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    });
+  }
+
   return (
     <section className="grid md:grid-cols-5 gap-6 mt-10">
       {/* Left: Client List */}
@@ -184,6 +242,14 @@ export default function Clients({ ctx }) {
                     />
                     <span className="truncate text-left">{r.name}</span>
                   </button>
+
+                  <button
+                    className="text-red-600 hover:bg-red-50 transition relative flex items-center justify-center"
+                    title="Delete Client"
+                    onClick={() => deleteClient(r.id)}
+                  >
+                    <MdDeleteOutline size={20} />
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs mb-3">
@@ -201,7 +267,7 @@ export default function Clients({ ctx }) {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
                     <span className="text-gray-500 block text-xs">পাওনা</span>
                     <span
@@ -313,7 +379,7 @@ export default function Clients({ ctx }) {
                       </span>
                     </td>
 
-                    <td className="py-3 px-4 text-right rounded-r-xl">
+                    <td className="py-3 px-4 text-right rounded-r-xl flex gap-1.5">
                       <button
                         className="px-3 py-1.5 rounded-lg border text-gray-700 hover:bg-white transition relative"
                         onClick={() => openPayModal(r.id)}
@@ -326,6 +392,14 @@ export default function Clients({ ctx }) {
                         }}
                       >
                         Add Payment
+                      </button>
+
+                      <button
+                        className="text-red-600 hover:bg-red-50 transition relative flex items-center justify-center"
+                        onClick={() => deleteClient(r.id)}
+                        title="Delete Client"
+                      >
+                        <MdDeleteOutline size={20} />
                       </button>
                     </td>
                   </tr>

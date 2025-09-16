@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Swal from "sweetalert2";
 import { Field } from "./Field";
 import { clamp2, computeBalances, fmtBDT, uid } from "./utils";
 
@@ -84,20 +85,41 @@ export default function Settings({ ctx }) {
   }
 
   function removeNumber(id) {
-    if (!confirm("ডিলিট করবেন?")) return;
-    const next = {
-      ...state,
-      numbers: state.numbers.filter((n) => n.id !== id),
-      logs: [
-        ...state.logs,
-        {
-          id: uid("log"),
-          ts: new Date().toISOString(),
-          msg: `নম্বর মুছে ফেলা হয়েছে`,
-        },
-      ],
-    };
-    dispatch({ type: "SAVE", payload: next });
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "এই নম্বরটি মুছে ফেলা হবে!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const next = {
+          ...state,
+          numbers: state.numbers.filter((n) => n.id !== id),
+          logs: [
+            ...state.logs,
+            {
+              id: uid("log"),
+              ts: new Date().toISOString(),
+              msg: `নম্বর মুছে ফেলা হয়েছে`,
+            },
+          ],
+        };
+
+        dispatch({ type: "SAVE", payload: next });
+
+        Swal.fire({
+          title: "ডিলিট হয়েছে!",
+          text: "নম্বরটি সফলভাবে ডিলিট করা হয়েছে।",
+          icon: "success",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    });
   }
 
   // keep this helper in your component
