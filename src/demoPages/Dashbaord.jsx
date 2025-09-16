@@ -124,7 +124,7 @@ export function StatCard({ title, value, sub, icon, gradient }) {
 
         {/* Icon and title */}
         <div className="flex items-center justify-between mb-3">
-          <div className="text-base md:text-lg font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
+          <div className="text-base md:text-lg font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center">
             <span className="text-xl">{icon}</span>
             {title}
           </div>

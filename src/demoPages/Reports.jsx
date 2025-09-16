@@ -58,21 +58,21 @@ export default function Reports({ ctx }) {
           title="আজকের বিক্রি"
           value={`৳${fmtBDT(todayRow.sell)}`}
           sub={today}
-          icon="📈"
+          icon=""
           gradient="from-[#862C8A] to-[#009C91]"
         />
         <StatCard
           title="আজকের লাভ"
           value={`৳${fmtBDT(todayRow.profit)}`}
           sub={today}
-          icon="💰"
+          icon=""
           gradient="from-[#862C8A] to-[#009C91]"
         />
         <StatCard
           title="আজকের পাওনা"
           value={`৳${fmtBDT(todayRow.due)}`}
           sub={today}
-          icon="🧾"
+          icon=""
           gradient="from-[#862C8A] to-[#009C91]"
         />
       </div>
