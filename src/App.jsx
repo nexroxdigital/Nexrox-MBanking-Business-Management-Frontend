@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useReducer, useState } from "react";
+import Footer from "./components/shared/Footer/Footer";
 import Clients from "./demoPages/Clients";
 import Dashboard from "./demoPages/Dashbaord";
 import Navbar from "./demoPages/Navbar";
@@ -150,17 +151,24 @@ export default function App() {
   const ctx = useMemo(() => ({ state, dispatch }), [state, dispatch]);
 
   return (
-    <div className="min-h-screen dark:bg-slate-900 bg-[#f5f5f5]  text-gray-900">
+    <div className="min-h-screen flex flex-col dark:bg-slate-900 bg-[#f5f5f5]  text-gray-900">
       <Navbar toggleMenu={toggleMenu} isMenuOpen={isMenuOpen} />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-2 pb-16">
-        <Tabs tab={tab} setTab={setTab} isMenuOpen={isMenuOpen} />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-2 pb-16 flex-1">
+        <Tabs
+          tab={tab}
+          setTab={setTab}
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+        />
         {tab === "dashboard" && <Dashboard ctx={ctx} />}
         {tab === "transactions" && <Transactions ctx={ctx} />}
         {tab === "clients" && <Clients ctx={ctx} />}
         {tab === "reports" && <Reports ctx={ctx} />}
         {tab === "settings" && <Settings ctx={ctx} />}
       </div>
+
+      <Footer />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { IoIosContacts } from "react-icons/io";
 import { LuFileText, LuSlidersHorizontal } from "react-icons/lu";
 import { MdOutlineDashboard } from "react-icons/md";
 
-function Tabs({ tab, setTab, isMenuOpen }) {
+function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
   const tabs = [
     { id: "dashboard", label: "ড্যাশবোর্ড", icon: <MdOutlineDashboard /> },
     { id: "transactions", label: "লেনদেন", icon: <HiOutlineBanknotes /> },
@@ -65,7 +65,9 @@ function Tabs({ tab, setTab, isMenuOpen }) {
                   <span className="inline text-base">{t.icon}</span>
 
                   {/* Label */}
-                  <span className="font-medium tracking-wide text-base">{t.label}</span>
+                  <span className="font-medium tracking-wide text-base">
+                    {t.label}
+                  </span>
 
                   {/* Active indicator dot */}
                   {tab === t.id && (
@@ -115,7 +117,11 @@ function Tabs({ tab, setTab, isMenuOpen }) {
               return (
                 <button
                   key={t.id}
-                  onClick={() => setTab(t.id)}
+                  onClick={() => {
+                    setTab(t.id);
+                    setIsMenuOpen(false);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
                   className={`
               group relative flex items-center justify-center gap-2 px-4 py-3 sm:px-6 sm:py-3
               rounded-xl text-sm font-semibold transition-all duration-300
