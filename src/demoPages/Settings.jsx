@@ -6,10 +6,15 @@ export default function Settings({ ctx }) {
   const { state, dispatch } = ctx;
   const [num, setNum] = useState({
     label: "",
+    number: "",
     channel: "Bkash",
     kind: "Agent",
   });
   const [sms, setSms] = useState(state.sms);
+  const [adjustOpenId, setAdjustOpenId] = useState(null);
+  const [adjustValue, setAdjustValue] = useState("");
+
+  console.log(state);
 
   const [menuOpenId, setMenuOpenId] = useState(null);
   const menuRef = useRef(null);
@@ -34,11 +39,32 @@ export default function Settings({ ctx }) {
 
   useEffect(() => setSms(state.sms), [state.sms]);
 
+  const openAdjust = (id) => {
+    setAdjustOpenId(id);
+    setAdjustValue(""); // reset each time
+  };
+
+  // submit
+  const submitAdjust = () => {
+    const delta = Number(adjustValue || 0);
+    doAdjust(adjustOpenId, delta);
+    setAdjustOpenId(null);
+    setAdjustValue("");
+  };
+
+  // esc to close
+  useEffect(() => {
+    const onEsc = (e) => e.key === "Escape" && setAdjustOpenId(null);
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, []);
+
   function addNumber() {
     if (!num.label.trim()) return;
     const entry = {
       id: uid("num"),
       label: num.label.trim(),
+      number: num.number,
       channel: num.channel,
       kind: num.kind,
       manualAdj: 0,
@@ -56,7 +82,7 @@ export default function Settings({ ctx }) {
       ],
     };
     dispatch({ type: "SAVE", payload: next });
-    setNum({ label: "", channel: num.channel, kind: num.kind });
+    setNum({ label: "", number: "", channel: num.channel, kind: num.kind });
   }
 
   function removeNumber(id) {
@@ -79,6 +105,11 @@ export default function Settings({ ctx }) {
   function adjustNumber(id) {
     const v = prompt("ম্যানুয়াল অ্যাডজাস্ট (৳, +/−)");
     const delta = Number(v || 0);
+    doAdjust(id, delta);
+  }
+
+  // keep this helper in your component
+  const doAdjust = (id, delta) => {
     const nextNums = state.numbers.map((n) =>
       n.id === id ? { ...n, manualAdj: clamp2((n.manualAdj || 0) + delta) } : n
     );
@@ -95,7 +126,7 @@ export default function Settings({ ctx }) {
       ],
     };
     dispatch({ type: "SAVE", payload: next });
-  }
+  };
 
   function saveSms() {
     const next = {
@@ -154,9 +185,25 @@ export default function Settings({ ctx }) {
               />
             </Field>
 
+            <Field label="ফোন নম্বর">
+              <input
+                className="border rounded-xl px-3 py-2 bg-white/90 text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#862C8A33] max-w-[220px]"
+                style={{
+                  borderImageSlice: 1,
+                  borderImageSource:
+                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                }}
+                value={num.number}
+                onChange={(e) => setNum({ ...num, number: e.target.value })}
+                placeholder="018..."
+              />
+            </Field>
+
             <Field label="চ্যানেল">
               <select
-                className="border rounded-xl px-3 py-2 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
+                className="border rounded-xl px-3 py-1.5 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
                 style={{
                   borderImageSlice: 1,
                   borderImageSource:
@@ -177,7 +224,7 @@ export default function Settings({ ctx }) {
 
             <Field label="টাইপ">
               <select
-                className="border rounded-xl px-3 py-2 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
+                className="border rounded-xl px-3 py-1.5 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
                 style={{
                   borderImageSlice: 1,
                   borderImageSource:
@@ -233,7 +280,7 @@ export default function Settings({ ctx }) {
                           <span className="truncate">{n.label}</span>
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                          {n.channel} • {n.kind}
+                          {n.number}
                         </div>
                       </div>
 
@@ -253,7 +300,7 @@ export default function Settings({ ctx }) {
                     <div className="mt-3 flex gap-2 justify-end">
                       <button
                         className="px-3 py-1.5 rounded-lg text-gray-700 transition border"
-                        onClick={() => adjustNumber(n.id)}
+                        onClick={() => openAdjust(n.id)}
                         style={{
                           borderImageSlice: 1,
                           borderImageSource:
@@ -296,7 +343,7 @@ export default function Settings({ ctx }) {
                       লেবেল
                     </th>
                     <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur">
-                      চ্যানেল
+                      ফোন নম্বর
                     </th>
                     <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur">
                       টাইপ
@@ -323,7 +370,7 @@ export default function Settings({ ctx }) {
                           </span>
                         </div>
                       </td>
-                      <td className="py-2 px-4">{n.channel}</td>
+                      <td className="py-2 px-4">{n.number}</td>
                       <td className="py-2 px-4">{n.kind}</td>
                       <td className="py-2 px-4 text-right">
                         ৳{fmtBDT(balances[n.id] || 0)}
@@ -335,7 +382,7 @@ export default function Settings({ ctx }) {
                             className="px-3 py-2 rounded-lg text-gray-700 transition border text-left hover:bg-white"
                             onClick={() => {
                               setMenuOpenId(null);
-                              adjustNumber(n.id);
+                              openAdjust(n.id);
                             }}
                           >
                             Adjust
@@ -367,6 +414,80 @@ export default function Settings({ ctx }) {
                 </tbody>
               </table>
             </div>
+            {adjustOpenId && (
+              <div className="fixed inset-0 z-[110] flex items-center justify-center">
+                {/* Dialog */}
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Manual balance adjust"
+                  className="relative w-full max-w-sm mx-4 rounded-2xl shadow-xl border bg-white"
+                  style={{
+                    borderImageSlice: 1,
+                    borderImageSource:
+                      "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Gradient top bar */}
+                  <div
+                    className="h-1 w-full rounded-t-2xl"
+                    style={{
+                      background:
+                        "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                    }}
+                  />
+
+                  <div className="p-4">
+                    <div className="mb-3">
+                      <h4 className="font-medium text-gray-900">
+                        ম্যানুয়াল অ্যাডজাস্ট
+                      </h4>
+                      <p className="text-xs text-gray-500 mt-1">
+                        ধনাত্মক (+) বা ঋণাত্মক (−) মান দিন। উদাহরণ: 500 বা -200
+                      </p>
+                    </div>
+
+                    <div className="grid gap-3">
+                      <input
+                        autoFocus
+                        type="number"
+                        inputMode="decimal"
+                        step="any"
+                        className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border focus:ring-1"
+                        placeholder="৳ পরিমাণ (যেমন: 500 বা -200)"
+                        value={adjustValue}
+                        onChange={(e) => setAdjustValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") submitAdjust();
+                        }}
+                      />
+
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                          onClick={() => setAdjustOpenId(null)}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="px-4 py-2 rounded-lg text-white shadow-sm hover:shadow transition"
+                          onClick={submitAdjust}
+                          style={{
+                            background:
+                              "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                          }}
+                        >
+                          Submit
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
