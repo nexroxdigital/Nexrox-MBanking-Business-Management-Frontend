@@ -353,6 +353,11 @@ export default function Clients({ ctx }) {
 
           {payModalOpen && (
             <div className="fixed inset-0 z-[120] flex items-center justify-center">
+              <div
+                className="absolute inset-0 bg-black/30"
+                onClick={payModalOpen}
+                aria-hidden="true"
+              />
               {/* Dialog */}
               <div
                 role="dialog"
