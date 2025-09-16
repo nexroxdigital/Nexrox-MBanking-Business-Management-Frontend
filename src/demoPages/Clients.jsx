@@ -495,6 +495,9 @@ export default function Clients({ ctx }) {
                     {selClient.name}
                   </div>
                   <div className="text-xs text-gray-500">
+                    নম্বর: {selClient.number}
+                  </div>
+                  <div className="text-xs text-gray-500">
                     মোট {selTx.length} ট্রান্সাকশন
                   </div>
                 </div>

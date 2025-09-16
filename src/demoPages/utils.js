@@ -78,13 +78,24 @@ export function computeBalances(numbers, transactions) {
 export const COMMISSION_RATES = {
   // % of amount by type when NumberType = Agent
   // Adjust these as needed.
-  Bkash: { "Cash In": 0.003, "Cash Out": 0.005, "Bill Payment": 0.002 },
-  Nagad: { "Cash In": 0.0035, "Cash Out": 0.0055, "Bill Payment": 0.002 },
-  Rocket: { "Cash In": 0.003, "Cash Out": 0.005, "Bill Payment": 0.002 },
+  Bkash: {
+    "Cash In": 0.02,
+    "Cash Out": 0.005,
+    "Bill Payment": 0.002,
+  },
+  Nagad: {
+    "Cash In": 0.02,
+    "Cash Out": 0.0055,
+    "Bill Payment": 0.002,
+  },
+  Rocket: {
+    "Cash In": 0.02,
+    "Cash Out": 0.005,
+    "Bill Payment": 0.002,
+  },
   "Bill Payment": { "Bill Payment": 0.002 }, // fallback for odd mapping
 };
 
 export function uid(prefix = "id") {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
-
