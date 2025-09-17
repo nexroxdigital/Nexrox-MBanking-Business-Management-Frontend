@@ -1,21 +1,21 @@
-import { Navigate, useLocation } from "react-router";
-import Loading from "../components/Loading/Loading";
-import useAuth from "../context/AuthContext/AuthContext";
+// import { Navigate, useLocation } from "react-router";
+// import Loading from "../components/Loading/Loading";
+// import useAuth from "../context/AuthContext/AuthContext";
 
-const PrivateRoutes = ({ children }) => {
-  const { user, loading } = useAuth();
+// const PrivateRoutes = ({ children }) => {
+//   const { user, loading } = useAuth();
 
-  const location = useLocation();
+//   const location = useLocation();
 
-  if (loading) {
-    return <Loading />;
-  }
+//   if (loading) {
+//     return <Loading />;
+//   }
 
-  if (!user) {
-    return <Navigate state={location?.pathname} to="/login"></Navigate>;
-  }
+//   if (!user) {
+//     return <Navigate state={location?.pathname} to="/login"></Navigate>;
+//   }
 
-  return children;
-};
+//   return children;
+// };
 
-export default PrivateRoutes;
+// export default PrivateRoutes;

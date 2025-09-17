@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import useAuth from "../context/AuthContext/AuthContext";
 
 const axiosInstance = axios.create({
-  baseURL: "https://server-alpha-livid.vercel.app",
+  baseURL: "",
 });
 
 const useAxiosSecure = () => {

@@ -416,7 +416,6 @@ export default function Settings({ ctx }) {
               <div className="fixed inset-0 z-[110] flex items-center justify-center">
                 <div
                   className="absolute inset-0 bg-black/30"
-                  onClick={adjustOpenId}
                   aria-hidden="true"
                 />
                 {/* Dialog */}

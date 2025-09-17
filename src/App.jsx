@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useReducer, useState } from "react";
 import Footer from "./components/shared/Footer/Footer";
-import Clients from "./demoPages/Clients";
-import Dashboard from "./demoPages/Dashbaord";
-import Navbar from "./demoPages/Navbar";
-import Reports from "./demoPages/Reports";
-import Settings from "./demoPages/Settings";
-import Tabs from "./demoPages/Tabs";
-import Transactions from "./demoPages/Transactions";
-import { clamp2, COMMISSION_RATES, todayISO, uid } from "./demoPages/utils";
+import Clients from "./pages/Clients";
+import Dashboard from "./pages/Dashbaord";
+import Navbar from "./pages/Navbar";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Tabs from "./pages/Tabs";
+import Transactions from "./pages/Transactions";
+import { clamp2, COMMISSION_RATES, todayISO, uid } from "./pages/utils";
 
 /*************************
  * Reducer & initial state
