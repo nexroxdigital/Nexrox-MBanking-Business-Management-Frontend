@@ -15,6 +15,7 @@ export default function Clients({ ctx }) {
   const [payClientId, setPayClientId] = useState(null);
   const [payAmount, setPayAmount] = useState("");
   const [payNote, setPayNote] = useState("");
+  const [addModalOpen, setAddModalOpen] = useState(false);
 
   // open from button
   const openPayModal = (clientId) => {
@@ -31,6 +32,14 @@ export default function Clients({ ctx }) {
     setPayNote("");
   };
 
+  const openAddModal = () => {
+    setNewClient({ name: "", number: "" }); // reset form
+    setAddModalOpen(true);
+  };
+  const closeAddModal = () => {
+    setAddModalOpen(false);
+  };
+
   // submit (same data rules as your original: amount must be > 0 after clamp2)
   const submitPayModal = () => {
     const amount = clamp2(payAmount);
@@ -41,10 +50,15 @@ export default function Clients({ ctx }) {
 
   // esc to close
   useEffect(() => {
-    const onEsc = (e) => e.key === "Escape" && closePayModal();
+    const onEsc = (e) => {
+      if (e.key === "Escape") {
+        if (payModalOpen) closePayModal();
+        if (addModalOpen) closeAddModal();
+      }
+    };
     document.addEventListener("keydown", onEsc);
     return () => document.removeEventListener("keydown", onEsc);
-  }, []);
+  }, [payModalOpen, addModalOpen]);
 
   function addClient() {
     if (!newClient.name.trim() || !newClient.number) return;
@@ -68,6 +82,7 @@ export default function Clients({ ctx }) {
     };
     dispatch({ type: "SAVE", payload: next });
     setNewClient({ name: "", number: "" });
+    setAddModalOpen(false);
   }
 
   function addPayment(clientId, amount, note = "") {
@@ -186,34 +201,14 @@ export default function Clients({ ctx }) {
             ক্লায়েন্ট তালিকা
           </h3>
           <div className="flex flex-col md:flex-row gap-2 w-full sm:w-auto">
-            <input
-              className="flex-1 sm:flex-none px-2 sm:px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border border-white/60 focus:border-white focus:ring-2 focus:ring-white/60 transition text-sm"
-              placeholder="নতুন ক্লায়েন্ট"
-              value={newClient.name}
-              type="text"
-              onChange={(e) =>
-                setNewClient((prev) => ({ ...prev, name: e.target.value }))
-              }
-            />
-
-            <input
-              className="flex-1 sm:flex-none px-2 sm:px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border border-white/60 focus:border-white focus:ring-2 focus:ring-white/60 transition text-sm"
-              placeholder="মোবাইল নম্বর"
-              value={newClient.number}
-              type="number"
-              onChange={(e) =>
-                setNewClient((prev) => ({ ...prev, number: e.target.value }))
-              }
-            />
-
             <button
               className="px-5 md:px-3 py-2 rounded-xl text-white shadow-sm hover:shadow transition text-sm whitespace-nowrap self-center"
               style={{
                 background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
               }}
-              onClick={addClient}
+              onClick={openAddModal}
             >
-              যোগ করুন
+              ক্লায়েন্ট যোগ করুন
             </button>
           </div>
         </div>
@@ -314,23 +309,23 @@ export default function Clients({ ctx }) {
           </div>
 
           {/* Desktop Table Layout */}
-          <div className="hidden sm:block overflow-x-auto rounded-xl border border-gray-100">
-            <table className="w-full table-fixed border-separate border-spacing-y-2 text-sm">
-              <thead>
-                <tr className="text-left">
-                  <th className="py-3 px-4 text-gray-600 sticky top-0 z-10 bg-white/80 backdrop-blur rounded-l-xl">
+          <div className="hidden sm:block overflow-x-auto border border-gray-100">
+            <table className="w-full table-fixed  text-sm">
+              <thead className="bg-[#66196c9c]">
+                <tr className="text-left divide-x divide-gray-400 border-b border-b-gray-400 border-gray-300 border">
+                  <th className="py-3 px-4 text-gray-600 sticky top-0 z-10 bg-white/80 backdrop-blur">
                     নাম
                   </th>
                   <th className="py-3 px-4 text-gray-600 text-right bg-white/80 backdrop-blur">
                     মোট বিক্রি
                   </th>
-                  <th className="py-3 px-4 text-gray-600 text-right bg-white/80 backdrop-blur">
+                  <th className="py-3 px-4 text-gray-600 text-right bg-white/80 backdrop-blur  ">
                     পেমেন্ট
                   </th>
-                  <th className="py-3 px-4 text-gray-600 text-right bg-white/80 backdrop-blur">
+                  <th className="py-3 px-4 text-gray-600 text-right bg-white/80 backdrop-blur  ">
                     পাওনা
                   </th>
-                  <th className="py-3 px-4 text-gray-600 text-right sticky top-0 z-10 bg-white/80 backdrop-blur rounded-r-xl">
+                  <th className="py-3 px-4 text-gray-600 text-right sticky top-0 z-10 bg-white/80 backdrop-blur">
                     অ্যাকশন
                   </th>
                 </tr>
@@ -342,7 +337,7 @@ export default function Clients({ ctx }) {
                     key={r.id}
                     className="group rounded-xl bg-gradient-to-r from-white to-white hover:from-white hover:to-white shadow-sm hover:shadow transition-all duration-200 border border-gray-100"
                   >
-                    <td className="py-3 px-4 rounded-l-xl">
+                    <td className="py-3 px-4 border-r border-r-gray-300 border-b border-b-gray-300">
                       <button
                         className="inline-flex items-center gap-2 font-medium text-gray-900 hover:opacity-90 transition"
                         onClick={() => setSelected(r.id)}
@@ -359,15 +354,15 @@ export default function Clients({ ctx }) {
                       </button>
                     </td>
 
-                    <td className="py-3 px-4 text-right text-gray-700">
+                    <td className="py-3 px-4 text-right text-gray-700 border-r border-r-gray-300 border-b border-b-gray-300">
                       ৳{fmtBDT(r.totalSell)}
                     </td>
 
-                    <td className="py-3 px-4 text-right text-gray-700">
+                    <td className="py-3 px-4 text-right text-gray-700 border-r border-r-gray-300 border-b border-b-gray-300">
                       ৳{fmtBDT(r.paid)}
                     </td>
 
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-right border-r border-r-gray-300 border-b border-b-gray-300">
                       <span
                         className="inline-block px-2.5 py-1 rounded-lg font-semibold text-gray-900"
                         style={{
@@ -379,9 +374,9 @@ export default function Clients({ ctx }) {
                       </span>
                     </td>
 
-                    <td className="py-3 px-4 text-right rounded-r-xl flex gap-1.5">
+                    <td className="py-3 px-4 text-right flex gap-1.5 border-b border-b-gray-300">
                       <button
-                        className="px-3 py-1.5 rounded-lg border text-gray-700 hover:bg-white transition relative"
+                        className="px-3 py-1.5 rounded-lg border text-gray-700 hover:bg-white transition relative whitespace-nowrap"
                         onClick={() => openPayModal(r.id)}
                         style={{
                           borderImageSlice: 1,
@@ -424,6 +419,121 @@ export default function Clients({ ctx }) {
               </tbody>
             </table>
           </div>
+
+          {addModalOpen && (
+            <div className="fixed inset-0 z-[125] flex items-center justify-center">
+              <div
+                className="absolute inset-0 bg-black/30"
+                aria-hidden="true"
+                onClick={closeAddModal}
+              />
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Add client"
+                className="relative w-full max-w-sm mx-4 rounded-2xl shadow-xl border bg-white"
+                style={{
+                  borderImageSlice: 1,
+                  borderImageSource:
+                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Gradient top bar */}
+                <div
+                  className="h-1 w-full rounded-t-2xl"
+                  style={{
+                    background:
+                      "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                  }}
+                />
+
+                <div className="p-4">
+                  <h4 className="font-medium text-gray-900">নতুন ক্লায়েন্ট</h4>
+                  <p className="text-xs text-gray-500 mt-1">
+                    নাম ও মোবাইল নম্বর দিন।
+                  </p>
+
+                  {/* Form*/}
+                  <form
+                    onSubmit={(e) => {
+                      const formEl = e.currentTarget;
+                      if (!formEl.reportValidity()) {
+                        e.preventDefault();
+                        return;
+                      }
+                      e.preventDefault();
+                      addClient();
+                    }}
+                    className="mt-4 grid gap-3"
+                  >
+                    <div>
+                      <label className="text-xs text-gray-600 mb-1 block">
+                        নাম
+                      </label>
+                      <input
+                        autoFocus
+                        required
+                        type="text"
+                        className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border border-[#6314698e] focus:ring-2 focus:ring-[#862C8A33]"
+                        placeholder="যেমন: Rahim"
+                        value={newClient.name}
+                        onChange={(e) =>
+                          setNewClient((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-gray-600 mb-1 block">
+                        মোবাইল নম্বর
+                      </label>
+                      <input
+                        required
+                        type="tel"
+                        pattern="01[0-9]{9}" // optional BD format
+                        title="Valid BD mobile: 11 digits, starts with 01"
+                        className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border focus:ring-2 border-[#6314698e] focus:ring-[#862C8A33]"
+                        placeholder="যেমন: 018XXXXXXXX"
+                        value={newClient.number}
+                        onChange={(e) =>
+                          setNewClient((prev) => ({
+                            ...prev,
+                            number: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                        onClick={closeAddModal}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 rounded-lg text-white shadow-sm hover:shadow transition"
+                        style={{
+                          background:
+                            "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                        }}
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
 
           {payModalOpen && (
             <div className="fixed inset-0 z-[120] flex items-center justify-center">
