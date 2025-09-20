@@ -14,6 +14,7 @@ export default function Settings({ ctx }) {
 
   const [adjustOpenId, setAdjustOpenId] = useState(null);
   const [adjustValue, setAdjustValue] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
 
   console.log(state);
 
@@ -30,6 +31,7 @@ export default function Settings({ ctx }) {
     const onEsc = (e) => {
       if (e.key === "Escape") setMenuOpenId(null);
     };
+
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onEsc);
     return () => {
@@ -59,7 +61,15 @@ export default function Settings({ ctx }) {
   }, []);
 
   function addNumber() {
-    if (!num.label.trim()) return;
+    if (!num.label.trim() || !num.number.trim() || !num.channel || !num.kind) {
+      Swal.fire({
+        icon: "error",
+        title: "সব তথ্য পূরণ করুন",
+        text: "লেবেল, নম্বর, চ্যানেল এবং টাইপ সবগুলো প্রয়োজনীয়।",
+      });
+      return;
+    }
+
     const entry = {
       id: uid("num"),
       label: num.label.trim(),
@@ -82,6 +92,7 @@ export default function Settings({ ctx }) {
     };
     dispatch({ type: "SAVE", payload: next });
     setNum({ label: "", number: "", channel: num.channel, kind: num.kind });
+    setAddOpen(false);
   }
 
   function removeNumber(id) {
@@ -158,103 +169,24 @@ export default function Settings({ ctx }) {
           <h3 className="font-semibold text-white tracking-wide">
             নম্বর সেটিংস
           </h3>
-          <span className="text-xs px-2 py-1 rounded-lg bg-white/15 text-white/90">
+          {/* <span className="text-xs px-2 py-1 rounded-lg bg-white/15 text-white/90">
             Manage numbers
-          </span>
-        </div>
-
-        {/* Body */}
-        <div className="p-5">
-          {/* Fields */}
-          <div className="flex flex-col md:flex-row gap-3">
-            <Field label="লেবেল">
-              <input
-                className="border rounded-xl px-3 py-2 bg-white/90 text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#862C8A33] max-w-[220px]"
-                style={{
-                  borderImageSlice: 1,
-                  borderImageSource:
-                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                }}
-                value={num.label}
-                onChange={(e) => setNum({ ...num, label: e.target.value })}
-                placeholder="Bkash Agent 02"
-              />
-            </Field>
-
-            <Field label="ফোন নম্বর">
-              <input
-                className="border rounded-xl px-3 py-2 bg-white/90 text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#862C8A33] max-w-[220px]"
-                style={{
-                  borderImageSlice: 1,
-                  borderImageSource:
-                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                }}
-                value={num.number}
-                onChange={(e) => setNum({ ...num, number: e.target.value })}
-                placeholder="018..."
-              />
-            </Field>
-
-            <Field label="চ্যানেল">
-              <select
-                className="border rounded-xl px-3 py-1.5 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
-                style={{
-                  borderImageSlice: 1,
-                  borderImageSource:
-                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                }}
-                value={num.channel}
-                onChange={(e) => setNum({ ...num, channel: e.target.value })}
-              >
-                {["Bkash", "Nagad", "Rocket", "Bill Payment"].map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="টাইপ">
-              <select
-                className="border rounded-xl px-3 py-1.5 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
-                style={{
-                  borderImageSlice: 1,
-                  borderImageSource:
-                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                }}
-                value={num.kind}
-                onChange={(e) => setNum({ ...num, kind: e.target.value })}
-              >
-                {["Agent", "Personal"].map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
-
-          {/* Add button */}
+          </span> */}
           <div className="mt-4">
             <button
               className="px-4 py-2 rounded-xl text-white shadow-sm hover:shadow transition"
               style={{
                 background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
               }}
-              onClick={addNumber}
+              onClick={() => setAddOpen(true)}
             >
-              যোগ করুন
+              নম্বর যোগ করুন
             </button>
           </div>
+        </div>
 
+        {/* Body */}
+        <div className="p-5">
           {/* Numbers List */}
           <div className="mt-6">
             {/* Mobile cards */}
@@ -333,23 +265,23 @@ export default function Settings({ ctx }) {
             </div>
 
             {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-100 mt-0">
+            <div className="hidden md:block overflow-x-auto border border-gray-100 mt-0">
               <table className="w-full text-sm table-fixed ">
                 <thead>
-                  <tr className="text-left">
-                    <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur sticky top-0 rounded-l-xl">
+                  <tr className="text-left bg-[#6314698e] border border-gray-300 border-b-0">
+                    <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur sticky top-0 border-r border-r-gray-200">
                       লেবেল
                     </th>
-                    <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur">
+                    <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur border-r border-r-gray-200">
                       ফোন নম্বর
                     </th>
-                    <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur">
+                    <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur border-r border-r-gray-200">
                       টাইপ
                     </th>
-                    <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur ">
+                    <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur border-r border-r-gray-200">
                       ব্যালেন্স
                     </th>
-                    <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur rounded-r-xl">
+                    <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur">
                       অ্যাকশন
                     </th>
                   </tr>
@@ -359,21 +291,21 @@ export default function Settings({ ctx }) {
                   {state.numbers.map((n) => (
                     <tr
                       key={n.id}
-                      className="group rounded-xl border border-gray-100 bg-white hover:shadow-sm transition"
+                      className="group rounded-xl border border-gray-300 bg-white hover:shadow-sm transition"
                     >
-                      <td className="py-2 px-4 rounded-l-xl">
+                      <td className="py-2 px-4 rounded-l-xl border-r border-r-gray-300">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="" title={n.label}>
                             {n.label}
                           </span>
                         </div>
                       </td>
-                      <td className="py-2 px-4">{n.number}</td>
-                      <td className="py-2 px-4">{n.kind}</td>
-                      <td className="py-2 px-4 text-right">
+                      <td className="py-2 px-4 border-r border-r-gray-300">{n.number}</td>
+                      <td className="py-2 px-4 border-r border-r-gray-300">{n.kind}</td>
+                      <td className="py-2 px-4 text-right border-r border-r-gray-300">
                         ৳{fmtBDT(balances[n.id] || 0)}
                       </td>
-                      <td className="py-2 px-4 text-right rounded-r-xl relative">
+                      <td className="py-2 px-4 text-right rounded-r-xl relative ">
                         <div className="flex justify-end gap-2">
                           <button
                             autoFocus
@@ -412,11 +344,158 @@ export default function Settings({ ctx }) {
                 </tbody>
               </table>
             </div>
+
+            {addOpen && (
+              <div className="fixed inset-0 z-[120] flex items-center justify-center">
+                <div
+                  className="absolute inset-0 bg-black/30"
+                  aria-hidden="true"
+                  onClick={() => setAddOpen(false)}
+                />
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Add new number"
+                  className="relative w-full max-w-md mx-4 rounded-t-xl shadow-xl border bg-white"
+                  style={{
+                    borderImageSlice: 1,
+                    borderImageSource:
+                      "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Gradient top bar */}
+                  <div
+                    className="h-1 w-full rounded-t-2xl"
+                    style={{
+                      background:
+                        "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                    }}
+                  />
+
+                  <div className="p-4">
+                    <div className="mb-3">
+                      <h4 className="font-medium text-gray-900">
+                        নতুন নম্বর যোগ করুন
+                      </h4>
+                      <p className="text-xs text-gray-500 mt-1">
+                        প্রয়োজনীয় তথ্য পূরণ করে Submit চাপুন।
+                      </p>
+                    </div>
+
+                    {/* fields */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        addNumber();
+                      }}
+                    >
+                      <div className="grid grid-cols-1 gap-3">
+                        <Field label="লেবেল">
+                          <input
+                            required
+                            autoFocus
+                            className="border border-[#6314698e] rounded-xl px-3 py-2 bg-white/90 text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#862C8A33] w-full"
+                            value={num.label}
+                            onChange={(e) =>
+                              setNum({ ...num, label: e.target.value })
+                            }
+                            placeholder="Bkash Agent 02"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") addNumber(); // submit on enter
+                            }}
+                          />
+                        </Field>
+
+                        <Field label="ফোন নম্বর">
+                          <input
+                            className="border border-[#6314698e] rounded-xl px-3 py-2 bg-white/90 text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#862C8A33] w-full"
+                            value={num.number}
+                            onChange={(e) =>
+                              setNum({ ...num, number: e.target.value })
+                            }
+                            placeholder="018..."
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") addNumber();
+                            }}
+                            required
+                          />
+                        </Field>
+
+                        <div className="flex gap-5">
+                          <Field label="চ্যানেল">
+                            <select
+                              required
+                              className="border  border-[#6314698e] rounded-xl px-3 py-1.5 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
+                              value={num.channel}
+                              onChange={(e) =>
+                                setNum({ ...num, channel: e.target.value })
+                              }
+                            >
+                              {["Bkash", "Nagad", "Rocket", "Bill Payment"].map(
+                                (c) => (
+                                  <option key={c} value={c}>
+                                    {c}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                          </Field>
+
+                          <Field label="টাইপ">
+                            <select
+                              required
+                              className="border border-[#6314698e] rounded-xl px-3 py-1.5 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
+                              value={num.kind}
+                              onChange={(e) =>
+                                setNum({ ...num, kind: e.target.value })
+                              }
+                            >
+                              {["Agent", "Personal"].map((c) => (
+                                <option key={c} value={c}>
+                                  {c}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
+                        </div>
+                      </div>
+
+                      {/* modal actions */}
+                      <div className="mt-4 flex items-center justify-end gap-2">
+                        <button
+                          className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => {
+                            setAddOpen(false);
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="px-4 py-2 rounded-lg text-white shadow-sm hover:shadow transition cursor-pointer"
+                          style={{
+                            background:
+                              "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                          }}
+                          type="submit"
+                        >
+                          Submit
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {adjustOpenId && (
               <div className="fixed inset-0 z-[110] flex items-center justify-center">
                 <div
                   className="absolute inset-0 bg-black/30"
                   aria-hidden="true"
+                  onClick={() => setAdjustOpenId(null)}
                 />
                 {/* Dialog */}
                 <div
