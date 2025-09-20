@@ -193,7 +193,7 @@ export default function Transactions({ ctx }) {
         <div className="h-1 w-full bg-gradient-to-r from-[#862C8A] to-[#009C91]" />
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+            <h3 className="font-semibold text-gray-900 text-lg dark:text-gray-100">
               সব ট্রান্সাকশন
             </h3>
 
@@ -262,49 +262,48 @@ export default function Transactions({ ctx }) {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600 dark:text-gray-300">
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
+            <table className="w-full text-sm border-collapse">
+              <thead className="bg-[#ece3ed]">
+                <tr className="text-left text-gray-800 dark:text-gray-300 divide-x divide-gray-400 border-0 border-b border-b-gray-400">
+                  <th className="px-2 py-3 text-left text-base font-medium dark:text-gray-300">
                     <span className="inline-flex items-center gap-2">
-                      <span className="h-3 w-1 rounded bg-gradient-to-r from-[#862C8A] to-[#009C91]" />
                       তারিখ
                     </span>
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-3 text-left  font-medium dark:text-gray-300 uppercase tracking-wider">
                     চ্যানেল
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-3 text-left  font-medium dark:text-gray-300 uppercase tracking-wider">
                     টাইপ
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-3 text-left   font-medium dark:text-gray-300 uppercase tracking-wider">
                     {/* ✅ For Bill Payment, show billType instead of number */}
                     নম্বর / বিল টাইপ
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-3 text-left   font-medium   dark:text-gray-300 uppercase tracking-wider">
                     ক্লায়েন্ট
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-3 text-left  font-medium   dark:text-gray-300 uppercase tracking-wider">
                     অ্যামাউন্ট
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-3 text-left   font-medium   dark:text-gray-300 uppercase tracking-wider">
                     কমিশন
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-gray-300 dark:divide-gray-800">
                 {filtered.map((t) => (
                   <tr
                     key={t.id}
                     className="transition-colors hover:bg-gradient-to-r hover:from-[#862C8A]/5 hover:to-[#009C91]/5"
                   >
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-0 border-r border-r-gray-400">
                       {t.date}
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
                       {t.channel}
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
                       <span
                         className={`px-2 py-0.5 rounded-full text-xs font-medium
                     ${
@@ -318,16 +317,16 @@ export default function Transactions({ ctx }) {
                         {t.type}
                       </span>
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
                       {/* ✅ Prefer billType for Bill Payment rows */}
                       {t.channel === "Bill Payment"
                         ? t.billType || "—"
                         : t.numberLabel || "—"}
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
                       {t.clientName || <span className="text-gray-400">—</span>}
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
                       ৳{fmtBDT(t.amount)}
                     </td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">

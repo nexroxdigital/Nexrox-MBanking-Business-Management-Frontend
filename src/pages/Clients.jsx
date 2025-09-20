@@ -337,7 +337,7 @@ export default function Clients({ ctx }) {
                     key={r.id}
                     className="group rounded-xl bg-gradient-to-r from-white to-white hover:from-white hover:to-white shadow-sm hover:shadow transition-all duration-200 border border-gray-100"
                   >
-                    <td className="py-3 px-4 border-r border-r-gray-300 border-b border-b-gray-300">
+                    <td className="py-3 px-4 border-0 border-r border-r-gray-400 border-b border-b-gray-300">
                       <button
                         className="inline-flex items-center gap-2 font-medium text-gray-900 hover:opacity-90 transition"
                         onClick={() => setSelected(r.id)}
@@ -354,15 +354,15 @@ export default function Clients({ ctx }) {
                       </button>
                     </td>
 
-                    <td className="py-3 px-4 text-right text-gray-700 border-r border-r-gray-300 border-b border-b-gray-300">
+                    <td className="py-3 px-4 text-right text-gray-700 border-0 border-r border-r-gray-400 border-b border-b-gray-300">
                       ৳{fmtBDT(r.totalSell)}
                     </td>
 
-                    <td className="py-3 px-4 text-right text-gray-700 border-r border-r-gray-300 border-b border-b-gray-300">
+                    <td className="py-3 px-4 text-right text-gray-700 border-0 border-r border-r-gray-400 border-b border-b-gray-300">
                       ৳{fmtBDT(r.paid)}
                     </td>
 
-                    <td className="py-3 px-4 text-right border-r border-r-gray-300 border-b border-b-gray-300">
+                    <td className="py-3 px-4 text-right border-0 border-r border-r-gray-400 border-b border-b-gray-300">
                       <span
                         className="inline-block px-2.5 py-1 rounded-lg font-semibold text-gray-900"
                         style={{

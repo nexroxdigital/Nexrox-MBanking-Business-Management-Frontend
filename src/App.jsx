@@ -13,6 +13,7 @@ import { clamp2, COMMISSION_RATES, todayISO, uid } from "./pages/utils";
  * Reducer & initial state
  *************************/
 const initialState = {
+  openingCash: 0,
   transactions: [],
   clients: [],
   numbers: [],

@@ -1,17 +1,20 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   computeBalances,
   computeSums,
   fmtBDT,
   monthKey,
   todayISO,
+  uid,
 } from "./utils";
 
 import { CiMoneyCheck1 } from "react-icons/ci";
 
 export default function Dashboard({ ctx }) {
-  const { state } = ctx;
+  const { state, dispatch } = ctx;
   const today = todayISO();
+  const [openingModalOpen, setOpeningModalOpen] = useState(false);
+  const [openingCash, setOpeningCash] = useState("");
 
   const sums = useMemo(
     () => computeSums(state.transactions, state.clients),
@@ -22,6 +25,32 @@ export default function Dashboard({ ctx }) {
   const monthSums = sums.byMonth[month] || { sell: 0, profit: 0, due: 0 };
   const daySums = sums.byDay[today] || { sell: 0, profit: 0, due: 0 };
 
+  function saveOpeningCash(e) {
+    e.preventDefault();
+
+    const next = {
+      ...state,
+      openingCash: openingCash,
+      logs: [
+        ...state.logs,
+        {
+          id: uid("log"),
+          ts: new Date().toISOString(),
+          msg: `Opening Cash সেট করা হয়েছে: ৳${fmtBDT(openingCash)}`,
+        },
+      ],
+    };
+
+    // ✅ update state
+    dispatch({ type: "SAVE", payload: next });
+
+    console.log("saveOpeningCash", {
+      date: today,
+      amount: Number(openingCash),
+    });
+    setOpeningModalOpen(false);
+    setOpeningCash("");
+  }
   return (
     <div className="min-h-[calc(100vh-200px)] bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       {/* Modern background with floating orbs */}
@@ -46,12 +75,24 @@ export default function Dashboard({ ctx }) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="px-4 py-2 rounded-full bg-gradient-to-r from-[#862C8A]/10 to-[#009C91]/10 border border-[#862C8A]/20 dark:border-[#009C91]/20">
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Live Dashboard
+            <div className="flex flex-col items-start gap-3">
+              <div
+                onClick={() => setOpeningModalOpen(true)}
+                className="px-4 py-2 rounded-lg cursor-pointer bg-gradient-to-r from-[#99359fe7] to-[#028980ec] border border-[#862C8A]/20 dark:border-[#009C91]/20"
+              >
+                <span className="text-sm font-semibold dark:text-gray-300 text-white">
+                  Add Opening Cash
                 </span>
               </div>
+
+              {state.openingCash > 0 && (
+                <div className="ml-2 font-medium text-gray-700 dark:text-gray-300">
+                  Opening Cash:{" "}
+                  <span className="font-bold">
+                    ৳{fmtBDT(state.openingCash)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -99,6 +140,49 @@ export default function Dashboard({ ctx }) {
           <ActivityLog logs={state.logs} />
         </div>
       </div>
+
+      {openingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setOpeningModalOpen(false)}
+          />
+          <div
+            className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 w-full max-w-md z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+              Add Opening Cash
+            </h2>
+            <form onSubmit={saveOpeningCash} className="space-y-4">
+              <input
+                type="number"
+                step="0.01"
+                value={openingCash}
+                onChange={(e) => setOpeningCash(e.target.value)}
+                className="w-full rounded-lg px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                placeholder="Enter cash amount"
+                required
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOpeningModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

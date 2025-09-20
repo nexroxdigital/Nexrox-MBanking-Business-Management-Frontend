@@ -45,7 +45,7 @@ export default function Reports({ ctx }) {
       out[d].due = clientStats.totalDue; // simplistic snapshot
     });
     return out;
-  }, [state.transactions, state.clients, range, state]);
+  }, [range, state]);
 
   const today = todayISO();
   const todayRow = sums.byDay[today] || { sell: 0, profit: 0, due: 0 };
@@ -94,26 +94,26 @@ export default function Reports({ ctx }) {
 
         <div className="p-5">
           <div
-            className="rounded-xl  overflow-x-auto"
+            className="overflow-x-auto"
             style={{
               borderImageSlice: 1,
               borderImageSource:
                 "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
             }}
           >
-            <table className="w-full text-sm table-fixed border-separate border-spacing-y-2">
-              <thead>
-                <tr className="text-left">
-                  <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur sticky top-0 rounded-l-xl">
+            <table className="w-full text-sm table-fixed border-collapse">
+              <thead className="bg-[#66196c9c]">
+                <tr className="text-left border-0 border-b border-b-gray-400">
+                  <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur sticky top-0 border-0 border-r border-r-gray-300">
                     তারিখ
                   </th>
-                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur">
+                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur border-0 border-r border-r-gray-300">
                     বিক্রি
                   </th>
-                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur">
+                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur border-0 border-r border-r-gray-300">
                     লাভ
                   </th>
-                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur rounded-r-xl">
+                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur border-r-0">
                     পাওনা (স্ন্যাপশট)
                   </th>
                 </tr>
@@ -124,9 +124,9 @@ export default function Reports({ ctx }) {
                   .map(([d, v]) => (
                     <tr
                       key={d}
-                      className="group rounded-xl border border-gray-100 bg-white hover:shadow-sm transition"
+                      className="group rounded-xl bg-white hover:shadow-sm transition"
                     >
-                      <td className="py-2 px-4 rounded-l-xl">
+                      <td className="py-2 px-4 rounded-l-xl border-r border-r-gray-400 border-b border-b-gray-300">
                         <div className="flex items-center gap-2">
                           <span
                             className="inline-block w-1.5 h-5 rounded-full"
@@ -138,28 +138,16 @@ export default function Reports({ ctx }) {
                           <span>{d}</span>
                         </div>
                       </td>
-                      <td className="py-2 px-4 text-right text-gray-800">
+                      <td className="py-2 px-4 text-right text-gray-800 border-r border-r-gray-400 border-b border-b-gray-300">
                         ৳{fmtBDT(v.sell)}
                       </td>
-                      <td className="py-2 px-4 text-right text-gray-800">
-                        <span
-                          className="px-2 py-0.5 rounded-md font-semibold text-gray-900"
-                          style={{
-                            background:
-                              "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
-                          }}
-                        >
+                      <td className="py-2 px-4 text-right text-gray-800 border-r border-r-gray-400 border-b border-b-gray-300">
+                        <span className="px-2 py-0.5 rounded-md font-semibold text-gray-900">
                           ৳{fmtBDT(v.profit)}
                         </span>
                       </td>
-                      <td className="py-2 px-4 text-right rounded-r-xl">
-                        <span
-                          className="px-2.5 py-1 rounded-lg font-semibold text-gray-900"
-                          style={{
-                            background:
-                              "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
-                          }}
-                        >
+                      <td className="py-2 px-4 text-right rounded-r-xl border-b border-b-gray-300">
+                        <span className="px-2.5 py-1 rounded-lg font-semibold text-gray-900">
                           ৳{fmtBDT(v.due)}
                         </span>
                       </td>
@@ -181,30 +169,27 @@ export default function Reports({ ctx }) {
           }}
         >
           <h3 className="font-semibold text-white">নম্বারভিত্তিক রিপোর্ট</h3>
-          <span className="text-xs px-2 py-1 rounded-lg bg-white/15 text-white/90">
-            Top Channels
-          </span>
         </div>
 
         <div className="p-5">
           <div
-            className="rounded-xl overflow-x-auto"
+            className="overflow-x-auto"
             style={{
               borderImageSlice: 1,
               borderImageSource:
                 "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
             }}
           >
-            <table className="w-full text-sm table-fixed border-separate border-spacing-y-2">
-              <thead>
-                <tr className="text-left">
-                  <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur sticky top-0 rounded-l-xl">
+            <table className="w-full text-sm table-fixed">
+              <thead className="bg-[#66196c9c]">
+                <tr className="text-left border-0 border-b border-b-gray-400">
+                  <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur sticky top-0 border-0 border-r border-r-gray-400">
                     নম্বর
                   </th>
-                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur">
+                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur border-0 border-r border-r-gray-400">
                     লেনদেন
                   </th>
-                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur rounded-r-xl">
+                  <th className="py-2 px-4 text-right text-gray-600 bg-white/85 backdrop-blur">
                     মোট
                   </th>
                 </tr>
@@ -215,7 +200,7 @@ export default function Reports({ ctx }) {
                     key={k}
                     className="group rounded-xl border border-gray-100 bg-white hover:shadow-sm transition"
                   >
-                    <td className="py-2 px-4 rounded-l-xl">
+                    <td className="py-2 px-4 rounded-l-xl border-0 border-r border-r-gray-400 border-b border-b-gray-200">
                       <div className="flex items-center gap-2">
                         <span
                           className="inline-block w-2 h-2 rounded-full"
@@ -229,10 +214,10 @@ export default function Reports({ ctx }) {
                         </span>
                       </div>
                     </td>
-                    <td className="py-2 px-4 text-right text-gray-800">
+                    <td className="py-2 px-4 text-right text-gray-800 border-0 border-r border-r-gray-400 border-b border-b-gray-200">
                       {v.count}
                     </td>
-                    <td className="py-2 px-4 text-right rounded-r-xl">
+                    <td className="py-2 px-4 text-right rounded-r-xl border-b border-b-gray-200">
                       <span
                         className="px-2.5 py-1 rounded-lg font-semibold text-gray-900"
                         style={{
