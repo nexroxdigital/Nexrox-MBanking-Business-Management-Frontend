@@ -266,9 +266,9 @@ export default function Settings({ ctx }) {
 
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto border border-gray-100 mt-0">
-              <table className="w-full text-sm table-fixed ">
+              <table className="w-full text-sm table-fixed">
                 <thead>
-                  <tr className="text-left bg-[#6314698e] border border-gray-300 border-b-0">
+                  <tr className="text-left bg-[#6314698e] border border-gray-300 border-b-0 border-l border-l-gray-400 border-r border-r-gray-400">
                     <th className="py-2 px-4 text-gray-600 bg-white/85 backdrop-blur sticky top-0 border-r border-r-gray-200">
                       লেবেল
                     </th>
@@ -300,8 +300,12 @@ export default function Settings({ ctx }) {
                           </span>
                         </div>
                       </td>
-                      <td className="py-2 px-4 border-r border-r-gray-300">{n.number}</td>
-                      <td className="py-2 px-4 border-r border-r-gray-300">{n.kind}</td>
+                      <td className="py-2 px-4 border-r border-r-gray-300">
+                        {n.number}
+                      </td>
+                      <td className="py-2 px-4 border-r border-r-gray-300">
+                        {n.kind}
+                      </td>
                       <td className="py-2 px-4 text-right border-r border-r-gray-300">
                         ৳{fmtBDT(balances[n.id] || 0)}
                       </td>

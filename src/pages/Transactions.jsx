@@ -11,6 +11,7 @@ import {
 
 export default function Transactions({ ctx }) {
   const { state, dispatch } = ctx;
+  const [newTxOpen, setNewTxOpen] = useState(false);
   const [filter, setFilter] = useState({
     q: "",
     channel: "",
@@ -21,13 +22,16 @@ export default function Transactions({ ctx }) {
     date: todayISO(),
     channel: "Bkash",
     type: "Cash In",
-    numberType: "Agent",
-    numberId: "",
+    numberType: "Agent", // HIDDEN when channel === "Bill Payment"
+    numberId: "", // HIDDEN when channel === "Bill Payment"
     amount: "",
     commission: "",
     clientId: "",
     note: "",
-    number: "",
+    // number: "", // ❌ REMOVED per request (client number input removed)
+    billType: "", // ✅ NEW: shown only when channel === "Bill Payment" (Electricity/Internet/Gas)
+    dueAmount: "", // ✅ NEW: after client field, to capture any due money
+    sendSms: true, // ✅ NEW: checkbox at bottom to control whether to send message on save
   });
 
   // number choices filtered by channel & numberType
@@ -41,7 +45,7 @@ export default function Transactions({ ctx }) {
     [state.numbers, form.channel, form.numberType]
   );
 
-  // auto-commission for Agent
+  // ✅ Auto-commission for Agent numbers only (unchanged behavior). For Bill Payment, numberType is cleared, so field stays manual.
   useEffect(() => {
     if (
       form.numberType === "Agent" &&
@@ -54,25 +58,44 @@ export default function Transactions({ ctx }) {
     }
   }, [form.amount, form.channel, form.type, form.numberType]);
 
+  // ✅ When channel switches, enforce Bill Payment rules
+  useEffect(() => {
+    if (form.channel === "Bill Payment") {
+      // Hide/disable number fields → clear them
+      setForm((f) => ({
+        ...f,
+        numberType: "", // hide by making it empty
+        numberId: "", // not applicable
+      }));
+    } else if (!form.numberType) {
+      // restore a sensible default when leaving bill payment
+      setForm((f) => ({ ...f, numberType: "Agent" }));
+    }
+  }, [form.channel]);
+
+  // close modal on esc
+  useEffect(() => {
+    const onEsc = (e) => {
+      if (e.key === "Escape") setNewTxOpen(false);
+    };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, []);
+
   const filtered = useMemo(() => {
     const dateTo = todayISO();
-  
-    console.log("filter", filter.dateFrom);
-
     return state.transactions
       .filter((t) => {
         if (filter.q) {
-          const s =
-            `${t.channel} ${t.type} ${t.numberLabel} ${t.clientName} ${t.amount} ${t.note}`.toLowerCase();
+          const s = `${t.channel} ${t.type} ${t.numberLabel || ""} ${
+            t.clientName || ""
+          } ${t.amount} ${t.note || ""} ${t.billType || ""}`.toLowerCase();
           if (!s.includes(filter.q.toLowerCase())) return false;
         }
         if (filter.channel && t.channel !== filter.channel) return false;
         if (filter.type && t.type !== filter.type) return false;
-
-        // assuming t.date is an ISO date string ("YYYY-MM-DD" or full ISO)
         if (filter.dateFrom && t.date < filter.dateFrom) return false;
         if (t.date > dateTo) return false; // ✅ auto-clamped to today
-
         return true;
       })
       .sort((a, b) => b.date.localeCompare(a.date));
@@ -82,16 +105,23 @@ export default function Transactions({ ctx }) {
     e.preventDefault();
     const client = state.clients.find((c) => c.id === form.clientId);
     const number = state.numbers.find((n) => n.id === form.numberId);
-    if (!number) return alert("নম্বর সিলেক্ট করুন");
+
+    // ✅ Validation changes:
+    // - If channel is Bill Payment → do NOT require number selection
+    // - Else → number is required
+    if (form.channel !== "Bill Payment" && !number) {
+      return alert("নম্বর সিলেক্ট করুন");
+    }
 
     const tx = {
       id: uid("tx"),
       date: form.date,
       channel: form.channel,
-      type: form.type,
-      numberType: form.numberType,
-      numberId: number.id,
-      numberLabel: number.label,
+      type: form.type || "", // empty for Bill Payment
+      numberType: form.numberType || "", // empty for Bill Payment
+      numberId: number?.id || "", // empty for Bill Payment
+      numberLabel: number?.label || "", // empty for Bill Payment
+      billType: form.channel === "Bill Payment" ? form.billType : "",
       clientId: client?.id || "",
       clientName: client?.name || "",
       amount: clamp2(form.amount),
@@ -99,6 +129,7 @@ export default function Transactions({ ctx }) {
         form.numberType === "Agent" ? form.commission : form.commission || 0
       ),
       note: form.note || "",
+      dueAmount: clamp2(form.dueAmount || 0), // ✅ NEW
     };
 
     const next = {
@@ -114,8 +145,8 @@ export default function Transactions({ ctx }) {
       ],
     };
 
-    // Simulate SMS send
-    if (state.sms.enabled && client?.name) {
+    // ✅ SMS send now respects the checkbox and still requires SMS to be globally enabled
+    if (form.sendSms && state.sms.enabled && client?.name) {
       const sms = {
         id: uid("sms"),
         date: new Date().toISOString(),
@@ -130,6 +161,12 @@ export default function Transactions({ ctx }) {
         ts: new Date().toISOString(),
         msg: `SMS queued → ${client.name}`,
       });
+    } else if (!form.sendSms) {
+      next.logs.push({
+        id: uid("log"),
+        ts: new Date().toISOString(),
+        msg: `SMS skipped by user`, // ✅ NEW log to indicate user choice
+      });
     }
 
     dispatch({ type: "SAVE", payload: next });
@@ -139,192 +176,37 @@ export default function Transactions({ ctx }) {
       amount: "",
       commission: f.numberType === "Agent" ? 0 : "",
       note: "",
+      dueAmount: "",
+      // Keep billType as-is so repeated bill entries are faster
     }));
+
+    setNewTxOpen(false);
   }
 
+  const isBillPayment = form.channel === "Bill Payment";
+
   return (
-    <section className="grid lg:grid-cols-5 gap-6 mt-10">
-      {/* LEFT: Create Transaction */}
-      <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-800/60 bg-white/90 dark:bg-gray-900/80 backdrop-blur shadow-lg">
+    <section className="grid lg:grid-cols-5 gap-6 mt-10 relative">
+      {/* All Transactions */}
+      <div className="lg:col-span-5 overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-800/60 bg-white/90 dark:bg-gray-900/80 backdrop-blur shadow-lg">
         {/* top gradient bar */}
         <div className="h-1 w-full bg-gradient-to-r from-[#862C8A] to-[#009C91]" />
         <div className="p-5">
-          <h3 className="font-semibold mb-4 text-gray-900 dark:text-gray-100">
-            নতুন ট্রান্সাকশন
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+              সব ট্রান্সাকশন
+            </h3>
 
-          <form className="space-y-4" onSubmit={addTx}>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="তারিখ">
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
-                         focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
-                  required
-                />
-              </Field>
-              <Field label="চ্যানেল">
-                <select
-                  value={form.channel}
-                  onChange={(e) =>
-                    setForm({ ...form, channel: e.target.value })
-                  }
-                  className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                         focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
-                >
-                  {["Bkash", "Nagad", "Rocket", "Bill Payment"].map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="টাইপ">
-                <select
-                  value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
-                  className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                         focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
-                >
-                  {["Cash In", "Cash Out", "Bill Payment"].map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="নম্বর টাইপ">
-                <select
-                  value={form.numberType}
-                  onChange={(e) =>
-                    setForm({ ...form, numberType: e.target.value })
-                  }
-                  className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                         focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
-                >
-                  {["Agent", "Personal"].map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            <Field label="নম্বর">
-              <select
-                value={form.numberId}
-                onChange={(e) => setForm({ ...form, numberId: e.target.value })}
-                className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                       focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
-                required
-              >
-                <option value="">— সিলেক্ট —</option>
-                {numberChoices.map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="অ্যামাউন্ট (৳)">
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                         focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
-                  required
-                />
-              </Field>
-              <Field
-                label={`কমিশন (৳) ${
-                  form.numberType === "Agent" ? "— অটো" : "— ম্যানুয়াল"
-                }`}
-              >
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.commission}
-                  onChange={(e) =>
-                    setForm({ ...form, commission: e.target.value })
-                  }
-                  className={`w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                          focus:outline-none ${
-                            form.numberType === "Agent"
-                              ? "opacity-60 cursor-not-allowed"
-                              : "focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
-                          }`}
-                  disabled={form.numberType === "Agent"}
-                  required={form.numberType !== "Agent"}
-                />
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="ক্লায়েন্ট">
-                <select
-                  value={form.clientId}
-                  onChange={(e) => {
-                    const clientId = e.target.value;
-                    const client = state.clients.find((c) => c.id === clientId);
-                    setForm({
-                      ...form,
-                      clientId,
-                      number: client ? client.number || "" : "",
-                    });
-                  }}
-                  className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                         focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
-                >
-                  <option value="">— অপশনাল —</option>
-                  {state.clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="নম্বর">
-                <input
-                  value={form.number}
-                  onChange={(e) => setForm({ ...form, number: e.target.value })}
-                  className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
-                         focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
-                  placeholder="নম্বর"
-                />
-              </Field>
-            </div>
-
-            <div className="pt-2">
-              <button
-                className="px-4 py-2 rounded-xl text-white font-semibold shadow-md transition
-                       bg-gradient-to-r from-[#862C8A] to-[#009C91]
-                       hover:opacity-95 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#862C8A]"
-              >
-                সেভ করুন
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* RIGHT: Transactions */}
-      <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-800/60 bg-white/90 dark:bg-gray-900/80 backdrop-blur shadow-lg">
-        {/* top gradient bar */}
-        <div className="h-1 w-full bg-gradient-to-r from-[#862C8A] to-[#009C91]" />
-        <div className="p-5">
-          <h3 className="font-semibold mb-4 text-gray-900 dark:text-gray-100">
-            সব ট্রান্সাকশন
-          </h3>
+            {/* open modal button */}
+            <button
+              className="px-4 py-2 rounded-xl text-white font-semibold shadow-md transition
+                         bg-gradient-to-r from-[#862C8A] to-[#009C91]
+                         hover:opacity-95 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#862C8A]"
+              onClick={() => setNewTxOpen(true)}
+            >
+              Add Transaction
+            </button>
+          </div>
 
           {/* Filters */}
           <div className="grid md:grid-cols-5 gap-2 mb-4">
@@ -396,7 +278,8 @@ export default function Transactions({ ctx }) {
                     টাইপ
                   </th>
                   <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    নম্বর
+                    {/* ✅ For Bill Payment, show billType instead of number */}
+                    নম্বর / বিল টাইপ
                   </th>
                   <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     ক্লায়েন্ট
@@ -436,7 +319,10 @@ export default function Transactions({ ctx }) {
                       </span>
                     </td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
-                      {t.numberLabel}
+                      {/* ✅ Prefer billType for Bill Payment rows */}
+                      {t.channel === "Bill Payment"
+                        ? t.billType || "—"
+                        : t.numberLabel || "—"}
                     </td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
                       {t.clientName || <span className="text-gray-400">—</span>}
@@ -469,6 +355,292 @@ export default function Transactions({ ctx }) {
           </div>
         </div>
       </div>
+
+      {/* Add Transaction Modal */}
+      {newTxOpen && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/30"
+            aria-hidden="true"
+            onClick={() => setNewTxOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add new transaction"
+            className="relative w-full max-w-2xl mx-4 rounded-2xl shadow-xl border bg-white dark:bg-gray-900"
+            style={{
+              borderImageSlice: 1,
+              borderImageSource:
+                "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+              borderWidth: "1px",
+              borderStyle: "solid",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Gradient top bar */}
+            <div
+              className="h-1 w-full rounded-t-2xl"
+              style={{
+                background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+              }}
+            />
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                  নতুন ট্রান্সাকশন
+                </h3>
+                <button
+                  onClick={() => setNewTxOpen(false)}
+                  className="text-sm px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:opacity-90"
+                >
+                  Close
+                </button>
+              </div>
+
+              {/* FORM */}
+              <form className="space-y-4" onSubmit={addTx}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Field label="তারিখ">
+                    <input
+                      type="date"
+                      value={form.date}
+                      onChange={(e) =>
+                        setForm({ ...form, date: e.target.value })
+                      }
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
+                               focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
+                      required
+                    />
+                  </Field>
+                  <Field label="চ্যানেল">
+                    <select
+                      value={form.channel}
+                      onChange={(e) =>
+                        setForm({ ...form, channel: e.target.value })
+                      }
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
+                    >
+                      {["Bkash", "Nagad", "Rocket", "Bill Payment"].map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* ✅ HIDE Number Type when channel is Bill Payment */}
+                  {!isBillPayment && (
+                    <>
+                      <Field label="টাইপ">
+                        <select
+                          value={form.type}
+                          onChange={(e) =>
+                            setForm({ ...form, type: e.target.value })
+                          }
+                          className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
+                        >
+                          {["Cash In", "Cash Out", "Bill Payment"].map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+
+                      <Field label="নম্বর টাইপ">
+                        <select
+                          value={form.numberType}
+                          onChange={(e) =>
+                            setForm({ ...form, numberType: e.target.value })
+                          }
+                          className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                                 focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
+                        >
+                          {["Agent", "Personal"].map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    </>
+                  )}
+                </div>
+
+                {/* ✅ If Bill Payment → show Bill Type instead of Number selection */}
+                {isBillPayment ? (
+                  <Field label="বিল টাইপ">
+                    <select
+                      value={form.billType}
+                      onChange={(e) =>
+                        setForm({ ...form, billType: e.target.value })
+                      }
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
+                      required
+                    >
+                      <option value="">— সিলেক্ট —</option>
+                      <option value="Electricity">Electricity</option>
+                      <option value="Internet">Internet</option>
+                      <option value="Gas">Gas</option>
+                    </select>
+                  </Field>
+                ) : (
+                  // Else show Number selection as before
+                  <Field label="নম্বর">
+                    <select
+                      value={form.numberId}
+                      onChange={(e) =>
+                        setForm({ ...form, numberId: e.target.value })
+                      }
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
+                      required
+                    >
+                      <option value="">— সিলেক্ট —</option>
+                      {numberChoices.map((n) => (
+                        <option key={n.id} value={n.id}>
+                          {n.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Field label="অ্যামাউন্ট (৳)">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.amount}
+                      onChange={(e) =>
+                        setForm({ ...form, amount: e.target.value })
+                      }
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
+                      required
+                    />
+                  </Field>
+
+                  <Field
+                    label={`কমিশন (৳) ${
+                      form.numberType === "Agent" && !isBillPayment
+                        ? "— অটো"
+                        : "— ম্যানুয়াল"
+                    }`}
+                  >
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.commission}
+                      onChange={(e) =>
+                        setForm({ ...form, commission: e.target.value })
+                      }
+                      className={`w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                                focus:outline-none ${
+                                  form.numberType === "Agent" && !isBillPayment
+                                    ? "opacity-60 cursor-not-allowed"
+                                    : "focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
+                                }`}
+                      disabled={form.numberType === "Agent" && !isBillPayment}
+                      required={
+                        !(form.numberType === "Agent" && !isBillPayment)
+                      }
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Field label="ক্লায়েন্ট">
+                    <select
+                      value={form.clientId}
+                      onChange={(e) => {
+                        const clientId = e.target.value;
+                        setForm({ ...form, clientId });
+                      }}
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
+                    >
+                      <option value="">— অপশনাল —</option>
+                      {state.clients.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  {/* Due amount*/}
+                  <Field label="বাকি (৳)">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.dueAmount}
+                      onChange={(e) =>
+                        setForm({ ...form, dueAmount: e.target.value })
+                      }
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
+                               focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
+                      placeholder="বাকি টাকা"
+                    />
+                  </Field>
+                </div>
+
+                <Field label="নোট (ঐচ্ছিক)">
+                  <input
+                    value={form.note}
+                    onChange={(e) => setForm({ ...form, note: e.target.value })}
+                    className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
+                             focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
+                    placeholder="নোট লিখুন..."
+                  />
+                </Field>
+
+                {/*  SMS opt-in checkbox at the bottom */}
+                <div className="flex items-center gap-2">
+                  <input
+                    id="send-sms"
+                    type="checkbox"
+                    checked={form.sendSms}
+                    onChange={(e) =>
+                      setForm({ ...form, sendSms: e.target.checked })
+                    }
+                    className="h-4 w-4 rounded border-gray-300 text-[#862C8A] focus:ring-[#862C8A]"
+                  />
+                  <label
+                    htmlFor="send-sms"
+                    className="text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    SMS পাঠান
+                  </label>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 rounded-xl text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:opacity-90"
+                    onClick={() => setNewTxOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 rounded-xl text-white font-semibold shadow-md transition
+                             bg-gradient-to-r from-[#862C8A] to-[#009C91]
+                             hover:opacity-95 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#862C8A]"
+                  >
+                    সেভ করুন
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
