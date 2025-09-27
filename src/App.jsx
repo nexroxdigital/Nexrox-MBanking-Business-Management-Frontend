@@ -5,6 +5,7 @@ import Clients from "./pages/Clients";
 import DailyTransactions from "./pages/DailyTransactions";
 import Dashboard from "./pages/Dashbaord";
 import MobileBanking from "./pages/MobileBanking";
+import MobileRecharge from "./pages/MobileRecharge";
 import Navbar from "./pages/Navbar";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
@@ -171,8 +172,9 @@ export default function App() {
         {tab === "reports" && <Reports ctx={ctx} />}
         {tab === "daily-transactions" && <DailyTransactions ctx={ctx} />}
         {tab === "mobile-bankings" && <MobileBanking ctx={ctx} />}
+        {tab === "mobile-recharge" && <MobileRecharge ctx={ctx} />}
         {tab === "banks" && <BankTransactions ctx={ctx} />}
-        {tab === "settings" && <Settings ctx={ctx} />}
+        {/* {tab === "settings" && <Settings ctx={ctx} />} */}
       </div>
 
       <Footer />

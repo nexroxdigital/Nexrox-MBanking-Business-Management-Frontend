@@ -55,10 +55,13 @@ const DailyTransactions = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50">
-      <div className="bg-white shadow-lg rounded-xl p-6">
+    <div className=" mt-10">
+      <div className="h-1 w-full bg-gradient-to-r from-[#862C8A] to-[#009C91]" />
+      <div className="bg-white shadow-lg rounded-xl p-6 rounded-tr-none rounded-tl-none">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">দৈনিক লেনদেন</h1>
+          <h1 className="text-lg md:text-3xl font-bold text-gray-800">
+            দৈনিক লেনদেন
+          </h1>
           <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 rounded-md bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white shadow-md"

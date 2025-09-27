@@ -197,7 +197,7 @@ export default function Clients({ ctx }) {
             background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
           }}
         >
-          <h3 className="font-semibold text-white tracking-wide text-sm sm:text-base">
+          <h3 className="font-semibold text-white tracking-wide text-lg md:text-xl sm:text-base">
             ক্লায়েন্ট তালিকা
           </h3>
           <div className="flex flex-col md:flex-row gap-2 w-full sm:w-auto">
@@ -655,7 +655,7 @@ export default function Clients({ ctx }) {
             background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
           }}
         >
-          <h3 className="font-semibold text-white tracking-wide">
+          <h3 className="font-semibold text-white tracking-wide text-lg md:text-xl">
             ক্লায়েন্টভিত্তিক ট্রান্সাকশন
           </h3>
           {selClient && (

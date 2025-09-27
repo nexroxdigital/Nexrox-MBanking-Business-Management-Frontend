@@ -188,12 +188,12 @@ export default function Transactions({ ctx }) {
   return (
     <section className="grid lg:grid-cols-5 gap-6 mt-10 relative">
       {/* All Transactions */}
-      <div className="lg:col-span-5 overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-800/60 bg-white/90 dark:bg-gray-900/80 backdrop-blur shadow-lg">
+      <div className="lg:col-span-5 overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-800/60 bg-white/90 dark:bg-gray-900/80 backdrop-blur shadow-lg rounded-tr-none rounded-tl-none">
         {/* top gradient bar */}
         <div className="h-1 w-full bg-gradient-to-r from-[#862C8A] to-[#009C91]" />
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 text-lg dark:text-gray-100">
+            <h3 className="text-lg md:text-3xl font-semibold text-gray-900 dark:text-gray-100">
               সব ট্রান্সাকশন
             </h3>
 

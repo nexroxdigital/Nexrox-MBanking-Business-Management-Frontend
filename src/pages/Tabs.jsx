@@ -17,10 +17,15 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
       label: "মোবাইল ব্যাংকিং",
       icon: <HiOutlineBanknotes />,
     },
+    {
+      id: "mobile-recharge",
+      label: "মোবাইল রিচার্জ",
+      icon: <HiOutlineBanknotes />,
+    },
     { id: "banks", label: "ব্যাংক", icon: <LuSlidersHorizontal /> },
     { id: "clients", label: "ক্লায়েন্ট", icon: <IoIosContacts /> },
     { id: "reports", label: "রিপোর্ট", icon: <LuFileText /> },
-    { id: "settings", label: "সেটিংস", icon: <LuSlidersHorizontal /> },
+    // { id: "settings", label: "সেটিংস", icon: <LuSlidersHorizontal /> },
   ];
 
   return (

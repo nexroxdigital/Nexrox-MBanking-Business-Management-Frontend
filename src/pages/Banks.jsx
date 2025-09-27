@@ -123,12 +123,13 @@ const BankTransactions = () => {
   ];
 
   return (
-    <div className=" p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className=" bg-white shadow-2xl rounded-2xl p-8 space-y-10 border border-gray-100">
+    <div className="mt-10">
+      <div className="h-1 w-full bg-gradient-to-r from-[#862C8A] to-[#009C91]" />
+      <div className=" bg-white shadow-2xl rounded-2xl rounded-tr-none rounded-tl-none p-6 space-y-10 border border-gray-100">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
-            🏦 ব্যাংক ট্রানজেকশন
+          <h1 className="text-lg md:text-3xl font-extrabold text-gray-900 tracking-tight">
+            ব্যাংক ট্রানজেকশন
           </h1>
           <div className="flex gap-3">
             <button

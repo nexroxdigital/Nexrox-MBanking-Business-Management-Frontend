@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 import { Field } from "./Field";
 import { clamp2, computeBalances, fmtBDT, uid } from "./utils";
 
-export default function Settings({ ctx }) {
+export default function Settings({ ctx, onClose }) {
   const { state, dispatch } = ctx;
   const [num, setNum] = useState({
     label: "",
@@ -156,7 +156,7 @@ export default function Settings({ ctx }) {
   const balances = computeBalances(state.numbers, state.transactions);
 
   return (
-    <section className="mt-10">
+    <section className="">
       {/* ===== Number Settings ===== */}
       <div className="rounded-2xl border border-gray-300 shadow-sm overflow-hidden bg-white">
         {/* Gradient Header */}
@@ -166,13 +166,13 @@ export default function Settings({ ctx }) {
             background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
           }}
         >
-          <h3 className="font-semibold text-white tracking-wide">
+          <h3 className="font-semibold text-white tracking-wide text-lg md:text-2xl">
             নম্বর সেটিংস
           </h3>
           {/* <span className="text-xs px-2 py-1 rounded-lg bg-white/15 text-white/90">
             Manage numbers
           </span> */}
-          <div className="mt-4">
+          <div className="">
             <button
               className="px-4 py-2 rounded-xl text-white shadow-sm hover:shadow transition"
               style={{
@@ -181,6 +181,15 @@ export default function Settings({ ctx }) {
               onClick={() => setAddOpen(true)}
             >
               নম্বর যোগ করুন
+            </button>
+            <button
+              className="px-4 py-2 rounded-xl text-white shadow-sm hover:shadow transition"
+              style={{
+                background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+              }}
+              onClick={onClose}
+            >
+              ফিরে যান
             </button>
           </div>
         </div>
