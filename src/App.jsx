@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useReducer, useState } from "react";
 import Footer from "./components/shared/Footer/Footer";
+import BankTransactions from "./pages/Banks";
 import Clients from "./pages/Clients";
+import DailyTransactions from "./pages/DailyTransactions";
 import Dashboard from "./pages/Dashbaord";
+import MobileBanking from "./pages/MobileBanking";
 import Navbar from "./pages/Navbar";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
@@ -166,6 +169,9 @@ export default function App() {
         {tab === "transactions" && <Transactions ctx={ctx} />}
         {tab === "clients" && <Clients ctx={ctx} />}
         {tab === "reports" && <Reports ctx={ctx} />}
+        {tab === "daily-transactions" && <DailyTransactions ctx={ctx} />}
+        {tab === "mobile-bankings" && <MobileBanking ctx={ctx} />}
+        {tab === "banks" && <BankTransactions ctx={ctx} />}
         {tab === "settings" && <Settings ctx={ctx} />}
       </div>
 

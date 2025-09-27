@@ -672,7 +672,7 @@ export default function Clients({ ctx }) {
         <div className="p-5 bg-white">
           {!selClient && (
             <div className="text-gray-500 text-sm">
-              বামে থেকে একটি ক্লায়েন্ট সিলেক্ট করুন
+              বাম পাশ থেকে একটি ক্লায়েন্ট সিলেক্ট করুন
             </div>
           )}
 
