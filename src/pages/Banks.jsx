@@ -35,6 +35,28 @@ const BankTransactions = () => {
       fee: 200,
       pay: 49800,
     },
+    {
+      date: todayISO(),
+      time: getCurrentTime(),
+      bank: "ডাচ্-বাংলা ব্যাংক",
+      branch: "ঢাকা",
+      senderName: "করিম",
+      receiverName: "রহিম",
+      amount: 50000,
+      fee: 200,
+      pay: 49800,
+    },
+    {
+      date: todayISO(),
+      time: getCurrentTime(),
+      bank: "ডাচ্-বাংলা ব্যাংক",
+      branch: "ঢাকা",
+      senderName: "করিম",
+      receiverName: "রহিম",
+      amount: 50000,
+      fee: 200,
+      pay: 49800,
+    },
   ]);
 
   const [showBankModal, setShowBankModal] = useState(false);
