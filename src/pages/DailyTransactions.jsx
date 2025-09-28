@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import TransactionTable from "../components/Transactions/TransactionTable";
+import { transactionData } from "../data/transactionData";
 import { todayISO } from "./utils";
 
 /* ---------- helpers ---------- */
@@ -28,323 +29,7 @@ const itemOptions = ["photocopy", "picture", "printing", "other"];
 
 /* ---------- Main ---------- */
 const DailyTransactions = () => {
-  const [transactions, setTransactions] = useState([
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-     {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-     {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-     {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-     {
-      date: "2025-09-28",
-      item: "ক্যাশ আউট (এজেন্ট)",
-      method: "Bkash Agent",
-      pay: 1050,
-      fee: 50,
-      commission: 0,
-      cost: 0,
-      refund: 0,
-      profit: 50,
-    },
-    {
-      date: "2025-09-28",
-      item: "ক্যাশ ইন (পার্সোনাল)",
-      method: "Nagad Personal",
-      pay: 1020,
-      fee: 20,
-      cost: 20,
-      refund: 0,
-      profit: 20,
-    },
-  ]);
+  const [transactions, setTransactions] = useState(transactionData);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState("agent");
   const [cashItems, setCashItems] = useState([]);
@@ -401,7 +86,6 @@ const DailyTransactions = () => {
   const saveAgent = (data) => {
     const { commissionAmt, total, profit } = computeAgent(data);
     setTransactions((s) => [
-      ...s,
       {
         date: data.date,
         item: "ক্যাশ আউট (এজেন্ট)",
@@ -413,6 +97,7 @@ const DailyTransactions = () => {
         refund: 0,
         profit,
       },
+      ...s,
     ]);
 
     resetAgent({
@@ -439,7 +124,6 @@ const DailyTransactions = () => {
   const savePersonal = (data) => {
     const { feeAmt, total, expense, profit } = computePersonal(data);
     setTransactions((s) => [
-      ...s,
       {
         date: data.date,
         item: "ক্যাশ ইন (পার্সোনাল)",
@@ -450,6 +134,7 @@ const DailyTransactions = () => {
         refund: data.refund,
         profit,
       },
+      ...s,
     ]);
     resetAgent({
       date: todayISO(),
@@ -473,7 +158,6 @@ const DailyTransactions = () => {
 
   const saveCash = (data) => {
     setTransactions((s) => [
-      ...s,
       {
         date: todayISO(),
         item: cashItems.join(", ") || "ক্যাশ",
@@ -484,6 +168,7 @@ const DailyTransactions = () => {
         refund: 0,
         profit: data.profit,
       },
+      ...s,
     ]);
     resetAgent({
       date: todayISO(),
@@ -902,60 +587,6 @@ const DailyTransactions = () => {
             </div>
           </div>
         )}
-
-        {/* Table */}
-        {/* <div className="overflow-x-auto rounded-lg border border-gray-200">
-          <table className="w-full text-sm md:text-base border border-gray-200">
-            <thead className="bg-gray-100 text-gray-700">
-              <tr>
-                {[
-                  "তারিখ",
-                  "আইটেম",
-                  "মেথড",
-                  "টাকা",
-                  "ফি",
-                  "খরচ",
-                  "রিফান্ড",
-                  "লাভ",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className="p-3 text-left font-semibold border border-gray-200"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((txn, i) => (
-                <tr
-                  key={i}
-                  className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition"
-                >
-                  <td className="p-3 border border-gray-200">{txn.date}</td>
-                  <td className="p-3 border border-gray-200">{txn.item}</td>
-                  <td className="p-3 border border-gray-200">{txn.method}</td>
-                  <td className="p-3 border border-gray-200 text-right">
-                    ৳{fmtBDT(txn.pay)}
-                  </td>
-                  <td className="p-3 border border-gray-200 text-right">
-                    ৳{fmtBDT(txn.fee)}
-                  </td>
-                  <td className="p-3 border border-gray-200 text-right">
-                    ৳{fmtBDT(txn.cost)}
-                  </td>
-                  <td className="p-3 border border-gray-200 text-right">
-                    ৳{fmtBDT(txn.refund)}
-                  </td>
-                  <td className="p-3 border border-gray-200 text-right font-semibold text-green-600">
-                    ৳{fmtBDT(txn.profit)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div> */}
 
         <TransactionTable data={transactions} />
       </div>

@@ -1,6 +1,11 @@
 import { useState } from "react";
+import { CiEdit } from "react-icons/ci";
+import { MdOutlineDelete } from "react-icons/md";
+import Swal from "sweetalert2";
+import { MobileBankingColumns } from "../components/columns/MobileBankingColumns";
+import TableComponent from "../components/shared/Table/Table";
 import Settings from "./Settings";
-import { fmtBDT, todayISO } from "./utils";
+import { todayISO } from "./utils";
 
 const getCurrentTime = () => {
   const now = new Date();
@@ -12,10 +17,10 @@ const getCurrentTime = () => {
 };
 
 const MobileBanking = ({ ctx }) => {
-  const [wallets] = useState([
-    { bank: "বিকাশ", number: "017XXXXXXXX", type: "এজেন্ট" },
-    { bank: "নগদ", number: "018XXXXXXXX", type: "পার্সোনাল" },
-    { bank: "রকেট", number: "019XXXXXXXX", type: "এজেন্ট" },
+  const [wallets, setWallets] = useState([
+    { bank: "বিকাশ", number: "017XXXXXXXX", type: "এজেন্ট", balance: 3500 },
+    { bank: "নগদ", number: "018XXXXXXXX", type: "পার্সোনাল", balance: 3500 },
+    { bank: "রকেট", number: "019XXXXXXXX", type: "এজেন্ট", balance: 3500 },
   ]);
 
   const [transactions] = useState([
@@ -30,6 +35,7 @@ const MobileBanking = ({ ctx }) => {
       commission: 20,
       pay: 980,
       method: "ক্যাশ",
+      balance: 1200,
     },
     {
       date: todayISO(),
@@ -42,10 +48,59 @@ const MobileBanking = ({ ctx }) => {
       commission: 20,
       pay: 980,
       method: "ক্যাশ",
+      balance: 1300,
     },
   ]);
 
   const [showSetting, setShowSetting] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
+  const [editData, setEditData] = useState({
+    bank: "",
+    number: "",
+    type: "",
+    balance: "",
+  });
+
+  // 🟢 Edit handler
+  const handleEditMBank = (index) => {
+    setEditIndex(index);
+    setEditData(wallets[index]);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateMBank = () => {
+    const updated = [...wallets];
+    updated[editIndex] = editData;
+    setWallets(updated);
+    setShowEditModal(false);
+    setEditIndex(null);
+  };
+
+  // 🟢 Delete handler
+  const handleDeleteMBank = (index) => {
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "এই মোবাইল ব্যাংকটি ডিলিট হবে!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setWallets(wallets.filter((_, i) => i !== index));
+        Swal.fire({
+          title: "ডিলিট হয়েছে!",
+          text: "অপারেটরটি সফলভাবে ডিলিট হয়েছে।",
+          icon: "success",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    });
+  };
 
   return (
     <div className="mt-10">
@@ -70,15 +125,30 @@ const MobileBanking = ({ ctx }) => {
             </div>
 
             {/* Wallets List */}
-
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {wallets.map((w, i) => (
                 <div
                   key={i}
-                  className="group p-6 rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-xl transition transform hover:-translate-y-1 flex flex-col justify-between"
+                  className="relative group p-6 rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-xl transition transform hover:-translate-y-1 flex flex-col justify-between"
                 >
+                  {/* Edit/Delete Icons */}
+                  <div className="absolute top-3 right-3 flex gap-2">
+                    <button
+                      onClick={() => handleEditMBank(i)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      <CiEdit size={20} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMBank(i)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <MdOutlineDelete size={20} />
+                    </button>
+                  </div>
+
                   {/* Top Section with Bank Name */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
                     <h3 className="text-xl font-bold text-gray-900">
                       {w.bank}
                     </h3>
@@ -98,85 +168,90 @@ const MobileBanking = ({ ctx }) => {
                     {w.number}
                   </p>
 
-                  {/* Accent line */}
-                  <div className="mt-6 h-1 w-full rounded-full bg-gradient-to-r from-gray-200 to-gray-300 group-hover:from-[#862C8A] group-hover:to-[#009C91] transition" />
+                  {/* Balance */}
+                  <div className="mt-4">
+                    <span className="text-sm text-gray-500 font-semibold">
+                      ব্যালেন্স
+                    </span>
+                    <p className="text-2xl font-bold text-green-600">
+                      ৳{w.balance.toLocaleString("bn-BD")}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Transactions Table */}
-            <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-md">
-              <table className="w-full text-sm md:text-base border border-gray-200">
-                <thead className="bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white">
-                  <tr>
-                    <th className="p-4 text-left font-semibold border border-gray-200">
-                      তারিখ
-                    </th>
-                    <th className="p-4 text-left font-semibold border border-gray-200">
-                      প্রেরক
-                    </th>
-                    <th className="p-4 text-left font-semibold border border-gray-200">
-                      গ্রাহক
-                    </th>
-                    <th className="p-4 text-left font-semibold border border-gray-200">
-                      রেফারেন্স
-                    </th>
-                    <th className="p-4 text-left font-semibold border border-gray-200">
-                      ট্রানজেকশন আইডি
-                    </th>
-                    <th className="p-4 text-left font-semibold border border-gray-200">
-                      সময়
-                    </th>
-                    <th className="p-4 text-right font-semibold border border-gray-200">
-                      পরিমাণ
-                    </th>
-                    <th className="p-4 text-right font-semibold border border-gray-200">
-                      কমিশন
-                    </th>
-                    <th className="p-4 text-right font-semibold border border-gray-200">
-                      পে
-                    </th>
-                    <th className="p-4 text-left font-semibold border border-gray-200">
-                      মেথড
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((txn, i) => (
-                    <tr
-                      key={i}
-                      className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition"
-                    >
-                      <td className="p-4 border border-gray-200">{txn.date}</td>
-                      <td className="p-4 border border-gray-200">
-                        {txn.sender}
-                      </td>
-                      <td className="p-4 border border-gray-200">
-                        {txn.receiver}
-                      </td>
-                      <td className="p-4 border border-gray-200">{txn.ref}</td>
-                      <td className="p-4 border border-gray-200">
-                        {txn.trxId}
-                      </td>
-                      <td className="p-4 border border-gray-200">{txn.time}</td>
-                      <td className="p-4 border border-gray-200 text-right">
-                        ৳{fmtBDT(txn.amount)}
-                      </td>
-                      <td className="p-4 border border-gray-200 text-right text-purple-600 font-medium">
-                        ৳{fmtBDT(txn.commission)}
-                      </td>
-                      <td className="p-4 border border-gray-200 text-right text-green-600 font-semibold">
-                        ৳{fmtBDT(txn.pay)}
-                      </td>
-                      <td className="p-4 border border-gray-200">
-                        {txn.method}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <TableComponent
+              data={transactions}
+              columns={MobileBankingColumns}
+            />
           </>
+        )}
+
+        {/* 🟢 Edit Wallet Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md space-y-6">
+              <h2 className="text-xl font-bold mb-4">ওয়ালেট সম্পাদনা করুন</h2>
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="text"
+                  value={editData.bank}
+                  onChange={(e) =>
+                    setEditData({ ...editData, bank: e.target.value })
+                  }
+                  className="w-full border rounded-lg p-3"
+                  placeholder="ব্যাংক"
+                />
+                <input
+                  type="text"
+                  value={editData.number}
+                  onChange={(e) =>
+                    setEditData({ ...editData, number: e.target.value })
+                  }
+                  className="w-full border rounded-lg p-3"
+                  placeholder="নম্বর"
+                />
+                <select
+                  value={editData.type}
+                  onChange={(e) =>
+                    setEditData({ ...editData, type: e.target.value })
+                  }
+                  className="w-full border rounded-lg p-3"
+                >
+                  <option value="এজেন্ট">এজেন্ট</option>
+                  <option value="পার্সোনাল">পার্সোনাল</option>
+                </select>
+                <input
+                  type="number"
+                  value={editData.balance}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      balance: Number(e.target.value),
+                    })
+                  }
+                  className="w-full border rounded-lg p-3"
+                  placeholder="ব্যালেন্স"
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleUpdateMBank}
+                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
+                  >
+                    আপডেট করুন
+                  </button>
+                  <button
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 py-2 rounded-lg border"
+                  >
+                    বাতিল
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { AllTransactionColumns } from "../components/columns/AllTransactionColumns";
+import TableComponent from "../components/shared/Table/Table";
 import { Field } from "./Field";
-import {
-  clamp2,
-  COMMISSION_RATES,
-  daysAgo,
-  fmtBDT,
-  todayISO,
-  uid,
-} from "./utils";
+import { clamp2, COMMISSION_RATES, daysAgo, todayISO, uid } from "./utils";
 
 export default function Transactions({ ctx }) {
   const { state, dispatch } = ctx;
@@ -22,16 +17,16 @@ export default function Transactions({ ctx }) {
     date: todayISO(),
     channel: "Bkash",
     type: "Cash In",
-    numberType: "Agent", // HIDDEN when channel === "Bill Payment"
-    numberId: "", // HIDDEN when channel === "Bill Payment"
+    numberType: "Agent",
+    numberId: "",
     amount: "",
     commission: "",
     clientId: "",
     note: "",
-    // number: "", // ❌ REMOVED per request (client number input removed)
-    billType: "", // ✅ NEW: shown only when channel === "Bill Payment" (Electricity/Internet/Gas)
-    dueAmount: "", // ✅ NEW: after client field, to capture any due money
-    sendSms: true, // ✅ NEW: checkbox at bottom to control whether to send message on save
+    // number: "",
+    billType: "",
+    dueAmount: "",
+    sendSms: true,
   });
 
   // number choices filtered by channel & numberType
@@ -261,97 +256,8 @@ export default function Transactions({ ctx }) {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead className="bg-[#ece3ed]">
-                <tr className="text-left text-gray-800 dark:text-gray-300 divide-x divide-gray-400 border-0 border-b border-b-gray-400">
-                  <th className="px-2 py-3 text-left text-base font-medium dark:text-gray-300">
-                    <span className="inline-flex items-center gap-2">
-                      তারিখ
-                    </span>
-                  </th>
-                  <th className="px-2 py-3 text-left  font-medium dark:text-gray-300 uppercase tracking-wider">
-                    চ্যানেল
-                  </th>
-                  <th className="px-2 py-3 text-left  font-medium dark:text-gray-300 uppercase tracking-wider">
-                    টাইপ
-                  </th>
-                  <th className="px-2 py-3 text-left   font-medium dark:text-gray-300 uppercase tracking-wider">
-                    {/* ✅ For Bill Payment, show billType instead of number */}
-                    নম্বর / বিল টাইপ
-                  </th>
-                  <th className="px-2 py-3 text-left   font-medium   dark:text-gray-300 uppercase tracking-wider">
-                    ক্লায়েন্ট
-                  </th>
-                  <th className="px-2 py-3 text-left  font-medium   dark:text-gray-300 uppercase tracking-wider">
-                    অ্যামাউন্ট
-                  </th>
-                  <th className="px-2 py-3 text-left   font-medium   dark:text-gray-300 uppercase tracking-wider">
-                    কমিশন
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-300 dark:divide-gray-800">
-                {filtered.map((t) => (
-                  <tr
-                    key={t.id}
-                    className="transition-colors hover:bg-gradient-to-r hover:from-[#862C8A]/5 hover:to-[#009C91]/5"
-                  >
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-0 border-r border-r-gray-400">
-                      {t.date}
-                    </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
-                      {t.channel}
-                    </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium
-                    ${
-                      t.type === "Cash In"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                        : t.type === "Cash Out"
-                        ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
-                        : "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
-                    }`}
-                      >
-                        {t.type}
-                      </span>
-                    </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
-                      {/* ✅ Prefer billType for Bill Payment rows */}
-                      {t.channel === "Bill Payment"
-                        ? t.billType || "—"
-                        : t.numberLabel || "—"}
-                    </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
-                      {t.clientName || <span className="text-gray-400">—</span>}
-                    </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white border-r border-r-gray-400">
-                      ৳{fmtBDT(t.amount)}
-                    </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
-                      ৳{fmtBDT(t.commission)}
-                    </td>
-                  </tr>
-                ))}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="py-10">
-                      <div className="mx-auto max-w-sm text-center">
-                        <div className="mx-auto h-12 w-12 rounded-2xl bg-gradient-to-r from-[#862C8A] to-[#009C91] opacity-90" />
-                        <div className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          কোন ট্রান্সাকশন নেই
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          নতুন ট্রান্সাকশন যোগ করলে এখানে দেখা যাবে।
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+
+          <TableComponent data={filtered} columns={AllTransactionColumns} />
         </div>
       </div>
 

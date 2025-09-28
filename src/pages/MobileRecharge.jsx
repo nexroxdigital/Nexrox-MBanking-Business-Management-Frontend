@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { fmtBDT, todayISO } from "./utils";
+import { CiEdit } from "react-icons/ci";
+import { MdOutlineDelete } from "react-icons/md";
+import Swal from "sweetalert2";
+import { MobileRechargeColumns } from "../components/columns/MobileRechargeColumns";
+import TableComponent from "../components/shared/Table/Table";
+import { todayISO } from "./utils";
 
 const MobileRecharge = () => {
   const [operators, setOperators] = useState([
-    { name: "রবি", number: "016XXXXXXXX" },
-    { name: "গ্রামীণফোন", number: "017XXXXXXXX" },
-    { name: "বাংলালিংক", number: "019XXXXXXXX" },
+    { name: "রবি", number: "016XXXXXXXX", balance: 2200 },
+    { name: "গ্রামীণফোন", number: "017XXXXXXXX", balance: 2300 },
+    { name: "বাংলালিংক", number: "019XXXXXXXX", balance: 3200 },
   ]);
 
   const [transactions, setTransactions] = useState([
@@ -28,6 +33,8 @@ const MobileRecharge = () => {
 
   const [showTxnModal, setShowTxnModal] = useState(false);
   const [showOperatorModal, setShowOperatorModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
   const rechargeForm = useForm({
     defaultValues: {
@@ -40,12 +47,14 @@ const MobileRecharge = () => {
   });
 
   const operatorForm = useForm({
-    defaultValues: {
-      name: "",
-      number: "",
-    },
+    defaultValues: { name: "", number: "", balance: "" },
   });
 
+  const editForm = useForm({
+    defaultValues: { name: "", number: "", balance: "" },
+  });
+
+  // Add new recharge
   const handleAddRecharge = (data) => {
     setTransactions([...transactions, data]);
     rechargeForm.reset({
@@ -58,10 +67,54 @@ const MobileRecharge = () => {
     setShowTxnModal(false);
   };
 
+  // Add new operator
   const handleAddOperator = (data) => {
-    setOperators([...operators, data]);
+    setOperators([
+      ...operators,
+      { ...data, balance: Number(data.balance) || 0 },
+    ]);
     operatorForm.reset();
     setShowOperatorModal(false);
+  };
+
+  // Edit operator
+  const handleEditOperator = (index) => {
+    setEditIndex(index);
+    editForm.reset(operators[index]);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateOperator = (data) => {
+    const updated = [...operators];
+    updated[editIndex] = { ...data, balance: Number(data.balance) || 0 };
+    setOperators(updated);
+    setShowEditModal(false);
+    setEditIndex(null);
+  };
+
+  // Delete operator
+  const handleDeleteOperator = (index) => {
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "এই অপারেটরটি ডিলিট হবে!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setOperators(operators.filter((_, i) => i !== index));
+        Swal.fire({
+          title: "ডিলিট হয়েছে!",
+          text: "অপারেটরটি সফলভাবে ডিলিট হয়েছে।",
+          icon: "success",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    });
   };
 
   return (
@@ -90,38 +143,38 @@ const MobileRecharge = () => {
         </div>
 
         {/* Operators List */}
-        {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {operators.map((op, i) => (
-            <div
-              key={i}
-              className="p-5 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow hover:shadow-xl transition transform hover:-translate-y-1"
-            >
-              <h3 className="text-xl font-bold text-gray-900">{op.name}</h3>
-              <p className="text-gray-700 mt-2">{op.number}</p>
-            </div>
-          ))}
-        </div> */}
-
-        {/* Operators List */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {operators.map((op, i) => (
             <div
               key={i}
-              className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:border-[#009C91] transition transform hover:-translate-y-1 flex flex-col items-start"
+              className="relative p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:border-[#009C91] transition transform flex flex-col items-start"
             >
-              {/* Operator Header */}
-              <div className="flex items-center justify-between w-full">
-                <h3 className="text-xl font-bold text-gray-900">{op.name}</h3>
-                {/* <span className="inline-block w-2 h-2 rounded-full bg-gradient-to-r from-[#862C8A] to-[#009C91]" /> */}
+              {/* Edit/Delete Icons */}
+              <div className="absolute top-3 right-3 flex gap-2">
+                <button
+                  onClick={() => handleEditOperator(i)}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  <CiEdit size={20} />
+                </button>
+                <button
+                  onClick={() => handleDeleteOperator(i)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <MdOutlineDelete size={20} />
+                </button>
               </div>
 
-              {/* Number */}
+              <h3 className="text-xl font-bold text-gray-900">{op.name}</h3>
               <p className="mt-3 text-gray-700 text-lg font-mono tracking-wide">
                 {op.number}
               </p>
-
-              {/* Subtle Accent Divider */}
-              <div className="mt-4 w-full h-px bg-gradient-to-r from-gray-200 to-gray-100 group-hover:from-[#862C8A] group-hover:to-[#009C91] transition" />
+              <div className="mt-3">
+                <span className="text-sm text-gray-500">ব্যালেন্স</span>
+                <p className="text-2xl font-bold text-green-600">
+                  ৳{op.balance.toLocaleString("bn-BD")}
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -147,6 +200,12 @@ const MobileRecharge = () => {
                   className="w-full border rounded-lg p-3"
                   {...operatorForm.register("number", { required: true })}
                 />
+                <input
+                  type="number"
+                  placeholder="ব্যালেন্স"
+                  className="w-full border rounded-lg p-3"
+                  {...operatorForm.register("balance", { required: true })}
+                />
                 <div className="flex gap-3">
                   <button
                     type="submit"
@@ -157,6 +216,53 @@ const MobileRecharge = () => {
                   <button
                     type="button"
                     onClick={() => setShowOperatorModal(false)}
+                    className="flex-1 py-2 rounded-lg border"
+                  >
+                    বাতিল
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Operator Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md animate-fade-in space-y-6">
+              <h2 className="text-xl font-bold mb-4">অপারেটর সম্পাদনা করুন</h2>
+              <form
+                onSubmit={editForm.handleSubmit(handleUpdateOperator)}
+                className="grid grid-cols-1 gap-4"
+              >
+                <input
+                  type="text"
+                  placeholder="অপারেটরের নাম"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("name", { required: true })}
+                />
+                <input
+                  type="text"
+                  placeholder="নম্বর"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("number", { required: true })}
+                />
+                <input
+                  type="number"
+                  placeholder="ব্যালেন্স"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("balance", { required: true })}
+                />
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
+                  >
+                    আপডেট করুন
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
                     className="flex-1 py-2 rounded-lg border"
                   >
                     বাতিল
@@ -231,49 +337,7 @@ const MobileRecharge = () => {
         )}
 
         {/* Transactions Table */}
-        <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-md">
-          <table className="w-full text-sm md:text-base border border-gray-200">
-            <thead className="bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white">
-              <tr>
-                <th className="p-4 text-left font-semibold border border-gray-200">
-                  তারিখ
-                </th>
-                <th className="p-4 text-left font-semibold border border-gray-200">
-                  প্রেরক নাম্বার
-                </th>
-                <th className="p-4 text-left font-semibold border border-gray-200">
-                  রিসিভার নাম্বার
-                </th>
-                <th className="p-4 text-right font-semibold border border-gray-200">
-                  পে
-                </th>
-                <th className="p-4 text-right font-semibold border border-gray-200">
-                  ব্যালেন্স
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((txn, i) => (
-                <tr
-                  key={i}
-                  className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition"
-                >
-                  <td className="p-4 border border-gray-200">{txn.date}</td>
-                  <td className="p-4 border border-gray-200">{txn.senderNo}</td>
-                  <td className="p-4 border border-gray-200">
-                    {txn.receiverNo}
-                  </td>
-                  <td className="p-4 border border-gray-200 text-right">
-                    ৳{fmtBDT(txn.pay)}
-                  </td>
-                  <td className="p-4 border border-gray-200 text-right text-green-600 font-semibold">
-                    ৳{fmtBDT(txn.balance)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TableComponent data={transactions} columns={MobileRechargeColumns} />
       </div>
     </div>
   );

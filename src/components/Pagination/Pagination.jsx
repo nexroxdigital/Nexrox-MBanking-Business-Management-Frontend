@@ -39,7 +39,7 @@ const Pagination = ({ table }) => {
         >
           {[5, 10, 20].map((pageSize) => (
             <option key={pageSize} value={pageSize}>
-              {pageSize} প্রতি পৃষ্ঠা
+              {pageSize} প্রতি পেইজ
             </option>
           ))}
         </select>

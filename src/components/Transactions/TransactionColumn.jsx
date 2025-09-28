@@ -24,6 +24,10 @@ export const transactionColumn = [
     header: "ফি",
     cell: (info) => `৳${fmtBDT(info.getValue())}`,
   }),
+  columnHelper.accessor("commission", {
+    header: "কমিশন",
+    cell: (info) => `৳${fmtBDT(info.getValue())}`,
+  }),
   columnHelper.accessor("cost", {
     header: "খরচ",
     cell: (info) => `৳${fmtBDT(info.getValue())}`,

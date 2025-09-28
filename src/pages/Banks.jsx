@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
+import { BankTxnColumns } from "../components/columns/BankTxnColumns";
+import TableComponent from "../components/shared/Table/Table";
 import { fmtBDT, todayISO } from "./utils";
 
 const getCurrentTime = () => {
@@ -14,12 +17,14 @@ const getCurrentTime = () => {
 const BankTransactions = () => {
   const [banks, setBanks] = useState([
     {
+      id: 1,
       bank: "ডাচ্-বাংলা ব্যাংক",
       branch: "ঢাকা",
       routingNo: "12345",
-      senderName: "করিম",
-      accountName: "রহিম উদ্দিন",
+      senderName: "রাকিব",
+      accountName: "রাকিবুল হাসান",
       accountNumber: "1234567890",
+      balance: 100000,
     },
   ]);
 
@@ -29,8 +34,8 @@ const BankTransactions = () => {
       time: getCurrentTime(),
       bank: "ডাচ্-বাংলা ব্যাংক",
       branch: "ঢাকা",
-      senderName: "করিম",
-      receiverName: "রহিম",
+      senderName: "সাকিব",
+      receiverName: "সাকিবুল হাসান",
       amount: 50000,
       fee: 200,
       pay: 49800,
@@ -40,19 +45,8 @@ const BankTransactions = () => {
       time: getCurrentTime(),
       bank: "ডাচ্-বাংলা ব্যাংক",
       branch: "ঢাকা",
-      senderName: "করিম",
-      receiverName: "রহিম",
-      amount: 50000,
-      fee: 200,
-      pay: 49800,
-    },
-    {
-      date: todayISO(),
-      time: getCurrentTime(),
-      bank: "ডাচ্-বাংলা ব্যাংক",
-      branch: "ঢাকা",
-      senderName: "করিম",
-      receiverName: "রহিম",
+      senderName: "সাকিব",
+      receiverName: "সাকিবুল হাসান",
       amount: 50000,
       fee: 200,
       pay: 49800,
@@ -60,7 +54,9 @@ const BankTransactions = () => {
   ]);
 
   const [showBankModal, setShowBankModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showTxnModal, setShowTxnModal] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
   const bankForm = useForm({
     defaultValues: {
@@ -70,6 +66,19 @@ const BankTransactions = () => {
       senderName: "",
       accountName: "",
       accountNumber: "",
+      balance: "",
+    },
+  });
+
+  const editForm = useForm({
+    defaultValues: {
+      bank: "",
+      branch: "",
+      routingNo: "",
+      senderName: "",
+      accountName: "",
+      accountNumber: "",
+      balance: "",
     },
   });
 
@@ -93,6 +102,40 @@ const BankTransactions = () => {
     setShowBankModal(false);
   };
 
+  const handleEditBank = (data) => {
+    const updatedBanks = [...banks];
+    updatedBanks[editIndex] = data;
+    setBanks(updatedBanks);
+    editForm.reset();
+    setShowEditModal(false);
+  };
+
+  const handleDeleteBank = (id) => {
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "এই ব্যাংকটি ডিলিট করা হবে!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const updatedBanks = banks.filter((b) => b.id !== id);
+        setBanks(updatedBanks);
+
+        Swal.fire({
+          title: "ডিলিট হয়েছে!",
+          text: "ব্যাংকটি সফলভাবে ডিলিট হয়েছে।",
+          icon: "success",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    });
+  };
+
   const handleAddTransaction = (data) => {
     setTransactions([...transactions, data]);
     txnForm.reset({
@@ -109,7 +152,7 @@ const BankTransactions = () => {
     setShowTxnModal(false);
   };
 
-  // Extract dropdown options from banks
+  // Dropdown helpers
   const bankNames = [...new Set(banks.map((b) => b.bank))];
   const getBranches = (bankName) => [
     ...new Set(banks.filter((b) => b.bank === bankName).map((b) => b.branch)),
@@ -148,23 +191,43 @@ const BankTransactions = () => {
         </div>
 
         {/* Bank List */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
           {banks.map((b, i) => (
             <div
               key={i}
-              className="p-6 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-md hover:shadow-xl transition transform hover:-translate-y-1"
+              className="p-5 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-md hover:shadow-xl transition transform hover:-translate-y-1 font-medium relative"
             >
               <span className="font-bold text-2xl text-gray-900">{b.bank}</span>
               <span className="block text-gray-700 mt-2">শাখা: {b.branch}</span>
               <span className="block text-gray-700">
                 অ্যাকাউন্ট: {b.accountNumber}
               </span>
-              <span className="block text-gray-700">
-                প্রেরক: {b.senderName}
-              </span>
               <span className="block text-sm text-gray-500 mt-1">
                 হোল্ডার: {b.accountName}
               </span>
+              <span className="block text-sm text-gray-600 mt-1">
+                ব্যালেন্স: ৳{fmtBDT(b.balance)}
+              </span>
+
+              {/* Actions */}
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => {
+                    setEditIndex(i);
+                    editForm.reset(b);
+                    setShowEditModal(true);
+                  }}
+                  className="px-3 py-1 text-sm rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                >
+                  এডিট
+                </button>
+                <button
+                  onClick={() => handleDeleteBank(b.id)}
+                  className="px-3 py-1 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600"
+                >
+                  ডিলিট
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -214,6 +277,12 @@ const BankTransactions = () => {
                   className="w-full border rounded-lg p-3"
                   {...bankForm.register("accountNumber", { required: true })}
                 />
+                <input
+                  type="number"
+                  placeholder="ব্যালেন্স"
+                  className="w-full border rounded-lg p-3"
+                  {...bankForm.register("balance", { required: true })}
+                />
                 <div className="col-span-full flex gap-3">
                   <button
                     type="submit"
@@ -224,6 +293,70 @@ const BankTransactions = () => {
                   <button
                     type="button"
                     onClick={() => setShowBankModal(false)}
+                    className="flex-1 py-2 rounded-lg border"
+                  >
+                    বাতিল
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Bank Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6">
+              <h2 className="text-xl font-bold mb-4">ব্যাংক এডিট করুন</h2>
+              <form
+                onSubmit={editForm.handleSubmit(handleEditBank)}
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+              >
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("bank", { required: true })}
+                />
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("branch", { required: true })}
+                />
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("routingNo", { required: true })}
+                />
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("senderName", { required: true })}
+                />
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("accountName", { required: true })}
+                />
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("accountNumber", { required: true })}
+                />
+                <input
+                  type="number"
+                  className="w-full border rounded-lg p-3"
+                  {...editForm.register("balance", { required: true })}
+                />
+                <div className="col-span-full flex gap-3">
+                  <button
+                    type="submit"
+                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
+                  >
+                    আপডেট করুন
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
                     className="flex-1 py-2 rounded-lg border"
                   >
                     বাতিল
@@ -338,7 +471,7 @@ const BankTransactions = () => {
         )}
 
         {/* Transactions Table */}
-        <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-md">
+        {/* <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-md">
           <table className="w-full text-sm md:text-base border border-gray-200">
             <thead className="bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white">
               <tr>
@@ -400,7 +533,8 @@ const BankTransactions = () => {
               ))}
             </tbody>
           </table>
-        </div>
+        </div> */}
+        <TableComponent data={transactions} columns={BankTxnColumns} />
       </div>
     </div>
   );
