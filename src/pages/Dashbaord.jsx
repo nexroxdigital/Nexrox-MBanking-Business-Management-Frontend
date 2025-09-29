@@ -75,7 +75,7 @@ export default function Dashboard({ ctx }) {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col items-start gap-3">
+            <div className="flex flex-col items-end gap-3">
               <div
                 onClick={() => setOpeningModalOpen(true)}
                 className="px-4 py-2 rounded-lg cursor-pointer bg-gradient-to-r from-[#99359fe7] to-[#028980ec] border border-[#862C8A]/20 dark:border-[#009C91]/20"

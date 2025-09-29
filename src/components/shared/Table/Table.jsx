@@ -43,6 +43,7 @@ const TableComponent = ({ data, columns }) => {
             </tr>
           ))}
         </thead>
+
         <tbody>
           {table.getRowModel().rows.map((row) => (
             <tr

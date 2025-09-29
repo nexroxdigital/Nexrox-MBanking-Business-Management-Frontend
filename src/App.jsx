@@ -2,15 +2,14 @@ import { useEffect, useMemo, useReducer, useState } from "react";
 import Footer from "./components/shared/Footer/Footer";
 import BankTransactions from "./pages/Banks";
 import Clients from "./pages/Clients";
+import ClientTransactions from "./pages/ClientTransactions";
 import DailyTransactions from "./pages/DailyTransactions";
 import Dashboard from "./pages/Dashbaord";
 import MobileBanking from "./pages/MobileBanking";
 import MobileRecharge from "./pages/MobileRecharge";
 import Navbar from "./pages/Navbar";
 import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
 import Tabs from "./pages/Tabs";
-import Transactions from "./pages/Transactions";
 import { clamp2, COMMISSION_RATES, todayISO, uid } from "./pages/utils";
 
 /*************************
@@ -142,6 +141,7 @@ export default function App() {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [tab, setTab] = useState("dashboard");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  console.log("app", state);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -167,7 +167,7 @@ export default function App() {
           setIsMenuOpen={setIsMenuOpen}
         />
         {tab === "dashboard" && <Dashboard ctx={ctx} />}
-        {tab === "transactions" && <Transactions ctx={ctx} />}
+        {tab === "transactions" && <ClientTransactions ctx={ctx} />}
         {tab === "clients" && <Clients ctx={ctx} />}
         {tab === "reports" && <Reports ctx={ctx} />}
         {tab === "daily-transactions" && <DailyTransactions ctx={ctx} />}

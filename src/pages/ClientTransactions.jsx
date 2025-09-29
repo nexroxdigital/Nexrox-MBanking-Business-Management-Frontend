@@ -1,11 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { AllTransactionColumns } from "../components/columns/AllTransactionColumns";
 import TableComponent from "../components/shared/Table/Table";
+import { Dummytransactions } from "../data/transactions";
 import { Field } from "./Field";
-import { clamp2, COMMISSION_RATES, daysAgo, todayISO, uid } from "./utils";
+import { clamp2, daysAgo, todayISO, uid } from "./utils";
 
-export default function Transactions({ ctx }) {
-  const { state, dispatch } = ctx;
+export default function ClientTransactions() {
+  const [numbers, setNumbers] = useState([
+    { id: "n1", channel: "Bkash", kind: "Agent", label: "Agent 1" },
+    { id: "n2", channel: "Bkash", kind: "Personal", label: "Personal 1" },
+    { id: "n3", channel: "Nagad", kind: "Agent", label: "Agent 2" },
+  ]);
+
+  const [clients, setClients] = useState([
+    { id: "c1", name: "Client A" },
+    { id: "c2", name: "Client B" },
+  ]);
+
+  const [transactions, setTransactions] = useState(Dummytransactions);
+  // will delete
   const [newTxOpen, setNewTxOpen] = useState(false);
   const [filter, setFilter] = useState({
     q: "",
@@ -13,60 +27,65 @@ export default function Transactions({ ctx }) {
     type: "",
     dateFrom: daysAgo(30),
   });
-  const [form, setForm] = useState({
-    date: todayISO(),
-    channel: "Bkash",
-    type: "Cash In",
-    numberType: "Agent",
-    numberId: "",
-    amount: "",
-    commission: "",
-    clientId: "",
-    note: "",
-    // number: "",
-    billType: "",
-    dueAmount: "",
-    sendSms: true,
+
+  const { register, handleSubmit, control, setValue, watch, reset } = useForm({
+    defaultValues: {
+      date: todayISO(),
+      channel: "Bkash",
+      type: "Cash In",
+      numberType: "Agent",
+      numberId: "",
+      amount: "",
+      commission: "",
+      clientId: "",
+      note: "",
+      billType: "",
+      dueAmount: "",
+      sendSms: false,
+      total: "",
+      profit: "",
+    },
   });
 
-  // number choices filtered by channel & numberType
-  const numberChoices = useMemo(
-    () =>
-      state.numbers.filter(
-        (n) =>
-          (!form.channel || n.channel === form.channel) &&
-          (form.numberType ? n.kind === form.numberType : true)
-      ),
-    [state.numbers, form.channel, form.numberType]
-  );
+  // 🔥 calculate profit & total inline
+  const amount = parseFloat(watch("amount")) || 0;
+  const commission = parseFloat(watch("commission"));
+  const type = watch("type");
 
-  // ✅ Auto-commission for Agent numbers only (unchanged behavior). For Bill Payment, numberType is cleared, so field stays manual.
+  // 🔥 Auto calculation with useEffect
   useEffect(() => {
-    if (
-      form.numberType === "Agent" &&
-      form.amount &&
-      form.channel &&
-      form.type
-    ) {
-      const rate = COMMISSION_RATES[form.channel]?.[form.type] || 0;
-      setForm((f) => ({ ...f, commission: clamp2(Number(f.amount) * rate) }));
+    let profitCalc = watch("profit");
+    let totalCalc = watch("total");
+
+    if (!isNaN(commission)) {
+      if (type === "Cash In") {
+        profitCalc = (amount * commission) / 100;
+      } else if (type === "Cash Out") {
+        profitCalc = (amount * commission) / 1000;
+      }
+      setValue("profit", profitCalc);
     }
-  }, [form.amount, form.channel, form.type, form.numberType]);
+
+    if (amount || profitCalc) {
+      totalCalc = amount + (parseFloat(profitCalc) || 0);
+      setValue("total", totalCalc);
+    }
+  }, [amount, commission, type, setValue, watch]);
 
   // ✅ When channel switches, enforce Bill Payment rules
   useEffect(() => {
-    if (form.channel === "Bill Payment") {
-      // Hide/disable number fields → clear them
-      setForm((f) => ({
-        ...f,
-        numberType: "", // hide by making it empty
-        numberId: "", // not applicable
-      }));
-    } else if (!form.numberType) {
-      // restore a sensible default when leaving bill payment
-      setForm((f) => ({ ...f, numberType: "Agent" }));
+    const channel = watch("channel");
+    const numberType = watch("numberType");
+
+    if (channel === "Bill Payment") {
+      // clear number fields
+      setValue("numberType", "");
+      setValue("numberId", "");
+    } else if (!numberType) {
+      // restore sensible default
+      setValue("numberType", "Agent");
     }
-  }, [form.channel]);
+  }, [watch("channel"), watch("numberType"), setValue]);
 
   // close modal on esc
   useEffect(() => {
@@ -79,7 +98,7 @@ export default function Transactions({ ctx }) {
 
   const filtered = useMemo(() => {
     const dateTo = todayISO();
-    return state.transactions
+    return transactions
       .filter((t) => {
         if (filter.q) {
           const s = `${t.channel} ${t.type} ${t.numberLabel || ""} ${
@@ -94,91 +113,37 @@ export default function Transactions({ ctx }) {
         return true;
       })
       .sort((a, b) => b.date.localeCompare(a.date));
-  }, [state.transactions, filter]);
+  }, [transactions, filter]);
 
-  function addTx(e) {
-    e.preventDefault();
-    const client = state.clients.find((c) => c.id === form.clientId);
-    const number = state.numbers.find((n) => n.id === form.numberId);
-
-    // ✅ Validation changes:
-    // - If channel is Bill Payment → do NOT require number selection
-    // - Else → number is required
-    if (form.channel !== "Bill Payment" && !number) {
-      return alert("নম্বর সিলেক্ট করুন");
-    }
+  const addTx = (data) => {
+    const client = clients.find((c) => c.id === data.clientId);
+    const number = numbers.find((n) => n.id === data.numberId);
 
     const tx = {
       id: uid("tx"),
-      date: form.date,
-      channel: form.channel,
-      type: form.type || "", // empty for Bill Payment
-      numberType: form.numberType || "", // empty for Bill Payment
-      numberId: number?.id || "", // empty for Bill Payment
-      numberLabel: number?.label || "", // empty for Bill Payment
-      billType: form.channel === "Bill Payment" ? form.billType : "",
+      date: data.date,
+      channel: data.channel,
+      type: data.type || "",
+      numberType: data.numberType || "",
+      numberId: number?.id || "",
+      numberLabel: number?.label || "",
+      billType: data.channel === "Bill Payment" ? data.billType : "",
       clientId: client?.id || "",
       clientName: client?.name || "",
-      amount: clamp2(form.amount),
-      commission: clamp2(
-        form.numberType === "Agent" ? form.commission : form.commission || 0
-      ),
-      note: form.note || "",
-      dueAmount: clamp2(form.dueAmount || 0), // ✅ NEW
+      amount: clamp2(data.amount),
+      commission: clamp2(data.commission || 0),
+      note: data.note || "",
+      dueAmount: clamp2(data.dueAmount || 0),
+      profit: clamp2(data.profit || 0),
+      total: clamp2(data.total || 0),
     };
 
-    const next = {
-      ...state,
-      transactions: [...state.transactions, tx],
-      logs: [
-        ...state.logs,
-        {
-          id: uid("log"),
-          ts: new Date().toISOString(),
-          msg: `লেনদেন সংরক্ষণ: ${tx.channel} ${tx.type} ৳${tx.amount}`,
-        },
-      ],
-    };
-
-    // ✅ SMS send now respects the checkbox and still requires SMS to be globally enabled
-    if (form.sendSms && state.sms.enabled && client?.name) {
-      const sms = {
-        id: uid("sms"),
-        date: new Date().toISOString(),
-        to: client.name,
-        body: `${client.name}: ${tx.channel} ${tx.type} ৳${tx.amount} | কমিশন ৳${tx.commission}`,
-        txId: tx.id,
-        status: "queued",
-      };
-      next.sms = { ...state.sms, outbox: [...state.sms.outbox, sms] };
-      next.logs.push({
-        id: uid("log"),
-        ts: new Date().toISOString(),
-        msg: `SMS queued → ${client.name}`,
-      });
-    } else if (!form.sendSms) {
-      next.logs.push({
-        id: uid("log"),
-        ts: new Date().toISOString(),
-        msg: `SMS skipped by user`,
-      });
-    }
-
-    dispatch({ type: "SAVE", payload: next });
-
-    setForm((f) => ({
-      ...f,
-      amount: "",
-      commission: f.numberType === "Agent" ? 0 : "",
-      note: "",
-      dueAmount: "",
-      // Keep billType as-is so repeated bill entries are faster
-    }));
-
+    console.log("Saved transaction:", tx);
+    reset(); // clear form
     setNewTxOpen(false);
-  }
+  };
 
-  const isBillPayment = form.channel === "Bill Payment";
+  const isBillPayment = watch("channel") === "Bill Payment";
 
   return (
     <section className="grid lg:grid-cols-5 gap-6 mt-10 relative">
@@ -256,7 +221,13 @@ export default function Transactions({ ctx }) {
           </div>
 
           {/* Table */}
-          <TableComponent data={filtered} columns={AllTransactionColumns} />
+          {filtered.length > 0 ? (
+            <TableComponent data={filtered} columns={AllTransactionColumns} />
+          ) : (
+            <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+              কোনো ট্রান্সাকশন পাওয়া যায়নি
+            </div>
+          )}
         </div>
       </div>
 
@@ -303,15 +274,12 @@ export default function Transactions({ ctx }) {
               </div>
 
               {/* FORM */}
-              <form className="space-y-4" onSubmit={addTx}>
+              <form className="space-y-4" onSubmit={handleSubmit(addTx)}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Field label="তারিখ">
                     <input
                       type="date"
-                      value={form.date}
-                      onChange={(e) =>
-                        setForm({ ...form, date: e.target.value })
-                      }
+                      {...register("date", { required: true })}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
                                focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
                       required
@@ -319,10 +287,7 @@ export default function Transactions({ ctx }) {
                   </Field>
                   <Field label="চ্যানেল">
                     <select
-                      value={form.channel}
-                      onChange={(e) =>
-                        setForm({ ...form, channel: e.target.value })
-                      }
+                      {...register("channel", { required: true })}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
                     >
@@ -336,142 +301,91 @@ export default function Transactions({ ctx }) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* ✅ HIDE Number Type when channel is Bill Payment */}
-                  {!isBillPayment && (
-                    <>
-                      <Field label="টাইপ">
-                        <select
-                          value={form.type}
-                          onChange={(e) =>
-                            setForm({ ...form, type: e.target.value })
-                          }
-                          className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                  {isBillPayment && (
+                    <Field label="বিল টাইপ">
+                      <select
+                        {...register("billType", { required: true })}
+                        className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
-                        >
-                          {["Cash In", "Cash Out", "Bill Payment"].map((t) => (
-                            <option key={t} value={t}>
-                              {t}
-                            </option>
-                          ))}
-                        </select>
-                      </Field>
-
-                      <Field label="নম্বর টাইপ">
-                        <select
-                          value={form.numberType}
-                          onChange={(e) =>
-                            setForm({ ...form, numberType: e.target.value })
-                          }
-                          className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                                 focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
-                        >
-                          {["Agent", "Personal"].map((t) => (
-                            <option key={t} value={t}>
-                              {t}
-                            </option>
-                          ))}
-                        </select>
-                      </Field>
-                    </>
+                        required
+                      >
+                        <option value="">— সিলেক্ট —</option>
+                        <option value="Electricity">Electricity</option>
+                        <option value="Internet">Internet</option>
+                        <option value="Gas">Gas</option>
+                      </select>
+                    </Field>
                   )}
-                </div>
 
-                {/* ✅ If Bill Payment → show Bill Type instead of Number selection */}
-                {isBillPayment ? (
-                  <Field label="বিল টাইপ">
-                    <select
-                      value={form.billType}
-                      onChange={(e) =>
-                        setForm({ ...form, billType: e.target.value })
-                      }
-                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                  {!isBillPayment && (
+                    <Field label="টাইপ">
+                      <select
+                        {...register("type", { required: true })}
+                        className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
-                      required
-                    >
-                      <option value="">— সিলেক্ট —</option>
-                      <option value="Electricity">Electricity</option>
-                      <option value="Internet">Internet</option>
-                      <option value="Gas">Gas</option>
-                    </select>
-                  </Field>
-                ) : (
-                  // Else show Number selection as before
-                  <Field label="নম্বর">
-                    <select
-                      value={form.numberId}
-                      onChange={(e) =>
-                        setForm({ ...form, numberId: e.target.value })
-                      }
-                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                               focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
-                      required
-                    >
-                      <option value="">— সিলেক্ট —</option>
-                      {numberChoices.map((n) => (
-                        <option key={n.id} value={n.id}>
-                          {n.label}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                )}
+                      >
+                        {["Cash In", "Cash Out"].map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Field label="অ্যামাউন্ট (৳)">
                     <input
                       type="number"
                       step="0.01"
-                      value={form.amount}
-                      onChange={(e) =>
-                        setForm({ ...form, amount: e.target.value })
-                      }
+                      {...register("amount", { required: true })}
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
+                      required
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Field label={`কমিশন (প্রতি হাজারে)`}>
+                    <input
+                      type="number"
+                      step="0.01"
+                      {...register("commission")}
+                      className={`w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                                focus:outline-none  focus:ring-2 focus:ring-[#862C8A] focus:border-transparent`}
+                    />
+                  </Field>
+
+                  <Field label="টোটাল">
+                    <input
+                      type="number"
+                      step="0.01"
+                      {...register("total", { required: true })}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
                       required
                     />
                   </Field>
 
-                  <Field
-                    label={`কমিশন (৳) ${
-                      form.numberType === "Agent" && !isBillPayment
-                        ? "— অটো"
-                        : "— ম্যানুয়াল"
-                    }`}
-                  >
+                  <Field label="লাভ">
                     <input
                       type="number"
                       step="0.01"
-                      value={form.commission}
-                      onChange={(e) =>
-                        setForm({ ...form, commission: e.target.value })
-                      }
-                      className={`w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                                focus:outline-none ${
-                                  form.numberType === "Agent" && !isBillPayment
-                                    ? "opacity-60 cursor-not-allowed"
-                                    : "focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
-                                }`}
-                      disabled={form.numberType === "Agent" && !isBillPayment}
-                      required={
-                        !(form.numberType === "Agent" && !isBillPayment)
-                      }
+                      {...register("profit")}
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
+                      required
                     />
                   </Field>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Field label="ক্লায়েন্ট">
                     <select
-                      value={form.clientId}
-                      onChange={(e) => {
-                        const clientId = e.target.value;
-                        setForm({ ...form, clientId });
-                      }}
+                      {...register("clientId")}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
                     >
-                      <option value="">— অপশনাল —</option>
-                      {state.clients.map((c) => (
+                      <option value="">— সিলেক্ট —</option>
+                      {clients.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}
                         </option>
@@ -479,41 +393,33 @@ export default function Transactions({ ctx }) {
                     </select>
                   </Field>
 
-                  {/* Due amount*/}
                   <Field label="বাকি (৳)">
                     <input
                       type="number"
                       step="0.01"
-                      value={form.dueAmount}
-                      onChange={(e) =>
-                        setForm({ ...form, dueAmount: e.target.value })
-                      }
+                      {...register("dueAmount")}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
                       placeholder="বাকি টাকা"
                     />
                   </Field>
-                </div>
 
-                <Field label="নোট (ঐচ্ছিক)">
-                  <input
-                    value={form.note}
-                    onChange={(e) => setForm({ ...form, note: e.target.value })}
-                    className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
+                  <Field label="নোট">
+                    <input
+                      {...register("note")}
+                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
                              focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
-                    placeholder="নোট লিখুন..."
-                  />
-                </Field>
+                      placeholder="নোট লিখুন..."
+                    />
+                  </Field>
+                </div>
 
                 {/*  SMS opt-in checkbox at the bottom */}
                 <div className="flex items-center gap-2">
                   <input
                     id="send-sms"
                     type="checkbox"
-                    checked={form.sendSms}
-                    onChange={(e) =>
-                      setForm({ ...form, sendSms: e.target.checked })
-                    }
+                    {...register("sendSms")}
                     className="h-4 w-4 rounded border-gray-300 text-[#862C8A] focus:ring-[#862C8A]"
                   />
                   <label

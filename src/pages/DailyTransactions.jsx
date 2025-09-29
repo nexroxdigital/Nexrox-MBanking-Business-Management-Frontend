@@ -127,6 +127,7 @@ const DailyTransactions = () => {
       {
         date: data.date,
         item: "ক্যাশ ইন (পার্সোনাল)",
+        number: data.number,
         method: data.channel,
         pay: total,
         fee: feeAmt,
@@ -238,8 +239,14 @@ const DailyTransactions = () => {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50"
+            onClick={() => setShowModal(false)}
+          >
+            <div
+              className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Tabs */}
               <div className="flex gap-2 mb-4">
                 {["agent", "personal", "cash"].map((id) => (
@@ -382,6 +389,17 @@ const DailyTransactions = () => {
                       ))}
                     </select>
                   </label>
+
+                  <label>
+                    <span className="text-sm text-gray-600">নম্বর</span>
+                    <input
+                      type="number"
+                      step="any"
+                      className="w-full border rounded p-2"
+                      {...registerPersonal("number", { required: true })}
+                    />
+                  </label>
+
                   <label>
                     <span className="text-sm text-gray-600">টাকা</span>
                     <input
