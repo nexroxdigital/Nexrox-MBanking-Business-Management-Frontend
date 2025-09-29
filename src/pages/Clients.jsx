@@ -1,16 +1,108 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdDeleteOutline } from "react-icons/md";
 import Swal from "sweetalert2";
-import { clamp2, computeClientStats, fmtBDT, todayISO, uid } from "./utils";
+import { ClientsColumns } from "../components/columns/ClientsColumns";
+import TableComponent from "../components/shared/Table/Table";
+import { clientsData } from "../data/clientsData";
+import { clamp2, fmtBDT, todayISO, uid } from "./utils";
 
-export default function Clients({ ctx }) {
-  const { state, dispatch } = ctx;
+function computeClientStats(clients) {
+  const byClient = {};
+  let totalDue = 0;
+
+  clients.forEach((c) => {
+    byClient[c.id] = {
+      sell: Number(c.totalSell || 0),
+      paid: Number(c.paid || 0),
+      due: Number(c.due || 0),
+    };
+    totalDue += Number(c.due || 0);
+  });
+
+  return { byClient, totalDue };
+}
+
+export default function Clients() {
+  const [clients, setClients] = useState(clientsData);
+  const [transactions, setTransactions] = useState([
+    {
+      id: "tx_1",
+      clientId: "client_88fgyn2",
+      clientName: "Mita Store",
+      date: "2025-01-15",
+      channel: "Bkash",
+      type: "Cash In",
+      numberType: "Agent",
+      numberLabel: "Agent 01",
+      amount: 2000,
+      commission: 30,
+      profit: 30,
+      total: 2030,
+      note: "First payment",
+    },
+    {
+      id: "tx_2",
+      clientId: "client_88fgyn2",
+      clientName: "Mita Store",
+      date: "2025-02-10",
+      channel: "Nagad",
+      type: "Cash Out",
+      numberType: "Personal",
+      numberLabel: "Personal 02",
+      amount: 1500,
+      commission: 20,
+      profit: 20,
+      total: 1520,
+      note: "Second payment",
+    },
+  ]);
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editClientId, setEditClientId] = useState(null);
+  const [editClient, setEditClient] = useState({ name: "", number: "" });
+
+  function openEditModal(clientId) {
+    const client = clients.find((c) => c.id === clientId);
+    if (!client) return;
+    setEditClientId(clientId);
+
+    // Copy everything except id & payments
+    const { id, payments, ...editableFields } = client;
+    setEditClient(editableFields);
+
+    setEditModalOpen(true);
+  }
+
+  function closeEditModal() {
+    setEditModalOpen(false);
+    setEditClientId(null);
+    setEditClient({ name: "", number: "" });
+  }
+
+  function updateClient() {
+    if (!editClient.name.trim() || !editClient.number) return;
+
+    setClients((prev) =>
+      prev.map((c) =>
+        c.id === editClientId
+          ? { ...c, ...editClient, name: editClient.name.trim() } // keep payments, id untouched
+          : c
+      )
+    );
+
+    closeEditModal();
+  }
+
+  const computed = useMemo(() => computeClientStats(clients), [clients]);
+
   const [newClient, setNewClient] = useState({
     name: "",
     number: "",
   });
   const [selected, setSelected] = useState(null);
-  const computed = useMemo(() => computeClientStats(state), [state]);
+
+  // const computed = useMemo(() => computeClientStats(state), [state]);
+
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [payClientId, setPayClientId] = useState(null);
   const [payAmount, setPayAmount] = useState("");
@@ -33,7 +125,7 @@ export default function Clients({ ctx }) {
   };
 
   const openAddModal = () => {
-    setNewClient({ name: "", number: "" }); // reset form
+    setNewClient({ name: "", number: "" });
     setAddModalOpen(true);
   };
   const closeAddModal = () => {
@@ -68,71 +160,52 @@ export default function Clients({ ctx }) {
       number: newClient.number,
       payments: [],
     };
-    const next = {
-      ...state,
-      clients: [...state.clients, c],
-      logs: [
-        ...state.logs,
-        {
-          id: uid("log"),
-          ts: new Date().toISOString(),
-          msg: `নতুন ক্লায়েন্ট: ${c.name}`,
-        },
-      ],
-    };
-    dispatch({ type: "SAVE", payload: next });
+    setClients((prev) => [...prev, c]);
     setNewClient({ name: "", number: "" });
     setAddModalOpen(false);
   }
 
   function addPayment(clientId, amount, note = "") {
-    const clients = state.clients.map((c) => {
-      if (c.id !== clientId) return c;
-      const p = { id: uid("pay"), date: todayISO(), amount, note };
-      return { ...c, payments: [...c.payments, p] };
-    });
+    setClients((prev) =>
+      prev.map((c) => {
+        if (c.id !== clientId) return c;
 
-    const client = state.clients.find((c) => c.id === clientId);
-    const next = {
-      ...state,
-      clients,
-      logs: [
-        ...state.logs,
-        {
-          id: uid("log"),
-          ts: new Date().toISOString(),
-          msg: `পেমেন্ট গ্রহণ: ${client?.name} ৳${amount}`,
-        },
-      ],
-    };
-    dispatch({ type: "SAVE", payload: next });
+        const newPaid = (c.paid || 0) + Number(amount);
+        const newDue = Math.max(0, (c.totalSell || 0) - newPaid);
+
+        return {
+          ...c,
+          paid: newPaid,
+          due: newDue,
+          payments: [
+            ...(c.payments || []),
+            { id: uid("pay"), date: todayISO(), amount, note },
+          ],
+        };
+      })
+    );
   }
 
-  const rows = state.clients.map((c) => {
+  const rows = clients.map((c) => {
     const totalSell = computed.byClient[c.id]?.sell || 0;
     const paid = (c.payments || []).reduce(
       (s, p) => s + Number(p.amount || 0),
       0
     );
     const due = Math.max(0, totalSell - paid);
-
-    return {
-      id: c.id,
-      name: c.name,
-      totalSell,
-      paid,
-      due,
-    };
+    return { id: c.id, name: c.name, totalSell, paid, due };
   });
 
-  const selClient = state.clients.find((c) => c.id === selected);
-  const selTx = state.transactions
+  console.log("rowssssss", rows);
+
+  const selClient = clients.find((c) => c.id === selected);
+  const selTx = transactions
     .filter((t) => t.clientId === selected)
     .sort((a, b) => b.date.localeCompare(a.date));
 
   // delete client handler
   function deleteClient(clientId) {
-    const client = state.clients.find((c) => c.id === clientId);
+    const client = clients.find((c) => c.id === clientId);
 
     Swal.fire({
       title: "আপনি কি নিশ্চিত?",
@@ -145,34 +218,19 @@ export default function Clients({ ctx }) {
       cancelButtonText: "বাতিল",
     }).then((result) => {
       if (result.isConfirmed) {
-        const nextClients = state.clients.filter((c) => c.id !== clientId);
-        const nextTx = state.transactions.map((t) =>
-          t.clientId === clientId
-            ? {
-                ...t,
-                clientId: null,
-                clientName: t.clientName || client?.name || "(Deleted Client)",
-              }
-            : t
+        setClients((prev) => prev.filter((c) => c.id !== clientId));
+        setTransactions((prev) =>
+          prev.map((t) =>
+            t.clientId === clientId
+              ? {
+                  ...t,
+                  clientId: null,
+                  clientName: client?.name || "(Deleted Client)",
+                }
+              : t
+          )
         );
 
-        // log + dispatch
-        const next = {
-          ...state,
-          clients: nextClients,
-          transactions: nextTx,
-          logs: [
-            ...state.logs,
-            {
-              id: uid("log"),
-              ts: new Date().toISOString(),
-              msg: `ক্লায়েন্ট ডিলিট: ${client?.name ?? clientId}`,
-            },
-          ],
-        };
-        dispatch({ type: "SAVE", payload: next });
-
-        // clear selection
         if (selected === clientId) setSelected(null);
 
         Swal.fire({
@@ -309,116 +367,15 @@ export default function Clients({ ctx }) {
           </div>
 
           {/* Desktop Table Layout */}
-          <div className="hidden sm:block overflow-x-auto border border-gray-100">
-            <table className="w-full table-fixed  text-sm">
-              <thead className="bg-[#66196c9c]">
-                <tr className="text-left divide-x divide-gray-400 border-b border-b-gray-400 border-gray-300 border">
-                  <th className="py-3 px-4 text-gray-600 sticky top-0 z-10 bg-white/80 backdrop-blur">
-                    নাম
-                  </th>
-                  <th className="py-3 px-4 text-gray-600 text-right bg-white/80 backdrop-blur">
-                    মোট বিক্রি
-                  </th>
-                  <th className="py-3 px-4 text-gray-600 text-right bg-white/80 backdrop-blur  ">
-                    পেমেন্ট
-                  </th>
-                  <th className="py-3 px-4 text-gray-600 text-right bg-white/80 backdrop-blur  ">
-                    পাওনা
-                  </th>
-                  <th className="py-3 px-4 text-gray-600 text-right sticky top-0 z-10 bg-white/80 backdrop-blur">
-                    অ্যাকশন
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {rows.map((r) => (
-                  <tr
-                    key={r.id}
-                    className="group rounded-xl bg-gradient-to-r from-white to-white hover:from-white hover:to-white shadow-sm hover:shadow transition-all duration-200 border border-gray-100"
-                  >
-                    <td className="py-3 px-4 border-0 border-r border-r-gray-400 border-b border-b-gray-300">
-                      <button
-                        className="inline-flex items-center gap-2 font-medium text-gray-900 hover:opacity-90 transition"
-                        onClick={() => setSelected(r.id)}
-                        title="ট্রান্সাকশন দেখুন"
-                      >
-                        <span
-                          className="inline-block w-2 h-2 rounded-full opacity-70 group-hover:opacity-100"
-                          style={{
-                            background:
-                              "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                          }}
-                        />
-                        <span className="truncate">{r.name}</span>
-                      </button>
-                    </td>
-
-                    <td className="py-3 px-4 text-right text-gray-700 border-0 border-r border-r-gray-400 border-b border-b-gray-300">
-                      ৳{fmtBDT(r.totalSell)}
-                    </td>
-
-                    <td className="py-3 px-4 text-right text-gray-700 border-0 border-r border-r-gray-400 border-b border-b-gray-300">
-                      ৳{fmtBDT(r.paid)}
-                    </td>
-
-                    <td className="py-3 px-4 text-right border-0 border-r border-r-gray-400 border-b border-b-gray-300">
-                      <span
-                        className="inline-block px-2.5 py-1 rounded-lg font-semibold text-gray-900"
-                        style={{
-                          background:
-                            "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
-                        }}
-                      >
-                        ৳{fmtBDT(r.due)}
-                      </span>
-                    </td>
-
-                    <td className="py-3 px-4 text-right flex gap-1.5 border-b border-b-gray-300">
-                      <button
-                        className="px-3 py-1.5 rounded-lg border text-gray-700 hover:bg-white transition relative whitespace-nowrap"
-                        onClick={() => openPayModal(r.id)}
-                        style={{
-                          borderImageSlice: 1,
-                          borderImageSource:
-                            "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                          borderWidth: "1px",
-                          borderStyle: "solid",
-                        }}
-                      >
-                        Add Payment
-                      </button>
-
-                      <button
-                        className="text-red-600 hover:bg-red-50 transition relative flex items-center justify-center"
-                        onClick={() => deleteClient(r.id)}
-                        title="Delete Client"
-                      >
-                        <MdDeleteOutline size={20} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {rows.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="py-10 text-center text-gray-400">
-                      <div
-                        className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                        style={{
-                          background:
-                            "linear-gradient(270deg, #862C8A33 0%, #009C9133 100%)",
-                        }}
-                      >
-                        <span className="text-2xl opacity-80">👥</span>
-                      </div>
-                      কোন ক্লায়েন্ট নেই
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <TableComponent
+            data={clients}
+            columns={ClientsColumns(
+              setSelected,
+              openPayModal,
+              deleteClient,
+              openEditModal
+            )}
+          />
 
           {addModalOpen && (
             <div className="fixed inset-0 z-[125] flex items-center justify-center">
@@ -639,6 +596,121 @@ export default function Clients({ ctx }) {
                       </button>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {editModalOpen && (
+            <div className="fixed inset-0 z-[130] flex items-center justify-center">
+              <div
+                className="absolute inset-0 bg-black/30"
+                aria-hidden="true"
+                onClick={closeEditModal}
+              />
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Edit client"
+                className="relative w-full max-w-sm mx-4 rounded-2xl shadow-xl border bg-white"
+                style={{
+                  borderImageSlice: 1,
+                  borderImageSource:
+                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Gradient top bar */}
+                <div
+                  className="h-1 w-full rounded-t-2xl"
+                  style={{
+                    background:
+                      "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                  }}
+                />
+
+                <div className="p-4">
+                  <h4 className="font-medium text-gray-900">
+                    ক্লায়েন্ট সম্পাদনা করুন
+                  </h4>
+                  <p className="text-xs text-gray-500 mt-1">
+                    নাম ও মোবাইল নম্বর আপডেট করুন।
+                  </p>
+
+                  {/* Form */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      updateClient();
+                    }}
+                    className="mt-4 grid gap-3"
+                  >
+                    {/* Name */}
+                    <div>
+                      <label className="text-xs text-gray-600 mb-1 block">
+                        নাম
+                      </label>
+                      <input
+                        autoFocus
+                        required
+                        type="text"
+                        className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border border-[#6314698e] focus:ring-2 focus:ring-[#862C8A33]"
+                        placeholder="যেমন: Rahim"
+                        value={editClient.name}
+                        onChange={(e) =>
+                          setEditClient((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    {/* Number */}
+                    <div>
+                      <label className="text-xs text-gray-600 mb-1 block">
+                        মোবাইল নম্বর
+                      </label>
+                      <input
+                        required
+                        type="tel"
+                        pattern="01[0-9]{9}"
+                        title="Valid BD mobile: 11 digits, starts with 01"
+                        className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border focus:ring-2 border-[#6314698e] focus:ring-[#862C8A33]"
+                        placeholder="যেমন: 018XXXXXXXX"
+                        value={editClient.number}
+                        onChange={(e) =>
+                          setEditClient((prev) => ({
+                            ...prev,
+                            number: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                        onClick={closeEditModal}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 rounded-lg text-white shadow-sm hover:shadow transition"
+                        style={{
+                          background:
+                            "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                        }}
+                      >
+                        Update
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>

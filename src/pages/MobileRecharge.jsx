@@ -181,8 +181,14 @@ const MobileRecharge = () => {
 
         {/* Add Operator Modal */}
         {showOperatorModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md animate-fade-in space-y-6">
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4"
+            onClick={() => setShowOperatorModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md animate-fade-in space-y-6"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 className="text-xl font-bold mb-4">নতুন অপারেটর যোগ করুন</h2>
               <form
                 onSubmit={operatorForm.handleSubmit(handleAddOperator)}
@@ -228,8 +234,14 @@ const MobileRecharge = () => {
 
         {/* Edit Operator Modal */}
         {showEditModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md animate-fade-in space-y-6">
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4"
+            onClick={() => setShowEditModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md animate-fade-in space-y-6"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 className="text-xl font-bold mb-4">অপারেটর সম্পাদনা করুন</h2>
               <form
                 onSubmit={editForm.handleSubmit(handleUpdateOperator)}
@@ -275,8 +287,14 @@ const MobileRecharge = () => {
 
         {/* Add Recharge Modal */}
         {showTxnModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg animate-fade-in space-y-6">
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4"
+            onClick={() => setShowTxnModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg animate-fade-in space-y-6"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 className="text-xl font-bold mb-4">নতুন রিচার্জ যোগ করুন</h2>
               <form
                 onSubmit={rechargeForm.handleSubmit(handleAddRecharge)}

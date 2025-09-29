@@ -1,7 +1,8 @@
+import { FaUniversity } from "react-icons/fa";
 import { HiOutlineBanknotes } from "react-icons/hi2";
 import { IoIosContacts } from "react-icons/io";
-import { LuFileText, LuSlidersHorizontal } from "react-icons/lu";
-import { MdOutlineDashboard } from "react-icons/md";
+import { LuFileText } from "react-icons/lu";
+import { MdOutlineDashboard, MdPayments, MdPhoneIphone } from "react-icons/md";
 
 function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
   const tabs = [
@@ -15,14 +16,14 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
     {
       id: "mobile-bankings",
       label: "মোবাইল ব্যাংকিং",
-      icon: <HiOutlineBanknotes />,
+      icon: <MdPayments />,
     },
     {
       id: "mobile-recharge",
       label: "মোবাইল রিচার্জ",
-      icon: <HiOutlineBanknotes />,
+      icon: <MdPhoneIphone />,
     },
-    { id: "banks", label: "ব্যাংক", icon: <LuSlidersHorizontal /> },
+    { id: "banks", label: "ব্যাংক", icon: <FaUniversity /> },
     { id: "clients", label: "ক্লায়েন্ট", icon: <IoIosContacts /> },
     { id: "reports", label: "রিপোর্ট", icon: <LuFileText /> },
     // { id: "settings", label: "সেটিংস", icon: <LuSlidersHorizontal /> },

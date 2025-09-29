@@ -234,8 +234,14 @@ const BankTransactions = () => {
 
         {/* Add Bank Modal */}
         {showBankModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6">
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4"
+            onClick={() => setShowBankModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 className="text-xl font-bold mb-4">নতুন ব্যাংক যোগ করুন</h2>
               <form
                 onSubmit={bankForm.handleSubmit(handleAddBank)}
@@ -305,8 +311,14 @@ const BankTransactions = () => {
 
         {/* Edit Bank Modal */}
         {showEditModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6">
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4"
+            onClick={() => setShowEditModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 className="text-xl font-bold mb-4">ব্যাংক এডিট করুন</h2>
               <form
                 onSubmit={editForm.handleSubmit(handleEditBank)}
@@ -369,8 +381,14 @@ const BankTransactions = () => {
 
         {/* Add Transaction Modal */}
         {showTxnModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6">
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4"
+            onClick={() => setShowTxnModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 className="text-xl font-bold mb-4">
                 নতুন ট্রানজেকশন যোগ করুন
               </h2>

@@ -50,7 +50,17 @@ export default function ClientTransactions() {
   // 🔥 calculate profit & total inline
   const amount = parseFloat(watch("amount")) || 0;
   const commission = parseFloat(watch("commission"));
+
   const type = watch("type");
+
+  // set commission default only when type changes
+  useEffect(() => {
+    if (type === "Cash Out") {
+      setValue("commission", 3.75, { shouldValidate: true });
+    } else if (type === "Cash In") {
+      setValue("commission", 1.5, { shouldValidate: true });
+    }
+  }, [type, setValue]);
 
   // 🔥 Auto calculation with useEffect
   useEffect(() => {
@@ -346,7 +356,11 @@ export default function ClientTransactions() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Field label={`কমিশন (প্রতি হাজারে)`}>
+                  <Field
+                    label={
+                      type === "Cash In" ? "কমিশন (%)" : "কমিশন (প্রতি হাজারে)"
+                    }
+                  >
                     <input
                       type="number"
                       step="0.01"

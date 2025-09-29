@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import TransactionTable from "../components/Transactions/TransactionTable";
 import { transactionData } from "../data/transactionData";
 import { todayISO } from "./utils";
+import TableComponent from "../components/shared/Table/Table";
+import { transactionColumn } from "../components/Transactions/TransactionColumn";
 
 /* ---------- helpers ---------- */
 const computeAgent = ({ taka, commissionPct }) => {
@@ -606,7 +608,8 @@ const DailyTransactions = () => {
           </div>
         )}
 
-        <TransactionTable data={transactions} />
+        {/* <TransactionTable data={transactions} /> */}
+        <TableComponent data={transactions} columns={transactionColumn} />
       </div>
     </div>
   );
