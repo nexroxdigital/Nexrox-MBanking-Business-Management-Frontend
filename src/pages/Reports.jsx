@@ -5,8 +5,7 @@ import { reportData } from "../data/reportData";
 import { StatCard } from "./Dashbaord";
 import { daysAgo, fmtBDT, todayISO } from "./utils";
 
-export default function Reports({ ctx }) {
-  const { state } = ctx;
+export default function Reports() {
   const [range, setRange] = useState({ from: daysAgo(30), to: todayISO() });
   const todayStats = [
     {

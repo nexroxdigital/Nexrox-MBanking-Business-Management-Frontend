@@ -167,14 +167,13 @@ export default function App() {
           setIsMenuOpen={setIsMenuOpen}
         />
         {tab === "dashboard" && <Dashboard ctx={ctx} />}
-        {tab === "transactions" && <ClientTransactions ctx={ctx} />}
-        {tab === "clients" && <Clients ctx={ctx} />}
-        {tab === "reports" && <Reports ctx={ctx} />}
-        {tab === "daily-transactions" && <DailyTransactions ctx={ctx} />}
-        {tab === "mobile-bankings" && <MobileBanking ctx={ctx} />}
-        {tab === "mobile-recharge" && <MobileRecharge ctx={ctx} />}
-        {tab === "banks" && <BankTransactions ctx={ctx} />}
-        {/* {tab === "settings" && <Settings ctx={ctx} />} */}
+        {tab === "transactions" && <ClientTransactions />}
+        {tab === "clients" && <Clients />}
+        {tab === "reports" && <Reports />}
+        {tab === "daily-transactions" && <DailyTransactions />}
+        {tab === "mobile-bankings" && <MobileBanking />}
+        {tab === "mobile-recharge" && <MobileRecharge />}
+        {tab === "banks" && <BankTransactions />}
       </div>
 
       <Footer />

@@ -1,12 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  computeBalances,
-  computeSums,
-  fmtBDT,
-  monthKey,
-  todayISO,
-  uid,
-} from "./utils";
+import { computeSums, fmtBDT, monthKey, todayISO } from "./utils";
 
 import { CiMoneyCheck1 } from "react-icons/ci";
 
@@ -14,7 +7,12 @@ export default function Dashboard({ ctx }) {
   const { state, dispatch } = ctx;
   const today = todayISO();
   const [openingModalOpen, setOpeningModalOpen] = useState(false);
-  const [openingCash, setOpeningCash] = useState("");
+  const [openingCash, setOpeningCash] = useState(2000);
+
+  const handleSubmitOpeningBalance = (e) => {
+    e.preventDefault();
+    setOpeningModalOpen(false);
+  };
 
   const sums = useMemo(
     () => computeSums(state.transactions, state.clients),
@@ -25,32 +23,6 @@ export default function Dashboard({ ctx }) {
   const monthSums = sums.byMonth[month] || { sell: 0, profit: 0, due: 0 };
   const daySums = sums.byDay[today] || { sell: 0, profit: 0, due: 0 };
 
-  function saveOpeningCash(e) {
-    e.preventDefault();
-
-    const next = {
-      ...state,
-      openingCash: openingCash,
-      logs: [
-        ...state.logs,
-        {
-          id: uid("log"),
-          ts: new Date().toISOString(),
-          msg: `Opening Cash সেট করা হয়েছে: ৳${fmtBDT(openingCash)}`,
-        },
-      ],
-    };
-
-    // ✅ update state
-    dispatch({ type: "SAVE", payload: next });
-
-    console.log("saveOpeningCash", {
-      date: today,
-      amount: Number(openingCash),
-    });
-    setOpeningModalOpen(false);
-    setOpeningCash("");
-  }
   return (
     <div className="min-h-[calc(100vh-200px)] bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       {/* Modern background with floating orbs */}
@@ -85,12 +57,10 @@ export default function Dashboard({ ctx }) {
                 </span>
               </div>
 
-              {state.openingCash > 0 && (
+              {openingCash > 0 && (
                 <div className="ml-2 font-medium text-gray-700 dark:text-gray-300">
                   Opening Cash:{" "}
-                  <span className="font-bold">
-                    ৳{fmtBDT(state.openingCash)}
-                  </span>
+                  <span className="font-bold">৳{fmtBDT(openingCash)}</span>
                 </div>
               )}
             </div>
@@ -154,12 +124,13 @@ export default function Dashboard({ ctx }) {
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               Add Opening Cash
             </h2>
-            <form onSubmit={saveOpeningCash} className="space-y-4">
+
+            <form onSubmit={handleSubmitOpeningBalance} className="space-y-4">
               <input
                 type="number"
                 step="0.01"
                 value={openingCash}
-                onChange={(e) => setOpeningCash(e.target.value)}
+                onChange={(e) => setOpeningCash(Number(e.target.value))}
                 className="w-full rounded-lg px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 placeholder="Enter cash amount"
                 required
@@ -240,16 +211,53 @@ export function StatCard({ title, value, sub, icon, gradient }) {
   );
 }
 
-function NumberBalances({ numbers, transactions }) {
-  const balances = useMemo(
-    () => computeBalances(numbers, transactions),
-    [numbers, transactions]
-  );
+function NumberBalances() {
+  const numbers = [
+    {
+      id: "num_tlsdwbq",
+      label: "Nagad Agent",
+      number: "01998376434",
+      channel: "Nagad",
+      type: "Agent",
+      balance: 640000,
+    },
+    {
+      id: "num_kjs72hf",
+      label: "Bkash Agent",
+      number: "01712345678",
+      channel: "Bkash",
+      type: "Agent",
+      balance: 450000,
+    },
+    {
+      id: "num_qwe92md",
+      label: "Rocket Personal",
+      number: "01876543210",
+      channel: "Rocket",
+      type: "Personal",
+      balance: 220000,
+    },
+    {
+      id: "num_mnb83zx",
+      label: "Nagad Personal",
+      number: "01911223344",
+      channel: "Nagad",
+      type: "Personal",
+      balance: 175000,
+    },
+    {
+      id: "num_vcx64pl",
+      label: "Bkash Personal",
+      number: "01799887766",
+      channel: "Bkash",
+      type: "Personal",
+      balance: 390000,
+    },
+  ];
 
   return (
     <div className="group relative backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 rounded-lg p-8 shadow-md border border-gray-300 border-b-transparent dark:border-gray-800/20 transition-all duration-300 overflow-hidden">
-      {/* Animated background */}
-
+      {/* Header */}
       <PanelTitle title="নম্বারভিত্তিক ব্যালেন্স" icon={<CiMoneyCheck1 />} />
 
       <div className="mt-6 overflow-x-auto">
@@ -266,7 +274,7 @@ function NumberBalances({ numbers, transactions }) {
               <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 text-left">
                 টাইপ
               </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 text-right rounded-r-xl">
+              <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300  text-center rounded-r-xl">
                 ব্যালেন্স
               </th>
             </tr>
@@ -288,11 +296,11 @@ function NumberBalances({ numbers, transactions }) {
                   {n.channel}
                 </td>
                 <td className="p-4 text-gray-600 dark:text-gray-300 font-medium">
-                  {n.kind}
+                  {n.type}
                 </td>
                 <td className="p-4 text-right font-bold text-gray-900 dark:text-white rounded-r-xl">
                   <span className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#862C8A]/10 to-[#009C91]/10">
-                    ৳{fmtBDT(balances[n.id] || 0)}
+                    ৳{fmtBDT(n.balance || 0)}
                   </span>
                 </td>
               </tr>

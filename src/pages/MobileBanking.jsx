@@ -16,7 +16,7 @@ const getCurrentTime = () => {
   });
 };
 
-const MobileBanking = ({ ctx }) => {
+const MobileBanking = () => {
   const [wallets, setWallets] = useState([
     { bank: "বিকাশ", number: "017XXXXXXXX", type: "এজেন্ট", balance: 3500 },
     { bank: "নগদ", number: "018XXXXXXXX", type: "পার্সোনাল", balance: 3500 },
@@ -108,7 +108,7 @@ const MobileBanking = ({ ctx }) => {
       <div className="bg-white shadow-2xl rounded-2xl p-6 rounded-tr-none rounded-tl-none space-y-10 border border-gray-100">
         {/* Conditional Rendering */}
         {showSetting ? (
-          <Settings ctx={ctx} onClose={() => setShowSetting(false)} />
+          <Settings onClose={() => setShowSetting(false)} />
         ) : (
           <>
             {/* Header */}
