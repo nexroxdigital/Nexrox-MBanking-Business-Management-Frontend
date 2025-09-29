@@ -1,10 +1,23 @@
-import { useMemo, useState } from "react";
-import { computeSums, fmtBDT, monthKey, todayISO } from "./utils";
+import { useState } from "react";
+import { fmtBDT, monthKey, todayISO } from "./utils";
 
 import { CiMoneyCheck1 } from "react-icons/ci";
+import { FaListAlt } from "react-icons/fa";
+import { activityLogs } from "../data/activityLogs";
 
-export default function Dashboard({ ctx }) {
-  const { state, dispatch } = ctx;
+const sums = {
+  byDay: {
+    "2025-09-29": { sell: 14000, profit: 2500, due: 4000 },
+    "2025-09-28": { sell: 8000, profit: 1800, due: 2000 },
+    "2025-09-27": { sell: 10000, profit: 2200, due: 3500 },
+  },
+  byMonth: {
+    "2025-09": { sell: 95000, profit: 18000, due: 15000 },
+    "2025-08": { sell: 87000, profit: 16200, due: 12000 },
+  },
+};
+
+export default function Dashboard() {
   const today = todayISO();
   const [openingModalOpen, setOpeningModalOpen] = useState(false);
   const [openingCash, setOpeningCash] = useState(2000);
@@ -13,11 +26,6 @@ export default function Dashboard({ ctx }) {
     e.preventDefault();
     setOpeningModalOpen(false);
   };
-
-  const sums = useMemo(
-    () => computeSums(state.transactions, state.clients),
-    [state.transactions, state.clients]
-  );
 
   const month = monthKey(today);
   const monthSums = sums.byMonth[month] || { sell: 0, profit: 0, due: 0 };
@@ -103,11 +111,8 @@ export default function Dashboard({ ctx }) {
 
         {/* Modern bottom panels */}
         <div className="grid gap-8 lg:grid-cols-2">
-          <NumberBalances
-            numbers={state.numbers}
-            transactions={state.transactions}
-          />
-          <ActivityLog logs={state.logs} />
+          <NumberBalances />
+          <ActivityLog activityLogs={activityLogs} />
         </div>
       </div>
 
@@ -328,17 +333,17 @@ function NumberBalances() {
   );
 }
 
-function ActivityLog({ logs }) {
+function ActivityLog({ activityLogs }) {
   return (
     <div className="group relative backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 rounded-lg p-8 shadow-md border border-gray-300 border-b-transparent dark:border-gray-800/20 transition-all duration-300">
       {/* Animated background */}
       {/* <div className="absolute inset-0 bg-gradient-to-bl from-[#009C91]/5 to-[#862C8A]/5 group-hover:from-[#009C91]/10 group-hover:to-[#862C8A]/10 transition-all duration-500" /> */}
 
-      <PanelTitle title="লগ" icon="📝" />
+      <PanelTitle title="লগ" icon={<FaListAlt />} />
 
       <div className="mt-6 max-h-80 overflow-y-auto pr-2">
         <div className="space-y-3">
-          {logs
+          {activityLogs
             .slice()
             .reverse()
             .map((l, index) => (
@@ -361,7 +366,7 @@ function ActivityLog({ logs }) {
               </div>
             ))}
 
-          {logs.length === 0 && (
+          {activityLogs.length === 0 && (
             <div className="text-center py-12">
               <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-[#009C91]/20 to-[#862C8A]/20 flex items-center justify-center">
                 <span className="text-2xl opacity-60">📝</span>

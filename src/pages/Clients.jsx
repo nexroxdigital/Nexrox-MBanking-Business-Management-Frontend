@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { MdDeleteOutline } from "react-icons/md";
 import Swal from "sweetalert2";
 import { ClientsColumns } from "../components/columns/ClientsColumns";
 import TableComponent from "../components/shared/Table/Table";
@@ -250,7 +249,7 @@ export default function Clients() {
       <div className="md:col-span-3 rounded-2xl border border-gray-200 shadow-sm p-0 overflow-hidden">
         {/* Gradient Header */}
         <div
-          className="px-3 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0"
+          className="px-3 sm:px-5 py-4 sm:py-4 flex items-center justify-between gap-3 sm:gap-0"
           style={{
             background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
           }}
@@ -258,114 +257,20 @@ export default function Clients() {
           <h3 className="font-semibold text-white tracking-wide text-lg md:text-xl sm:text-base">
             ক্লায়েন্ট তালিকা
           </h3>
-          <div className="flex flex-col md:flex-row gap-2 w-full sm:w-auto">
-            <button
-              className="px-5 md:px-3 py-2 rounded-xl text-white shadow-sm hover:shadow transition text-sm whitespace-nowrap self-center"
-              style={{
-                background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-              }}
-              onClick={openAddModal}
-            >
-              ক্লায়েন্ট যোগ করুন
-            </button>
-          </div>
+
+          <button
+            className="px-5 md:px-3 py-2 rounded-xl text-white shadow-sm hover:shadow transition text-sm whitespace-nowrap"
+            style={{
+              background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+            }}
+            onClick={openAddModal}
+          >
+            ক্লায়েন্ট যোগ করুন
+          </button>
         </div>
 
         {/* Body */}
         <div className="p-3 sm:p-5 bg-white">
-          {/* Mobile Card Layout */}
-          <div className="block sm:hidden space-y-3">
-            {rows.map((r) => (
-              <div
-                key={r.id}
-                className="group rounded-xl bg-gradient-to-r from-white to-white hover:from-white hover:to-white shadow-sm hover:shadow transition-all duration-200 border border-gray-100 p-4"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <button
-                    className="inline-flex items-center gap-2 font-medium text-gray-900 hover:opacity-90 transition flex-1"
-                    onClick={() => setSelected(r.id)}
-                    title="ট্রান্সাকশন দেখুন"
-                  >
-                    <span
-                      className="inline-block w-2 h-2 rounded-full opacity-70 group-hover:opacity-100 flex-shrink-0"
-                      style={{
-                        background:
-                          "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                      }}
-                    />
-                    <span className="truncate text-left">{r.name}</span>
-                  </button>
-
-                  <button
-                    className="text-red-600 hover:bg-red-50 transition relative flex items-center justify-center"
-                    title="Delete Client"
-                    onClick={() => deleteClient(r.id)}
-                  >
-                    <MdDeleteOutline size={20} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-xs mb-3">
-                  <div>
-                    <span className="text-gray-500 block">মোট বিক্রি</span>
-                    <span className="text-gray-700 font-medium">
-                      ৳{fmtBDT(r.totalSell)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block">পেমেন্ট</span>
-                    <span className="text-gray-700 font-medium">
-                      ৳{fmtBDT(r.paid)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-500 block text-xs">পাওনা</span>
-                    <span
-                      className="inline-block px-2 py-1 rounded-lg font-semibold text-gray-900 text-xs"
-                      style={{
-                        background:
-                          "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
-                      }}
-                    >
-                      ৳{fmtBDT(r.due)}
-                    </span>
-                  </div>
-                  <button
-                    className="px-3 py-1.5 rounded-lg border text-gray-700 hover:bg-white transition text-xs"
-                    onClick={() => openPayModal(r.id)}
-                    style={{
-                      borderImageSlice: 1,
-                      borderImageSource:
-                        "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                      borderWidth: "1px",
-                      borderStyle: "solid",
-                    }}
-                  >
-                    Add Payment
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {rows.length === 0 && (
-              <div className="py-10 text-center text-gray-400">
-                <div
-                  className="w-12 h-12 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                  style={{
-                    background:
-                      "linear-gradient(270deg, #862C8A33 0%, #009C9133 100%)",
-                  }}
-                >
-                  <span className="text-xl opacity-80">👥</span>
-                </div>
-                <p className="text-sm">কোন ক্লায়েন্ট নেই</p>
-              </div>
-            )}
-          </div>
-
           {/* Desktop Table Layout */}
           <TableComponent
             data={clients}

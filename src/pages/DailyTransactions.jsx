@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import TransactionTable from "../components/Transactions/TransactionTable";
-import { transactionData } from "../data/transactionData";
-import { todayISO } from "./utils";
 import TableComponent from "../components/shared/Table/Table";
 import { transactionColumn } from "../components/Transactions/TransactionColumn";
+import { transactionData } from "../data/transactionData";
+import { todayISO } from "./utils";
 
 /* ---------- helpers ---------- */
 const computeAgent = ({ taka, commissionPct }) => {
@@ -246,7 +245,7 @@ const DailyTransactions = () => {
             onClick={() => setShowModal(false)}
           >
             <div
-              className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl"
+              className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Tabs */}

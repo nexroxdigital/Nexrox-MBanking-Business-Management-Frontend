@@ -177,7 +177,7 @@ const BankTransactions = () => {
           <div className="flex gap-3">
             <button
               onClick={() => setShowBankModal(true)}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold shadow-lg hover:scale-105 transition"
+              className="px-3 lg:px-6 py-2 lg:py-3 rounded-xl bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold shadow-lg hover:scale-105 transition text-base"
             >
               + নতুন ব্যাংক যোগ করুন
             </button>
@@ -239,7 +239,7 @@ const BankTransactions = () => {
             onClick={() => setShowBankModal(false)}
           >
             <div
-              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6"
+              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-xl font-bold mb-4">নতুন ব্যাংক যোগ করুন</h2>
@@ -316,7 +316,7 @@ const BankTransactions = () => {
             onClick={() => setShowEditModal(false)}
           >
             <div
-              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6"
+              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-xl font-bold mb-4">ব্যাংক এডিট করুন</h2>
@@ -386,7 +386,7 @@ const BankTransactions = () => {
             onClick={() => setShowTxnModal(false)}
           >
             <div
-              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6"
+              className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl animate-fade-in space-y-6 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-xl font-bold mb-4">

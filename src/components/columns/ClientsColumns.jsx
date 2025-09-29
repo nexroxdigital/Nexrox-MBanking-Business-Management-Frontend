@@ -40,7 +40,7 @@ export const ClientsColumns = (
   // Total Sell
   columnHelper.accessor("totalSell", {
     header: () => (
-      <span className="py-3 px-4 text-gray-100 text-right   backdrop-blur">
+      <span className="py-3 px-4 text-gray-100 text-right backdrop-blur whitespace-nowrap">
         মোট বিক্রি
       </span>
     ),

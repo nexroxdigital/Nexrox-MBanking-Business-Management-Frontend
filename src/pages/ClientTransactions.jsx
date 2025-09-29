@@ -253,7 +253,7 @@ export default function ClientTransactions() {
             role="dialog"
             aria-modal="true"
             aria-label="Add new transaction"
-            className="relative w-full max-w-2xl mx-4 rounded-2xl shadow-xl border bg-white dark:bg-gray-900"
+            className="relative w-full max-w-2xl mx-4 rounded-2xl shadow-xl border bg-white dark:bg-gray-900 max-h-[90vh] overflow-y-auto"
             style={{
               borderImageSlice: 1,
               borderImageSource:
