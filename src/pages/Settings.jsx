@@ -1,10 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Swal from "sweetalert2";
+import { numbersData } from "../data/numbersData";
 import { Field } from "./Field";
-import { clamp2, computeBalances, fmtBDT, uid } from "./utils";
+import { clamp2, fmtBDT, uid } from "./utils";
 
-export default function Settings({ ctx, onClose }) {
-  const { state, dispatch } = ctx;
+function computeBalances(numbers) {
+  // Just return manualAdj as the balance for each number
+  return Object.fromEntries(
+    numbers.map((n) => [n.id, Number(n.manualAdj || 0)])
+  );
+}
+
+export default function Settings({ onClose }) {
+  const [numbers, setNumbers] = useState(numbersData);
+
   const [num, setNum] = useState({
     label: "",
     number: "",
@@ -15,30 +24,6 @@ export default function Settings({ ctx, onClose }) {
   const [adjustOpenId, setAdjustOpenId] = useState(null);
   const [adjustValue, setAdjustValue] = useState("");
   const [addOpen, setAddOpen] = useState(false);
-
-  console.log(state);
-
-  const [menuOpenId, setMenuOpenId] = useState(null);
-  const menuRef = useRef(null);
-
-  // Close on outside click / Esc
-  useEffect(() => {
-    const onDocClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpenId(null);
-      }
-    };
-    const onEsc = (e) => {
-      if (e.key === "Escape") setMenuOpenId(null);
-    };
-
-    document.addEventListener("mousedown", onDocClick);
-    document.addEventListener("keydown", onEsc);
-    return () => {
-      document.removeEventListener("mousedown", onDocClick);
-      document.removeEventListener("keydown", onEsc);
-    };
-  }, []);
 
   const openAdjust = (id) => {
     setAdjustOpenId(id);
@@ -52,13 +37,6 @@ export default function Settings({ ctx, onClose }) {
     setAdjustOpenId(null);
     setAdjustValue("");
   };
-
-  // esc to close
-  useEffect(() => {
-    const onEsc = (e) => e.key === "Escape" && setAdjustOpenId(null);
-    document.addEventListener("keydown", onEsc);
-    return () => document.removeEventListener("keydown", onEsc);
-  }, []);
 
   function addNumber() {
     if (!num.label.trim() || !num.number.trim() || !num.channel || !num.kind) {
@@ -78,19 +56,8 @@ export default function Settings({ ctx, onClose }) {
       kind: num.kind,
       manualAdj: 0,
     };
-    const next = {
-      ...state,
-      numbers: [...state.numbers, entry],
-      logs: [
-        ...state.logs,
-        {
-          id: uid("log"),
-          ts: new Date().toISOString(),
-          msg: `নতুন নম্বর: ${entry.label}`,
-        },
-      ],
-    };
-    dispatch({ type: "SAVE", payload: next });
+
+    setNumbers((prev) => [...prev, entry]); // <-- no dispatch
     setNum({ label: "", number: "", channel: num.channel, kind: num.kind });
     setAddOpen(false);
   }
@@ -107,20 +74,7 @@ export default function Settings({ ctx, onClose }) {
       cancelButtonText: "বাতিল",
     }).then((result) => {
       if (result.isConfirmed) {
-        const next = {
-          ...state,
-          numbers: state.numbers.filter((n) => n.id !== id),
-          logs: [
-            ...state.logs,
-            {
-              id: uid("log"),
-              ts: new Date().toISOString(),
-              msg: `নম্বর মুছে ফেলা হয়েছে`,
-            },
-          ],
-        };
-
-        dispatch({ type: "SAVE", payload: next });
+        setNumbers((prev) => prev.filter((n) => n.id !== id));
 
         Swal.fire({
           title: "ডিলিট হয়েছে!",
@@ -133,27 +87,17 @@ export default function Settings({ ctx, onClose }) {
     });
   }
 
-  // keep this helper in your component
   const doAdjust = (id, delta) => {
-    const nextNums = state.numbers.map((n) =>
-      n.id === id ? { ...n, manualAdj: clamp2((n.manualAdj || 0) + delta) } : n
+    setNumbers((prev) =>
+      prev.map((n) =>
+        n.id === id
+          ? { ...n, manualAdj: clamp2((n.manualAdj || 0) + delta) }
+          : n
+      )
     );
-    const next = {
-      ...state,
-      numbers: nextNums,
-      logs: [
-        ...state.logs,
-        {
-          id: uid("log"),
-          ts: new Date().toISOString(),
-          msg: `ব্যালেন্স অ্যাডজাস্ট: ${delta}`,
-        },
-      ],
-    };
-    dispatch({ type: "SAVE", payload: next });
   };
 
-  const balances = computeBalances(state.numbers, state.transactions);
+  const balances = computeBalances(numbers);
 
   return (
     <section className="">
@@ -200,8 +144,8 @@ export default function Settings({ ctx, onClose }) {
           <div className="mt-6">
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
-              {state.numbers.length > 0 ? (
-                state.numbers.map((n) => (
+              {numbers.length > 0 ? (
+                numbers.map((n) => (
                   <div
                     key={n.id}
                     className="rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow transition"
@@ -297,7 +241,7 @@ export default function Settings({ ctx, onClose }) {
                 </thead>
 
                 <tbody>
-                  {state.numbers.map((n) => (
+                  {numbers.map((n) => (
                     <tr
                       key={n.id}
                       className="group rounded-xl border border-gray-300 bg-white hover:shadow-sm transition"
@@ -313,7 +257,7 @@ export default function Settings({ ctx, onClose }) {
                         {n.number}
                       </td>
                       <td className="py-2 px-4 border-r border-r-gray-300">
-                        {n.kind}
+                        {n.type}
                       </td>
                       <td className="py-2 px-4 text-right border-r border-r-gray-300">
                         ৳{fmtBDT(balances[n.id] || 0)}
@@ -324,7 +268,6 @@ export default function Settings({ ctx, onClose }) {
                             autoFocus
                             className="px-3 py-2 rounded-lg text-gray-700 transition border text-left hover:bg-white"
                             onClick={() => {
-                              setMenuOpenId(null);
                               openAdjust(n.id);
                             }}
                           >
@@ -334,7 +277,6 @@ export default function Settings({ ctx, onClose }) {
                           <button
                             className="px-3 py-2 rounded-lg text-gray-700 transition border text-left hover:bg-white"
                             onClick={() => {
-                              setMenuOpenId(null);
                               removeNumber(n.id);
                             }}
                           >
@@ -344,7 +286,7 @@ export default function Settings({ ctx, onClose }) {
                       </td>
                     </tr>
                   ))}
-                  {state.numbers.length === 0 && (
+                  {numbers.length === 0 && (
                     <tr>
                       <td
                         colSpan={5}
@@ -588,143 +530,3 @@ export default function Settings({ ctx, onClose }) {
     </section>
   );
 }
-
-{
-  /* ===== SMS Integration (Demo) ===== */
-}
-// <div className="rounded-2xl border border-gray-300 shadow-sm overflow-hidden bg-white">
-
-//   <div
-//     className="px-5 py-4 flex items-center justify-between"
-//     style={{
-//       background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-//     }}
-//   >
-//     <h3 className="font-semibold text-white tracking-wide">
-//       SMS ইন্টিগ্রেশন
-//     </h3>
-//     <span className="text-xs px-2 py-1 rounded-lg bg-white/15 text-white/90">
-//       Beta
-//     </span>
-//   </div>
-
-//   {/* Body */}
-//   <div className="p-5">
-//     {/* Fields */}
-//     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-//       <Field label="সক্রিয়">
-//         <select
-//           className="border rounded-xl px-3 py-2 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
-//           style={{
-//             borderImageSlice: 1,
-//             borderImageSource:
-//               "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-//             borderWidth: "1px",
-//             borderStyle: "solid",
-//           }}
-//           value={sms.enabled ? "yes" : "no"}
-//           onChange={(e) =>
-//             setSms({ ...sms, enabled: e.target.value === "yes" })
-//           }
-//         >
-//           <option value="no">না</option>
-//           <option value="yes">হ্যাঁ</option>
-//         </select>
-//       </Field>
-
-//       <Field label="Sender ID">
-//         <input
-//           className="border rounded-xl px-3 py-2 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
-//           style={{
-//             borderImageSlice: 1,
-//             borderImageSource:
-//               "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-//             borderWidth: "1px",
-//             borderStyle: "solid",
-//           }}
-//           value={sms.senderId}
-//           onChange={(e) => setSms({ ...sms, senderId: e.target.value })}
-//           placeholder="যেমন: MBM"
-//         />
-//       </Field>
-
-//       <Field label="API Key">
-//         <input
-//           className="border rounded-xl px-3 py-2 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
-//           style={{
-//             borderImageSlice: 1,
-//             borderImageSource:
-//               "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-//             borderWidth: "1px",
-//             borderStyle: "solid",
-//           }}
-//           value={sms.apiKey}
-//           onChange={(e) => setSms({ ...sms, apiKey: e.target.value })}
-//           placeholder="••••••"
-//         />
-//       </Field>
-//     </div>
-
-//     {/* Save button */}
-//     <div className="mt-4">
-//       <button
-//         className="px-4 py-2 rounded-xl text-white shadow-sm hover:shadow transition"
-//         style={{
-//           background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-//         }}
-//         onClick={saveSms}
-//       >
-//         সেভ
-//       </button>
-//     </div>
-
-//     {/* Outbox */}
-//     <div className="mt-6">
-//       <h4 className="font-medium">Outbox</h4>
-//       <ul className="mt-2 space-y-2 max-h-64 overflow-auto pr-2 text-sm">
-//         {state.sms.outbox
-//           .slice()
-//           .reverse()
-//           .map((m) => (
-//             <li
-//               key={m.id}
-//               className="relative border rounded-xl p-3 bg-white hover:shadow-sm transition"
-//             >
-//               {/* Gradient accent bar */}
-//               <span
-//                 className="absolute left-0 top-0 h-full w-1 rounded-l-xl"
-//                 style={{
-//                   background:
-//                     "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-//                 }}
-//               />
-//               <div className="flex items-center justify-between">
-//                 <div className="text-xs text-gray-500">
-//                   {new Date(m.date).toLocaleString()}
-//                 </div>
-//                 <div className="text-xs">
-//                   Status:{" "}
-//                   <span
-//                     className="px-2 py-0.5 rounded-md"
-//                     style={{
-//                       background:
-//                         "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
-//                     }}
-//                   >
-//                     {m.status}
-//                   </span>
-//                 </div>
-//               </div>
-//               <div className="text-sm mt-1">
-//                 To: <span className="font-medium">{m.to}</span>
-//               </div>
-//               <div className="text-xs text-gray-600 mt-1">{m.body}</div>
-//             </li>
-//           ))}
-//         {state.sms.outbox.length === 0 && (
-//           <li className="text-gray-400">খালি</li>
-//         )}
-//       </ul>
-//     </div>
-//   </div>
-// </div>
