@@ -496,7 +496,7 @@ export default function Clients() {
             <div className="fixed inset-0 z-[120] flex items-center justify-center">
               <div
                 className="absolute inset-0 bg-black/30"
-                onClick={payModalOpen}
+                onClick={closePayModal}
                 aria-hidden="true"
               />
               {/* Dialog */}
@@ -632,9 +632,7 @@ export default function Clients() {
                 />
 
                 <div className="p-4">
-                  <h4 className="font-medium text-gray-900">
-                    ক্লায়েন্ট সম্পাদনা করুন
-                  </h4>
+                  <h4 className="font-medium text-gray-900">ক্লায়েন্ট আপডেট</h4>
                   <p className="text-xs text-gray-500 mt-1">
                     নাম ও মোবাইল নম্বর আপডেট করুন।
                   </p>
