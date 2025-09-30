@@ -9,6 +9,7 @@ import { useToast } from "../hooks/useToast";
 import {
   useCreateWalletNumber,
   useDeleteWalletNumber,
+  useEditWalletNumber,
   useWalletNumbers,
 } from "../hooks/useWallet";
 import { Field } from "./Field";
@@ -31,6 +32,8 @@ const MobileBanking = () => {
   const deleteWallet = useDeleteWalletNumber();
 
   const { data, isLoading, isError } = useWalletNumbers();
+
+  const editWallet = useEditWalletNumber();
 
   const [addOpen, setAddOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -107,29 +110,56 @@ const MobileBanking = () => {
   ]);
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
-  const [editData, setEditData] = useState({
-    bank: "",
-    number: "",
-    type: "",
-    balance: "",
-  });
 
-  console.log("waleet", data);
+  const [editData, setEditData] = useState(null);
 
-  // 🟢 Edit handler
-  const handleEditMBank = (index) => {
-    setEditIndex(index);
-    setEditData(wallets[index]);
+  const handleEditMBank = (id) => {
+    const wallet = wallets.find((w) => w._id === id);
+    if (!wallet) return;
+    setEditData(wallet);
     setShowEditModal(true);
   };
 
   const handleUpdateMBank = () => {
-    const updated = [...wallets];
-    updated[editIndex] = editData;
-    setWallets(updated);
-    setShowEditModal(false);
-    setEditIndex(null);
+    console.log("Edit data:", editData);
+    editWallet.mutate(
+      {
+        id: editData._id,
+        walletData: {
+          label: editData.label,
+          number: editData.number,
+          channel: editData.channel,
+          type: editData.type,
+          balance: editData.balance,
+        },
+      },
+      {
+        onMutate: async (updatedWallet) => {
+          // Optimistic UI: update local state immediately
+          setWallets((prev) =>
+            prev.map((w) => (w._id === updatedWallet._id ? updatedWallet : w))
+          );
+        },
+        onError: () => {
+          // Rollback not needed here if you rely on queryClient.invalidateQueries
+          // but you could restore prev state if you want
+          Swal.fire("ত্রুটি", "ওয়ালেট আপডেট ব্যর্থ হয়েছে", "error");
+        },
+        onSuccess: () => {
+          Swal.fire({
+            icon: "success",
+            title: "সফল",
+            text: "ওয়ালেট সফলভাবে আপডেট হয়েছে",
+            showConfirmButton: false,
+            timer: 1200,
+          });
+        },
+        onSettled: () => {
+          setShowEditModal(false);
+          setEditData(null);
+        },
+      }
+    );
   };
 
   const handleDeleteMBank = (id) => {
@@ -254,7 +284,7 @@ const MobileBanking = () => {
                 {/* Edit/Delete Icons */}
                 <div className="absolute top-3 right-3 flex gap-2">
                   <button
-                    onClick={() => handleEditMBank(i)}
+                    onClick={() => handleEditMBank(w._id)}
                     className="text-blue-500 hover:text-blue-700"
                   >
                     <CiEdit size={20} />
@@ -309,46 +339,70 @@ const MobileBanking = () => {
             <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md space-y-6">
               <h2 className="text-xl font-bold mb-4">ওয়ালেট সম্পাদনা করুন</h2>
               <div className="grid grid-cols-1 gap-4">
-                <input
-                  type="text"
-                  value={editData.bank}
-                  onChange={(e) =>
-                    setEditData({ ...editData, bank: e.target.value })
-                  }
-                  className="w-full border rounded-lg p-3"
-                  placeholder="ব্যাংক"
-                />
-                <input
-                  type="text"
-                  value={editData.number}
-                  onChange={(e) =>
-                    setEditData({ ...editData, number: e.target.value })
-                  }
-                  className="w-full border rounded-lg p-3"
-                  placeholder="নম্বর"
-                />
-                <select
-                  value={editData.type}
-                  onChange={(e) =>
-                    setEditData({ ...editData, type: e.target.value })
-                  }
-                  className="w-full border rounded-lg p-3"
-                >
-                  <option value="এজেন্ট">এজেন্ট</option>
-                  <option value="পার্সোনাল">পার্সোনাল</option>
-                </select>
-                <input
-                  type="number"
-                  value={editData.balance}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      balance: Number(e.target.value),
-                    })
-                  }
-                  className="w-full border rounded-lg p-3"
-                  placeholder="ব্যালেন্স"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    লেবেল
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.label}
+                    onChange={(e) =>
+                      setEditData({ ...editData, label: e.target.value })
+                    }
+                    className="w-full border rounded-lg p-3"
+                    placeholder="ব্যাংক"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    নম্বর
+                  </label>
+                  <input
+                    type="number"
+                    value={editData.number}
+                    onChange={(e) =>
+                      setEditData({ ...editData, number: e.target.value })
+                    }
+                    className="w-full border rounded-lg p-3"
+                    placeholder="নম্বর"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    টাইপ
+                  </label>
+                  <select
+                    value={editData.type}
+                    onChange={(e) =>
+                      setEditData({ ...editData, type: e.target.value })
+                    }
+                    className="w-full border rounded-lg p-3"
+                  >
+                    <option value="এজেন্ট">এজেন্ট</option>
+                    <option value="পার্সোনাল">পার্সোনাল</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ব্যালেন্স
+                  </label>
+                  <input
+                    type="number"
+                    value={editData.balance}
+                    onChange={(e) =>
+                      setEditData({
+                        ...editData,
+                        balance: Number(e.target.value),
+                      })
+                    }
+                    className="w-full border rounded-lg p-3"
+                    placeholder="ব্যালেন্স"
+                  />
+                </div>
+
                 <div className="flex gap-3">
                   <button
                     onClick={handleUpdateMBank}

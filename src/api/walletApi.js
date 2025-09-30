@@ -17,3 +17,9 @@ export const deleteWalletNumber = async (id) => {
   const res = await axiosSecure.delete(`/wallet/delete/${id}`);
   return res.data;
 };
+
+// Update wallet number by ID
+export const editWalletNumber = async ({ id, walletData }) => {
+  const res = await axiosSecure.put(`/wallet/edit/${id}`, walletData);
+  return res.data;
+};
