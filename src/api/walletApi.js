@@ -23,3 +23,11 @@ export const editWalletNumber = async ({ id, walletData }) => {
   const res = await axiosSecure.put(`/wallet/edit/${id}`, walletData);
   return res.data;
 };
+
+// Adjust wallet balance (increase or decrease)
+export const addWalletBalance = async ({ id, amount }) => {
+  const res = await axiosSecure.patch(`/wallet/add-balance/${id}`, {
+    amount,
+  });
+  return res.data;
+};

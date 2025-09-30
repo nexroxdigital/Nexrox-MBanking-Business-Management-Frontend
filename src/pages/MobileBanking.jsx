@@ -7,6 +7,7 @@ import Loading from "../components/shared/Loading/Loading";
 import TableComponent from "../components/shared/Table/Table";
 import { useToast } from "../hooks/useToast";
 import {
+  useAdjustWalletBalance,
   useCreateWalletNumber,
   useDeleteWalletNumber,
   useEditWalletNumber,
@@ -40,6 +41,8 @@ const MobileBanking = () => {
   const [selectedWalletId, setSelectedWalletId] = useState("");
   const [adjustValue, setAdjustValue] = useState("");
 
+  const adjustWalletBalance = useAdjustWalletBalance();
+
   const [wallets, setWallets] = useState([]);
 
   // sync query data into local state whenever it changes
@@ -51,20 +54,51 @@ const MobileBanking = () => {
 
   const openAdjust = () => {
     setAdjustOpen(true);
-    setSelectedWalletId(wallets[0]?.id || ""); // default first wallet
+    setSelectedWalletId(wallets[0]?.id || "");
     setAdjustValue("");
   };
 
   const submitAdjust = () => {
+    console.log("selectedWalletId:", selectedWalletId);
     const delta = Number(adjustValue || 0);
-    if (!selectedWalletId) return;
+    if (!selectedWalletId || isNaN(delta)) return;
 
+    // 🟢 Optimistic update
     setWallets((prev) =>
       prev.map((w) =>
-        w.id === Number(selectedWalletId)
+        w.id === selectedWalletId
           ? { ...w, balance: clamp2((w.balance || 0) + delta) }
           : w
       )
+    );
+
+    // 🔄 Call backend
+    adjustWalletBalance.mutate(
+      { id: selectedWalletId, amount: delta },
+      {
+        onError: () => {
+          // Rollback UI if error
+          setWallets((prev) =>
+            prev.map((w) =>
+              w.id === selectedWalletId
+                ? { ...w, balance: clamp2((w.balance || 0) - delta) }
+                : w
+            )
+          );
+
+          Swal.fire("ত্রুটি", "ব্যালেন্স আপডেট ব্যর্থ হয়েছে", "error");
+        },
+        // ✅ Success alert
+        onSuccess: () => {
+          Swal.fire({
+            title: "সফল",
+            text: "ব্যালেন্স সফলভাবে আপডেট হয়েছে!",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        },
+      }
     );
 
     setAdjustOpen(false);
@@ -408,7 +442,7 @@ const MobileBanking = () => {
                     onClick={handleUpdateMBank}
                     className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
                   >
-                    আপডেট করুন
+                    {editWallet.isPending ? "আপডেট হচ্ছে..." : "আপডেট করুন"}
                   </button>
                   <button
                     onClick={() => setShowEditModal(false)}
@@ -613,7 +647,7 @@ const MobileBanking = () => {
                     onChange={(e) => setSelectedWalletId(e.target.value)}
                   >
                     {wallets.map((w) => (
-                      <option key={w.id} value={w.id}>
+                      <option key={w._id} value={w._id}>
                         {w.label} ({w.number})
                       </option>
                     ))}

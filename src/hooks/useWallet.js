@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  addWalletBalance,
   createWalletNumber,
   deleteWalletNumber,
   editWalletNumber,
@@ -76,6 +77,19 @@ export const useEditWalletNumber = () => {
     mutationFn: editWalletNumber,
     onSuccess: () => {
       // Refresh wallet list after update
+      queryClient.invalidateQueries(["walletNumbers"]);
+    },
+  });
+};
+
+// Hook to adjust wallet balance
+export const useAdjustWalletBalance = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: addWalletBalance,
+    onSuccess: () => {
+      // Refresh wallet numbers after adjustment
       queryClient.invalidateQueries(["walletNumbers"]);
     },
   });
