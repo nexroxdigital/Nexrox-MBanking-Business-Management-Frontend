@@ -5,7 +5,7 @@ export const numbersData = [
     number: "01998376434",
     channel: "Nagad",
     type: "Agent",
-    manualAdj: 640000,
+    balance: 640000,
   },
   {
     id: "num_kjs72hf",
@@ -13,7 +13,7 @@ export const numbersData = [
     number: "01712345678",
     channel: "Bkash",
     type: "Agent",
-    manualAdj: 450000,
+    balance: 450000,
   },
   {
     id: "num_qwe92md",
@@ -21,7 +21,7 @@ export const numbersData = [
     number: "01876543210",
     channel: "Rocket",
     type: "Personal",
-    manualAdj: 220000,
+    balance: 220000,
   },
   {
     id: "num_mnb83zx",
@@ -29,7 +29,7 @@ export const numbersData = [
     number: "01911223344",
     channel: "Nagad",
     type: "Personal",
-    manualAdj: 175000,
+    balance: 175000,
   },
   {
     id: "num_vcx64pl",
@@ -37,6 +37,6 @@ export const numbersData = [
     number: "01799887766",
     channel: "Bkash",
     type: "Personal",
-    manualAdj: 390000,
+    balance: 390000,
   },
 ];

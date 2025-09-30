@@ -4,12 +4,12 @@ import { numbersData } from "../data/numbersData";
 import { Field } from "./Field";
 import { clamp2, fmtBDT, uid } from "./utils";
 
-function computeBalances(numbers) {
-  // Just return manualAdj as the balance for each number
-  return Object.fromEntries(
-    numbers.map((n) => [n.id, Number(n.manualAdj || 0)])
-  );
-}
+// function computeBalances(numbers) {
+//   // Just return manualAdj as the balance for each number
+//   return Object.fromEntries(
+//     numbers.map((n) => [n.id, Number(n.manualAdj || 0)])
+//   );
+// }
 
 export default function Settings({ onClose }) {
   const [numbers, setNumbers] = useState(numbersData);
@@ -18,7 +18,8 @@ export default function Settings({ onClose }) {
     label: "",
     number: "",
     channel: "Bkash",
-    kind: "Agent",
+    type: "Agent",
+    balance: 0
   });
 
   const [adjustOpenId, setAdjustOpenId] = useState(null);
@@ -57,7 +58,7 @@ export default function Settings({ onClose }) {
       manualAdj: 0,
     };
 
-    setNumbers((prev) => [...prev, entry]); // <-- no dispatch
+    setNumbers((prev) => [...prev, entry]);
     setNum({ label: "", number: "", channel: num.channel, kind: num.kind });
     setAddOpen(false);
   }
@@ -90,14 +91,12 @@ export default function Settings({ onClose }) {
   const doAdjust = (id, delta) => {
     setNumbers((prev) =>
       prev.map((n) =>
-        n.id === id
-          ? { ...n, manualAdj: clamp2((n.manualAdj || 0) + delta) }
-          : n
+        n.id === id ? { ...n, balance: clamp2((n.balance || 0) + delta) } : n
       )
     );
   };
 
-  const balances = computeBalances(numbers);
+  // const balances = computeBalances(numbers);
 
   return (
     <section className="">
@@ -175,7 +174,7 @@ export default function Settings({ onClose }) {
                               "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
                           }}
                         >
-                          ৳{fmtBDT(balances[n.id] || 0)}
+                          ৳{fmtBDT(n.balance || 0)}
                         </span>
                       </div>
                     </div>
@@ -260,7 +259,7 @@ export default function Settings({ onClose }) {
                         {n.type}
                       </td>
                       <td className="py-2 px-4 text-right border-r border-r-gray-300">
-                        ৳{fmtBDT(balances[n.id] || 0)}
+                        ৳{fmtBDT(n.balance || 0)}
                       </td>
                       <td className="py-2 px-4 text-right rounded-r-xl relative ">
                         <div className="flex justify-end gap-2">
