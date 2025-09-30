@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createWalletNumber, getWalletNumbers } from "../api/walletApi";
+import {
+  createWalletNumber,
+  deleteWalletNumber,
+  getWalletNumbers,
+} from "../api/walletApi";
 
 // Create a new wallet number
 export const useCreateWalletNumber = () => {
@@ -51,3 +55,14 @@ export const useWalletNumbers = () => {
   });
 };
 
+export const useDeleteWalletNumber = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteWalletNumber,
+    onSuccess: () => {
+      // Refresh wallet numbers after delete
+      queryClient.invalidateQueries(["walletNumbers"]);
+    },
+  });
+};

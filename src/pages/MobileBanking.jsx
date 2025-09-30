@@ -6,7 +6,11 @@ import { MobileBankingColumns } from "../components/columns/MobileBankingColumns
 import Loading from "../components/shared/Loading/Loading";
 import TableComponent from "../components/shared/Table/Table";
 import { useToast } from "../hooks/useToast";
-import { useCreateWalletNumber, useWalletNumbers } from "../hooks/useWallet";
+import {
+  useCreateWalletNumber,
+  useDeleteWalletNumber,
+  useWalletNumbers,
+} from "../hooks/useWallet";
 import { Field } from "./Field";
 import { clamp2, todayISO } from "./utils";
 
@@ -23,6 +27,9 @@ const MobileBanking = () => {
   const { showSuccess, showError } = useToast();
   // hook to post new wallet
   const createWallet = useCreateWalletNumber();
+  // 🟢 Delete handler
+  const deleteWallet = useDeleteWalletNumber();
+
   const { data, isLoading, isError } = useWalletNumbers();
 
   const [addOpen, setAddOpen] = useState(false);
@@ -125,8 +132,7 @@ const MobileBanking = () => {
     setEditIndex(null);
   };
 
-  // 🟢 Delete handler
-  const handleDeleteMBank = (index) => {
+  const handleDeleteMBank = (id) => {
     Swal.fire({
       title: "আপনি কি নিশ্চিত?",
       text: "এই মোবাইল ব্যাংকটি ডিলিট হবে!",
@@ -138,13 +144,24 @@ const MobileBanking = () => {
       cancelButtonText: "বাতিল",
     }).then((result) => {
       if (result.isConfirmed) {
-        setWallets(wallets.filter((_, i) => i !== index));
-        Swal.fire({
-          title: "ডিলিট হয়েছে!",
-          text: "অপারেটরটি সফলভাবে ডিলিট হয়েছে।",
-          icon: "success",
-          showConfirmButton: false,
-          timer: 1500,
+        // 🟢 Call mutation
+        deleteWallet.mutate(id, {
+          onSuccess: () => {
+            Swal.fire({
+              title: "ডিলিট হয়েছে!",
+              text: "অপারেটরটি সফলভাবে ডিলিট হয়েছে।",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1500,
+            });
+          },
+          onError: (err) => {
+            Swal.fire({
+              title: "Error!",
+              text: err?.response?.data?.message || "ডিলিট ব্যর্থ হয়েছে",
+              icon: "error",
+            });
+          },
         });
       }
     });
@@ -243,7 +260,7 @@ const MobileBanking = () => {
                     <CiEdit size={20} />
                   </button>
                   <button
-                    onClick={() => handleDeleteMBank(i)}
+                    onClick={() => handleDeleteMBank(w._id)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <MdOutlineDelete size={20} />

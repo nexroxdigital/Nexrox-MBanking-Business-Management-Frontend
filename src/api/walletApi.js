@@ -11,3 +11,9 @@ export const getWalletNumbers = async () => {
   const res = await axiosSecure.get("/wallet");
   return res.data.data;
 };
+
+// Delete wallet number by ID
+export const deleteWalletNumber = async (id) => {
+  const res = await axiosSecure.delete(`/wallet/delete/${id}`);
+  return res.data;
+};
