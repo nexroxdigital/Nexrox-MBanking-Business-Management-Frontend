@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CiEdit } from "react-icons/ci";
 import { MdOutlineDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import { MobileBankingColumns } from "../components/columns/MobileBankingColumns";
+import Loading from "../components/shared/Loading/Loading";
 import TableComponent from "../components/shared/Table/Table";
-import { useCreateWalletNumber } from "../hooks/useWallet";
+import { useToast } from "../hooks/useToast";
+import { useCreateWalletNumber, useWalletNumbers } from "../hooks/useWallet";
 import { Field } from "./Field";
 import { clamp2, todayISO } from "./utils";
 
@@ -18,32 +20,25 @@ const getCurrentTime = () => {
 };
 
 const MobileBanking = () => {
-  // const [wallets, setWallets] = useState([
-  //   { bank: "বিকাশ", number: "017XXXXXXXX", type: "এজেন্ট", balance: 3500 },
-  // ]);
+  const { showSuccess, showError } = useToast();
+  // hook to post new wallet
+  const createWallet = useCreateWalletNumber();
+  const { data, isLoading, isError } = useWalletNumbers();
+
   const [addOpen, setAddOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [selectedWalletId, setSelectedWalletId] = useState("");
   const [adjustValue, setAdjustValue] = useState("");
 
-  const [wallets, setWallets] = useState([
-    {
-      id: 1,
-      label: "Bkash Agent",
-      number: "017XXXXXXXX",
-      channel: "bkash",
-      type: "Agent",
-      balance: 3500,
-    },
-    {
-      id: 2,
-      label: "Nagad Agent",
-      number: "017XXXXXXXX",
-      channel: "bkash",
-      type: "Agent",
-      balance: 3500,
-    },
-  ]);
+  const [wallets, setWallets] = useState([]);
+
+  // sync query data into local state whenever it changes
+  useEffect(() => {
+    if (data) {
+      setWallets(data);
+    }
+  }, [data]);
+
   const openAdjust = () => {
     setAdjustOpen(true);
     setSelectedWalletId(wallets[0]?.id || ""); // default first wallet
@@ -113,8 +108,7 @@ const MobileBanking = () => {
     balance: "",
   });
 
-  // hook to post new wallet
-  const createWallet = useCreateWalletNumber();
+  console.log("waleet", data);
 
   // 🟢 Edit handler
   const handleEditMBank = (index) => {
@@ -178,7 +172,7 @@ const MobileBanking = () => {
 
     createWallet.mutate(newWallet, {
       onSuccess: () => {
-        alert("Wallet number added!");
+        showSuccess("Wallet number added!");
         setNum({
           label: "",
           number: "",
@@ -188,7 +182,7 @@ const MobileBanking = () => {
         });
       },
       onError: (err) => {
-        alert(err.response?.data?.message || "Failed to add wallet number");
+        showError(err.response?.data?.message || "Failed to add wallet number");
       },
     });
 
@@ -231,59 +225,63 @@ const MobileBanking = () => {
         </div>
 
         {/* Wallets List */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {wallets.map((w, i) => (
-            <div
-              key={i}
-              className="relative group p-5 rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-xl transition transform hover:-translate-y-1 flex flex-col justify-between"
-            >
-              {/* Edit/Delete Icons */}
-              <div className="absolute top-3 right-3 flex gap-2">
-                <button
-                  onClick={() => handleEditMBank(i)}
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  <CiEdit size={20} />
-                </button>
-                <button
-                  onClick={() => handleDeleteMBank(i)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <MdOutlineDelete size={20} />
-                </button>
-              </div>
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {wallets.map((w, i) => (
+              <div
+                key={i}
+                className="relative group p-5 rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-xl transition transform hover:-translate-y-1 flex flex-col justify-between"
+              >
+                {/* Edit/Delete Icons */}
+                <div className="absolute top-3 right-3 flex gap-2">
+                  <button
+                    onClick={() => handleEditMBank(i)}
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    <CiEdit size={20} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteMBank(i)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <MdOutlineDelete size={20} />
+                  </button>
+                </div>
 
-              {/* Top Section with Bank Name */}
-              <div className="flex flex-col items-start gap-2">
-                <h3 className="text-xl font-bold text-gray-900">{w.label}</h3>
-                <span
-                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                    w.type === "Agent"
-                      ? "bg-purple-100 text-purple-700"
-                      : "bg-teal-100 text-teal-700"
-                  }`}
-                >
-                  {w.type}
-                </span>
-              </div>
+                {/* Top Section with Bank Name */}
+                <div className="flex flex-col items-start gap-2">
+                  <h3 className="text-xl font-bold text-gray-900">{w.label}</h3>
+                  <span
+                    className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      w.type === "Agent"
+                        ? "bg-purple-100 text-purple-700"
+                        : "bg-teal-100 text-teal-700"
+                    }`}
+                  >
+                    {w.type}
+                  </span>
+                </div>
 
-              {/* Number */}
-              <p className="mt-4 text-gray-800 text-lg font-mono tracking-wide">
-                {w.number}
-              </p>
-
-              {/* Balance */}
-              <div className="mt-4">
-                <span className="text-sm text-gray-500 font-semibold">
-                  ব্যালেন্স
-                </span>
-                <p className="text-2xl font-bold text-green-600">
-                  ৳{w.balance.toLocaleString("bn-BD")}
+                {/* Number */}
+                <p className="mt-4 text-gray-800 text-lg font-mono tracking-wide">
+                  {w.number}
                 </p>
+
+                {/* Balance */}
+                <div className="mt-4">
+                  <span className="text-sm text-gray-500 font-semibold">
+                    ব্যালেন্স
+                  </span>
+                  <p className="text-2xl font-bold text-green-600">
+                    ৳{(w.balance ?? 0).toLocaleString("bn-BD")}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Transactions Table */}
         <TableComponent data={transactions} columns={MobileBankingColumns} />

@@ -7,7 +7,7 @@ export const createWalletNumber = async (walletData) => {
 };
 
 // Get all wallet numbers
-// export const getWalletNumbers = async () => {
-//   const res = await axiosInstance.get("/wallet-numbers");
-//   return res.data;
-// };
+export const getWalletNumbers = async () => {
+  const res = await axiosSecure.get("/wallet");
+  return res.data.data;
+};
