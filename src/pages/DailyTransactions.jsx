@@ -608,7 +608,15 @@ const DailyTransactions = () => {
         )}
 
         {/* <TransactionTable data={transactions} /> */}
-        <TableComponent data={transactions} columns={transactionColumn} />
+        <TableComponent
+          data={transactions}
+          columns={transactionColumn}
+          pagination=""
+          setPagination=""
+          pageCount=""
+          isFetching={false}
+          isLoading={false}
+        />
       </div>
     </div>
   );

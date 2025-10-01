@@ -232,7 +232,15 @@ export default function ClientTransactions() {
 
           {/* Table */}
           {filtered.length > 0 ? (
-            <TableComponent data={filtered} columns={AllTransactionColumns} />
+            <TableComponent
+              data={filtered}
+              columns={AllTransactionColumns}
+              pagination=""
+              setPagination=""
+              pageCount=""
+              isFetching={false}
+              isLoading={false}
+            />
           ) : (
             <div className="text-center py-10 text-gray-500 dark:text-gray-400">
               কোনো ট্রান্সাকশন পাওয়া যায়নি

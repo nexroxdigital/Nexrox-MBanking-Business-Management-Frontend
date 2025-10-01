@@ -67,7 +67,7 @@ export function computeBalances(numbers, transactions) {
     numbers.map((n) => [n.id, Number(n.manualAdj || 0)])
   );
   transactions.forEach((t) => {
-    const sign = t.type === "Cash Out" ? +1 : -1; 
+    const sign = t.type === "Cash Out" ? +1 : -1;
     balances[t.numberId] = clamp2(
       (balances[t.numberId] || 0) + sign * Number(t.amount || 0)
     );

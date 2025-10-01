@@ -1,8 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { ClientsColumns } from "../components/columns/ClientsColumns";
 import TableComponent from "../components/shared/Table/Table";
-import { clientsData } from "../data/clientsData";
+import TableLoading from "../components/shared/TableLoading/TableLoading";
+import {
+  useAddNewClient,
+  useClients,
+  useDeleteClient,
+  useUpdateClient,
+} from "../hooks/useClient";
+import { useToast } from "../hooks/useToast";
 import { clamp2, fmtBDT, todayISO, uid } from "./utils";
 
 function computeClientStats(clients) {
@@ -22,7 +29,27 @@ function computeClientStats(clients) {
 }
 
 export default function Clients() {
-  const [clients, setClients] = useState(clientsData);
+  const { showError } = useToast();
+  const [clients, setClients] = useState([]);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 5,
+  });
+
+  const { data, isLoading, isFetching } = useClients(
+    pagination.pageIndex,
+    pagination.pageSize
+  );
+
+  useEffect(() => {
+    if (data?.data) {
+      setClients(data?.data); // sync fetched data into state
+    }
+  }, [data]);
+
+  const addNewClientMutation = useAddNewClient();
+  const deleteClientMutation = useDeleteClient();
+
   const [transactions, setTransactions] = useState([
     {
       id: "tx_1",
@@ -58,45 +85,12 @@ export default function Clients() {
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editClientId, setEditClientId] = useState(null);
-  const [editClient, setEditClient] = useState({ name: "", number: "" });
-
-  function openEditModal(clientId) {
-    const client = clients.find((c) => c.id === clientId);
-    if (!client) return;
-    setEditClientId(clientId);
-
-    // Copy everything except id & payments
-    const { id, payments, ...editableFields } = client;
-    setEditClient(editableFields);
-
-    setEditModalOpen(true);
-  }
-
-  function closeEditModal() {
-    setEditModalOpen(false);
-    setEditClientId(null);
-    setEditClient({ name: "", number: "" });
-  }
-
-  function updateClient() {
-    if (!editClient.name.trim() || !editClient.number) return;
-
-    setClients((prev) =>
-      prev.map((c) =>
-        c.id === editClientId
-          ? { ...c, ...editClient, name: editClient.name.trim() } // keep payments, id untouched
-          : c
-      )
-    );
-
-    closeEditModal();
-  }
-
-  const computed = useMemo(() => computeClientStats(clients), [clients]);
+  const [editClient, setEditClient] = useState({ name: "", phone: "" });
+  const updateClientMutation = useUpdateClient();
 
   const [newClient, setNewClient] = useState({
     name: "",
-    number: "",
+    phone: "",
   });
   const [selected, setSelected] = useState(null);
 
@@ -107,6 +101,175 @@ export default function Clients() {
   const [payAmount, setPayAmount] = useState("");
   const [payNote, setPayNote] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
+
+  const openAddModal = () => {
+    setNewClient({ name: "", phone: "" });
+    setAddModalOpen(true);
+  };
+
+  const closeAddModal = () => {
+    setAddModalOpen(false);
+  };
+
+  function addClient() {
+    // console.log("newClient", newClient);
+
+    if (!newClient.name.trim() || !newClient.phone) return;
+
+    const optimisticClient = {
+      _id: Date.now().toString(),
+      name: newClient.name.trim(),
+      phone: newClient.phone,
+      optimistic: true,
+    };
+
+    const prevClients = [...clients];
+
+    // 🟢 Optimistic update
+    setClients((prev) => [...prev, optimisticClient]);
+
+    // 🔄 Call backend
+    addNewClientMutation.mutate(optimisticClient, {
+      onSuccess: (savedClient) => {
+        // Replace optimistic client with actual one from backend
+        setClients((prev) =>
+          prev.map((c) => (c._id === optimisticClient._id ? savedClient : c))
+        );
+      },
+      onError: () => {
+        //  Rollback on error
+        setClients(prevClients);
+        Swal.fire("ত্রুটি", "ক্লায়েন্ট যোগ ব্যর্থ হয়েছে!", "error");
+      },
+      onSettled: () => {
+        // Reset modal and input fields
+        // setNewClient({ name: "", phone: "" });
+        setAddModalOpen(false);
+      },
+    });
+  }
+
+  const deleteClient = (clientId) => {
+    console.log("clientId", clientId);
+    const client = clients.find((c) => c._id === clientId);
+
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: `${client?.name || "এই ক্লায়েন্ট"} ডিলিট হয়ে যাবে!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        //  Optimistic update
+        setClients((prev) => prev.filter((c) => c._id !== clientId));
+        if (selected === clientId) setSelected(null);
+
+        //  Call backend
+        deleteClientMutation.mutate(clientId, {
+          onSuccess: () => {
+            Swal.fire({
+              title: "ডিলিট হয়েছে!",
+              text: "ক্লায়েন্ট সফলভাবে ডিলিট করা হয়েছে।",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1100,
+            });
+          },
+          onError: () => {
+            Swal.fire({
+              title: "ভুল হয়েছে!",
+              text: "ক্লায়েন্ট ডিলিট করা যায়নি।",
+              icon: "error",
+            });
+          },
+        });
+      }
+    });
+  };
+
+  function openEditModal(clientId) {
+    const client = clients.find((c) => c._id === clientId);
+    if (!client) {
+      showError("Client not found");
+      return;
+    }
+    setEditClientId(clientId);
+ 
+    setEditClient({
+      name: client.name,
+      phone: client.phone,
+    });
+
+    setEditModalOpen(true);
+  }
+
+  function closeEditModal() {
+    setEditModalOpen(false);
+    setEditClientId(null);
+    setEditClient({ name: "", phone: "" });
+  }
+
+  function handleUpdateClient() {
+    if (!editClient.name.trim() || !editClient.phone) {
+      showError("Name and phone are required");
+      return;
+    }
+
+    console.log("editClient", editClient);
+
+    const prevClients = [...clients];
+
+    // Optimistic update
+    setClients((prev) =>
+      prev.map((c) =>
+        c._id === editClientId
+          ? {
+              ...c,
+              name: editClient.name.trim(),
+              phone: editClient.phone,
+            }
+          : c
+      )
+    );
+
+    //  Call backend
+    updateClientMutation.mutate(
+      {
+        id: editClientId,
+        name: editClient.name.trim(),
+        phone: editClient.phone,
+      },
+      {
+        onSuccess: (savedClient) => {
+          // Optionally replace optimistic with actual server response
+          setClients((prev) =>
+            prev.map((c) => (c._id === editClientId ? savedClient : c))
+          );
+           
+
+          Swal.fire({
+            title: "সফল",
+            text: "ক্লায়েন্ট সফলভাবে আপডেট হয়েছে!",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 1100,
+          });
+        },
+        onError: () => {
+          // 🔙 Rollback if failed
+          setClients(prevClients);
+          showError("ক্লায়েন্ট আপডেট ব্যর্থ হয়েছে!");
+        },
+        onSettled: () => {
+          closeEditModal();
+        },
+      }
+    );
+  }
 
   // open from button
   const openPayModal = (clientId) => {
@@ -121,14 +284,6 @@ export default function Clients() {
     setPayClientId(null);
     setPayAmount("");
     setPayNote("");
-  };
-
-  const openAddModal = () => {
-    setNewClient({ name: "", number: "" });
-    setAddModalOpen(true);
-  };
-  const closeAddModal = () => {
-    setAddModalOpen(false);
   };
 
   // submit (same data rules as your original: amount must be > 0 after clamp2)
@@ -151,19 +306,6 @@ export default function Clients() {
     return () => document.removeEventListener("keydown", onEsc);
   }, [payModalOpen, addModalOpen]);
 
-  function addClient() {
-    if (!newClient.name.trim() || !newClient.number) return;
-    const c = {
-      id: uid("client"),
-      name: newClient.name.trim(),
-      number: newClient.number,
-      payments: [],
-    };
-    setClients((prev) => [...prev, c]);
-    setNewClient({ name: "", number: "" });
-    setAddModalOpen(false);
-  }
-
   function addPayment(clientId, amount, note = "") {
     setClients((prev) =>
       prev.map((c) => {
@@ -185,63 +327,11 @@ export default function Clients() {
     );
   }
 
-  const rows = clients.map((c) => {
-    const totalSell = computed.byClient[c.id]?.sell || 0;
-    const paid = (c.payments || []).reduce(
-      (s, p) => s + Number(p.amount || 0),
-      0
-    );
-    const due = Math.max(0, totalSell - paid);
-    return { id: c.id, name: c.name, totalSell, paid, due };
-  });
-
-  console.log("rowssssss", rows);
-
   const selClient = clients.find((c) => c.id === selected);
+
   const selTx = transactions
     .filter((t) => t.clientId === selected)
     .sort((a, b) => b.date.localeCompare(a.date));
-
-  // delete client handler
-  function deleteClient(clientId) {
-    const client = clients.find((c) => c.id === clientId);
-
-    Swal.fire({
-      title: "আপনি কি নিশ্চিত?",
-      text: `${client?.name || "এই ক্লায়েন্ট"} ডিলিট হয়ে যাবে!`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#009C91",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
-      cancelButtonText: "বাতিল",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setClients((prev) => prev.filter((c) => c.id !== clientId));
-        setTransactions((prev) =>
-          prev.map((t) =>
-            t.clientId === clientId
-              ? {
-                  ...t,
-                  clientId: null,
-                  clientName: client?.name || "(Deleted Client)",
-                }
-              : t
-          )
-        );
-
-        if (selected === clientId) setSelected(null);
-
-        Swal.fire({
-          title: "ডিলিট হয়েছে!",
-          text: "ক্লায়েন্ট সফলভাবে ডিলিট করা হয়েছে।",
-          icon: "success",
-          showConfirmButton: false,
-          timer: 1500,
-        });
-      }
-    });
-  }
 
   return (
     <section className="grid md:grid-cols-5 gap-6 mt-10">
@@ -271,16 +361,32 @@ export default function Clients() {
 
         {/* Body */}
         <div className="p-3 sm:p-5 bg-white">
+          {isLoading ? (
+            <TableLoading />
+          ) : clients.length < 1 ? (
+            <div className="flex flex-col items-center justify-center gap-4 text-center py-12">
+              <div className="text-lg font-bold text-gray-900 dark:text-white">
+                ক্লায়েন্ট তালিকা খালি
+              </div>
+            </div>
+          ) : (
+            <TableComponent
+              data={clients}
+              columns={ClientsColumns(
+                setSelected,
+                openPayModal,
+                deleteClient,
+                openEditModal
+              )}
+              pagination={pagination}
+              setPagination={setPagination}
+              pageCount={data?.pagination?.totalPages ?? -1}
+              isFetching={isFetching}
+              isLoading={isLoading}
+            />
+          )}
+
           {/* Desktop Table Layout */}
-          <TableComponent
-            data={clients}
-            columns={ClientsColumns(
-              setSelected,
-              openPayModal,
-              deleteClient,
-              openEditModal
-            )}
-          />
 
           {addModalOpen && (
             <div className="fixed inset-0 z-[125] flex items-center justify-center">
@@ -321,11 +427,6 @@ export default function Clients() {
                   {/* Form*/}
                   <form
                     onSubmit={(e) => {
-                      const formEl = e.currentTarget;
-                      if (!formEl.reportValidity()) {
-                        e.preventDefault();
-                        return;
-                      }
                       e.preventDefault();
                       addClient();
                     }}
@@ -362,11 +463,11 @@ export default function Clients() {
                         title="Valid BD mobile: 11 digits, starts with 01"
                         className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border focus:ring-2 border-[#6314698e] focus:ring-[#862C8A33]"
                         placeholder="যেমন: 018XXXXXXXX"
-                        value={newClient.number}
+                        value={newClient.phone}
                         onChange={(e) =>
                           setNewClient((prev) => ({
                             ...prev,
-                            number: e.target.value,
+                            phone: e.target.value,
                           }))
                         }
                       />
@@ -375,20 +476,22 @@ export default function Clients() {
                     <div className="flex items-center justify-end gap-2 pt-1">
                       <button
                         type="button"
-                        className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                        className="px-3 py-2 rounded-lg text-red-500 hover:bg-gray-50 border border-red-300 hover:text-red-600 transition cursor-pointer"
                         onClick={closeAddModal}
                       >
-                        Cancel
+                        বাতিল
                       </button>
                       <button
                         type="submit"
-                        className="px-4 py-2 rounded-lg text-white shadow-sm hover:shadow transition"
+                        className="px-4 py-2 rounded-lg text-white shadow-sm hover:shadow transition cursor-pointer"
                         style={{
                           background:
                             "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
                         }}
                       >
-                        Submit
+                        {addNewClientMutation.isPending
+                          ? "অপেক্ষা করুন..."
+                          : "যোগ করুন"}
                       </button>
                     </div>
                   </form>
@@ -546,7 +649,7 @@ export default function Clients() {
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      updateClient();
+                      handleUpdateClient();
                     }}
                     className="mt-4 grid gap-3"
                   >
@@ -583,11 +686,11 @@ export default function Clients() {
                         title="Valid BD mobile: 11 digits, starts with 01"
                         className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border focus:ring-2 border-[#6314698e] focus:ring-[#862C8A33]"
                         placeholder="যেমন: 018XXXXXXXX"
-                        value={editClient.number}
+                        value={editClient.phone}
                         onChange={(e) =>
                           setEditClient((prev) => ({
                             ...prev,
-                            number: e.target.value,
+                            phone: e.target.value,
                           }))
                         }
                       />
@@ -600,7 +703,7 @@ export default function Clients() {
                         className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                         onClick={closeEditModal}
                       >
-                        Cancel
+                        বাতিল
                       </button>
                       <button
                         type="submit"
@@ -609,8 +712,11 @@ export default function Clients() {
                           background:
                             "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
                         }}
+                        disabled={updateClientMutation.isPending}
                       >
-                        Update
+                        {updateClientMutation.isPending
+                          ? "অপেক্ষা করুন..."
+                          : "আপডেট করুন"}
                       </button>
                     </div>
                   </form>

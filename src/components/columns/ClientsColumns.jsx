@@ -8,7 +8,7 @@ export const ClientsColumns = (
   setSelected,
   openPayModal,
   deleteClient,
-  editClientModal
+  openEditModal
 ) => [
   // Name column
   columnHelper.accessor("name", {
@@ -38,7 +38,7 @@ export const ClientsColumns = (
   }),
 
   // Total Sell
-  columnHelper.accessor("totalSell", {
+  columnHelper.accessor("totalSale", {
     header: () => (
       <span className="py-3 px-4 text-gray-100 text-right backdrop-blur whitespace-nowrap">
         মোট বিক্রি
@@ -112,7 +112,7 @@ export const ClientsColumns = (
 
           <button
             className=" hover:bg-blue-50 transition relative flex items-center justify-center"
-            onClick={() => editClientModal(r.id)}
+            onClick={() => openEditModal(r._id)}
             title="Edit Client"
           >
             <MdOutlineEdit size={20} />
@@ -120,7 +120,7 @@ export const ClientsColumns = (
 
           <button
             className="text-red-600 hover:bg-red-50 transition relative flex items-center justify-center"
-            onClick={() => deleteClient(r.id)}
+            onClick={() => deleteClient(r._id)}
             title="Delete Client"
           >
             <MdDeleteOutline size={20} />

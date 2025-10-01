@@ -1,9 +1,11 @@
 const Pagination = ({ table }) => {
-  const pageCount = table.getPageCount();
+  const pageCount = Math.max(table.getPageCount(), 0);
   const currentPage = table.getState().pagination.pageIndex;
 
   // Generate visible page numbers
   const getPageNumbers = () => {
+    if (pageCount === 0) return []; 
+
     if (pageCount <= 5) {
       return [...Array(pageCount).keys()];
     }

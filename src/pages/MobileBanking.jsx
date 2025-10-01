@@ -54,12 +54,12 @@ const MobileBanking = () => {
 
   const openAdjust = () => {
     setAdjustOpen(true);
-    setSelectedWalletId(wallets[0]?.id || "");
+    setSelectedWalletId(wallets[0]?._id || "");
     setAdjustValue("");
   };
 
   const submitAdjust = () => {
-    console.log("selectedWalletId:", selectedWalletId);
+    // console.log("selectedWalletId:", selectedWalletId);
     const delta = Number(adjustValue || 0);
     if (!selectedWalletId || isNaN(delta)) return;
 
@@ -309,23 +309,28 @@ const MobileBanking = () => {
         {isLoading ? (
           <Loading />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
             {wallets.map((w, i) => (
               <div
                 key={i}
-                className="relative group p-5 rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-xl transition transform hover:-translate-y-1 flex flex-col justify-between"
+                className="relative group p-4 rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 flex flex-col justify-between group"
               >
+                <div className="absolute inset-0 group-hover:bg-black/5 rounded-2xl"></div>
                 {/* Edit/Delete Icons */}
-                <div className="absolute top-3 right-3 flex gap-2">
+                <div
+                  className="absolute icon-actions flex top-3 right-3 gap-2
+               opacity-0
+               transition-all"
+                >
                   <button
                     onClick={() => handleEditMBank(w._id)}
-                    className="text-blue-500 hover:text-blue-700"
+                    className="text-blue-500 hover:text-blue-700 cursor-pointer"
                   >
                     <CiEdit size={20} />
                   </button>
                   <button
                     onClick={() => handleDeleteMBank(w._id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 cursor-pointer"
                   >
                     <MdOutlineDelete size={20} />
                   </button>
@@ -365,7 +370,15 @@ const MobileBanking = () => {
         )}
 
         {/* Transactions Table */}
-        <TableComponent data={transactions} columns={MobileBankingColumns} />
+        <TableComponent
+          data={transactions}
+          columns={MobileBankingColumns}
+          pagination=""
+          setPagination=""
+          pageCount=""
+          isFetching={false}
+          isLoading={false}
+        />
 
         {/* 🟢 Edit Wallet Modal */}
         {showEditModal && (

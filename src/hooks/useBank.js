@@ -1,0 +1,68 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  addNewBank,
+  adjustBankBalance,
+  deleteBank,
+  getBanks,
+  updateBank,
+} from "../api/bankApi";
+
+// Hook to create a new bank
+export const useAddNewBank = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: addNewBank,
+    onSuccess: () => {
+      // Refresh bank list after creation (when you add a GET later)
+      queryClient.invalidateQueries(["banks"]);
+    },
+  });
+};
+
+// Hook to fetch all banks
+export const useBanks = () => {
+  return useQuery({
+    queryKey: ["banks"],
+    queryFn: getBanks,
+  });
+};
+
+// Hook to delete a bank
+export const useDeleteBank = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteBank,
+    onSuccess: () => {
+      // Refresh bank list after deletion
+      queryClient.invalidateQueries(["banks"]);
+    },
+  });
+};
+
+// Hook to update a bank
+export const useUpdateBank = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateBank,
+    onSuccess: () => {
+      // Refresh bank list after update
+      queryClient.invalidateQueries(["banks"]);
+    },
+  });
+};
+
+// Hook to adjust bank balance
+export const useAdjustBankBalance = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: adjustBankBalance,
+    onSuccess: () => {
+      // Refresh bank list after balance adjustment
+      queryClient.invalidateQueries(["banks"]);
+    },
+  });
+};
