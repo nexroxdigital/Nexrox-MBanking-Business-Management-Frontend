@@ -82,6 +82,7 @@ export const useClientTransactions = (id) => {
     queryKey: ["transactions", id],
     queryFn: ({ pageParam = 0 }) =>
       getTransactionsByClient({ id, skip: pageParam, limit: 10 }),
+    enabled: !!id,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < 10) return undefined; // no more data
       return allPages.flat().length; // next skip = how many we already loaded
