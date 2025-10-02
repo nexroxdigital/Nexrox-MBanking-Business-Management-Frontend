@@ -3,85 +3,30 @@ import Swal from "sweetalert2";
 import { ClientsColumns } from "../components/columns/ClientsColumns";
 import TableComponent from "../components/shared/Table/Table";
 import TableLoading from "../components/shared/TableLoading/TableLoading";
+import SingleClientTransaction from "../components/SingleClientTransaction/SingleClientTransaction";
 import {
   useAddNewClient,
+  useAdjustClientPayment,
   useClients,
   useDeleteClient,
   useUpdateClient,
 } from "../hooks/useClient";
 import { useToast } from "../hooks/useToast";
-import { clamp2, fmtBDT, todayISO, uid } from "./utils";
-
-function computeClientStats(clients) {
-  const byClient = {};
-  let totalDue = 0;
-
-  clients.forEach((c) => {
-    byClient[c.id] = {
-      sell: Number(c.totalSell || 0),
-      paid: Number(c.paid || 0),
-      due: Number(c.due || 0),
-    };
-    totalDue += Number(c.due || 0);
-  });
-
-  return { byClient, totalDue };
-}
+import { clamp2 } from "./utils";
 
 export default function Clients() {
-  const { showError } = useToast();
+  const [isSendMessage, setIsSendMessage] = useState(false);
+  const [customMessage, setCustomMessage] = useState("");
+
+  const { showError, showSuccess } = useToast();
   const [clients, setClients] = useState([]);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 5,
   });
 
-  const { data, isLoading, isFetching } = useClients(
-    pagination.pageIndex,
-    pagination.pageSize
-  );
-
-  useEffect(() => {
-    if (data?.data) {
-      setClients(data?.data); // sync fetched data into state
-    }
-  }, [data]);
-
   const addNewClientMutation = useAddNewClient();
   const deleteClientMutation = useDeleteClient();
-
-  const [transactions, setTransactions] = useState([
-    {
-      id: "tx_1",
-      clientId: "client_88fgyn2",
-      clientName: "Mita Store",
-      date: "2025-01-15",
-      channel: "Bkash",
-      type: "Cash In",
-      numberType: "Agent",
-      numberLabel: "Agent 01",
-      amount: 2000,
-      commission: 30,
-      profit: 30,
-      total: 2030,
-      note: "First payment",
-    },
-    {
-      id: "tx_2",
-      clientId: "client_88fgyn2",
-      clientName: "Mita Store",
-      date: "2025-02-10",
-      channel: "Nagad",
-      type: "Cash Out",
-      numberType: "Personal",
-      numberLabel: "Personal 02",
-      amount: 1500,
-      commission: 20,
-      profit: 20,
-      total: 1520,
-      note: "Second payment",
-    },
-  ]);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editClientId, setEditClientId] = useState(null);
@@ -94,13 +39,22 @@ export default function Clients() {
   });
   const [selected, setSelected] = useState(null);
 
-  // const computed = useMemo(() => computeClientStats(state), [state]);
-
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [payClientId, setPayClientId] = useState(null);
   const [payAmount, setPayAmount] = useState("");
-  const [payNote, setPayNote] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const adjustPaymentMutation = useAdjustClientPayment();
+
+  const { data, isLoading, isFetching } = useClients(
+    pagination.pageIndex,
+    pagination.pageSize
+  );
+
+  useEffect(() => {
+    if (data?.data) {
+      setClients(data?.data); // sync fetched data into state
+    }
+  }, [data]);
 
   const openAddModal = () => {
     setNewClient({ name: "", phone: "" });
@@ -198,7 +152,7 @@ export default function Clients() {
       return;
     }
     setEditClientId(clientId);
- 
+
     setEditClient({
       name: client.name,
       phone: client.phone,
@@ -249,7 +203,6 @@ export default function Clients() {
           setClients((prev) =>
             prev.map((c) => (c._id === editClientId ? savedClient : c))
           );
-           
 
           Swal.fire({
             title: "সফল",
@@ -271,11 +224,12 @@ export default function Clients() {
     );
   }
 
-  // open from button
+  // open pay modal
   const openPayModal = (clientId) => {
     setPayClientId(clientId);
     setPayAmount("");
-    setPayNote("");
+    setIsSendMessage(false);
+    setCustomMessage("");
     setPayModalOpen(true);
   };
 
@@ -283,14 +237,15 @@ export default function Clients() {
     setPayModalOpen(false);
     setPayClientId(null);
     setPayAmount("");
-    setPayNote("");
   };
 
-  // submit (same data rules as your original: amount must be > 0 after clamp2)
   const submitPayModal = () => {
     const amount = clamp2(payAmount);
-    if (!amount || amount <= 0) return; // keep same behavior: do nothing if invalid
-    addPayment(payClientId, amount, payNote || "");
+    if (!amount || amount <= 0) return;
+
+    // update paid/due
+    addPayment(payClientId, amount, isSendMessage, customMessage);
+
     closePayModal();
   };
 
@@ -306,32 +261,48 @@ export default function Clients() {
     return () => document.removeEventListener("keydown", onEsc);
   }, [payModalOpen, addModalOpen]);
 
-  function addPayment(clientId, amount, note = "") {
+  function addPayment(clientId, amount, isSendMessage, customMessage) {
+    // Optimistic UI update
     setClients((prev) =>
       prev.map((c) => {
-        if (c.id !== clientId) return c;
+        if (c._id !== clientId) return c;
 
         const newPaid = (c.paid || 0) + Number(amount);
-        const newDue = Math.max(0, (c.totalSell || 0) - newPaid);
+        const newDue = Math.max(0, (c.totalSale || 0) - newPaid);
 
         return {
           ...c,
           paid: newPaid,
           due: newDue,
-          payments: [
-            ...(c.payments || []),
-            { id: uid("pay"), date: todayISO(), amount, note },
-          ],
         };
       })
     );
+
+    // Backend update
+    adjustPaymentMutation.mutate(
+      {
+        id: clientId,
+        amount: Number(amount),
+        isSendMessage,
+        message: customMessage,
+      },
+      {
+        onSuccess: () => {
+          showSuccess(`${amount} টাকা সফলভাবে অ্যাড হয়েছে`);
+        },
+        onError: () => {
+          Swal.fire({
+            icon: "error",
+            title: "পেমেন্ট ব্যর্থ",
+            text: "পেমেন্ট অ্যাড করতে সমস্যা হয়েছে",
+          });
+
+          // Rollback UI if API fails
+          setClients((prev) => [...prev]);
+        },
+      }
+    );
   }
-
-  const selClient = clients.find((c) => c.id === selected);
-
-  const selTx = transactions
-    .filter((t) => t.clientId === selected)
-    .sort((a, b) => b.date.localeCompare(a.date));
 
   return (
     <section className="grid md:grid-cols-5 gap-6 mt-10">
@@ -507,7 +478,6 @@ export default function Clients() {
                 onClick={closePayModal}
                 aria-hidden="true"
               />
-              {/* Dialog */}
               <div
                 role="dialog"
                 aria-modal="true"
@@ -522,7 +492,6 @@ export default function Clients() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Gradient top bar */}
                 <div
                   className="h-1 w-full rounded-t-2xl"
                   style={{
@@ -533,11 +502,10 @@ export default function Clients() {
 
                 <div className="p-4">
                   <h4 className="font-medium text-gray-900">পেমেন্ট অ্যাড</h4>
-                  <p className="text-xs text-gray-500 mt-1">
-                    পরিমাণ দিন (৳). ধনাত্মক সংখ্যা হতে হবে।
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1">টাকার পরিমাণ দিন</p>
 
                   <div className="mt-4 grid gap-3">
+                    {/* Amount */}
                     <div>
                       <label className="text-xs text-gray-600 mb-1 block">
                         পরিমাণ (৳)
@@ -558,32 +526,53 @@ export default function Clients() {
                         placeholder="যেমন: 500"
                         value={payAmount}
                         onChange={(e) => setPayAmount(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") submitPayModal();
-                        }}
                       />
                     </div>
 
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">
-                        নোট (ঐচ্ছিক)
-                      </label>
+                    {/* Send message checkbox */}
+                    <div className="flex items-center gap-2">
                       <input
-                        type="text"
-                        className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none"
-                        style={{
-                          borderImageSlice: 1,
-                          borderImageSource:
-                            "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                          borderWidth: "1px",
-                          borderStyle: "solid",
+                        className="w-4 h-4 cursor-pointer accent-[#009C91]"
+                        id="message"
+                        type="checkbox"
+                        checked={isSendMessage}
+                        onChange={(e) => {
+                          setIsSendMessage(e.target.checked);
+                          if (e.target.checked) {
+                            setCustomMessage(
+                              `প্রিয় গ্রাহক, আপনার টাকা ৳${
+                                payAmount || 0
+                              } সফলভাবে গ্রহণ করা হয়েছে। ধন্যবাদ।`
+                            );
+                          } else {
+                            setCustomMessage("");
+                          }
                         }}
-                        placeholder="যেমন: মার্চেন্ট পেমেন্ট"
-                        value={payNote}
-                        onChange={(e) => setPayNote(e.target.value)}
                       />
+                      <label
+                        htmlFor="message"
+                        className="text-sm text-gray-700 cursor-pointer"
+                      >
+                        Send message
+                      </label>
                     </div>
 
+                    {/* Message textarea (conditionally shown) */}
+                    {isSendMessage && (
+                      <div>
+                        <label className="text-xs text-gray-600 mb-1 block">
+                          Message
+                        </label>
+                        <textarea
+                          rows="3"
+                          className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border"
+                          value={customMessage}
+                          onChange={(e) => setCustomMessage(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Buttons */}
                     <div className="flex items-center justify-end gap-2 pt-1">
                       <button
                         className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
@@ -594,7 +583,7 @@ export default function Clients() {
                       <button
                         className="px-4 py-2 rounded-lg text-white shadow-sm hover:shadow transition disabled:opacity-50"
                         onClick={submitPayModal}
-                        disabled={!clamp2(payAmount) || clamp2(payAmount) <= 0} // same rule as original
+                        disabled={!clamp2(payAmount) || clamp2(payAmount) <= 0}
                         style={{
                           background:
                             "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
@@ -739,7 +728,7 @@ export default function Clients() {
           <h3 className="font-semibold text-white tracking-wide text-lg md:text-xl">
             ক্লায়েন্টভিত্তিক ট্রান্সাকশন
           </h3>
-          {selClient && (
+          {selected && (
             <button
               className="text-xs px-2 py-1 rounded-lg bg-white/90 text-gray-900 hover:bg-white transition"
               onClick={() => setSelected(null)}
@@ -750,81 +739,14 @@ export default function Clients() {
         </div>
 
         {/* Body */}
-        <div className="p-5 bg-white">
-          {!selClient && (
-            <div className="text-gray-500 text-sm">
+        <div className="p-5 bg-white max-h-[520px] overflow-y-auto">
+          {!selected && (
+            <div className="text-gray-700 text-sm">
               বাম পাশ থেকে একটি ক্লায়েন্ট সিলেক্ট করুন
             </div>
           )}
 
-          {selClient && (
-            <div className="mt-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-gray-900">
-                    {selClient.name}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    নম্বর: {selClient.number}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    মোট {selTx.length} ট্রান্সাকশন
-                  </div>
-                </div>
-              </div>
-
-              {/* Timeline list */}
-              <ul className="mt-4 space-y-3 h-full overflow-auto pr-2 text-sm">
-                {selTx.map((t) => (
-                  <li
-                    key={t.id}
-                    className="rounded-xl border border-gray-100 p-3 hover:shadow-sm transition relative"
-                  >
-                    {/* Gradient accent bar */}
-                    <span
-                      className="absolute left-0 top-0 h-full w-1 rounded-l-xl"
-                      style={{
-                        background:
-                          "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                      }}
-                    />
-
-                    <div className="flex items-start justify-between gap-3 pl-2">
-                      <div className="text-gray-700">
-                        <div className="font-medium">
-                          {t.date} · {t.channel} {t.type}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          কমিশন: ৳{fmtBDT(t.commission)} • {t.numberLabel}
-                        </div>
-                        {t.note && (
-                          <div className="text-xs mt-1 text-gray-600">
-                            নোট: {t.note}
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <span
-                          className="inline-block px-3 py-1 rounded-lg font-semibold text-gray-900 whitespace-nowrap"
-                          style={{
-                            background:
-                              "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
-                          }}
-                        >
-                          ৳{fmtBDT(t.amount)}
-                        </span>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-
-                {selTx.length === 0 && (
-                  <li className="text-gray-400">কোন ট্রান্সাকশন নেই</li>
-                )}
-              </ul>
-            </div>
-          )}
+          {selected && <SingleClientTransaction id={selected} />}
         </div>
       </div>
     </section>

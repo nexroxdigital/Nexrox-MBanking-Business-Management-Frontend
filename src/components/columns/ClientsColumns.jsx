@@ -21,8 +21,8 @@ export const ClientsColumns = (
       const r = row.original;
       return (
         <button
-          className="inline-flex items-center gap-2 font-medium text-gray-900 hover:opacity-90 transition"
-          onClick={() => setSelected(r.id)}
+          className="inline-flex items-center gap-2 font-medium text-gray-900 hover:opacity-90 transition cursor-pointer hover:underline"
+          onClick={() => setSelected(r._id)}
           title="ট্রান্সাকশন দেখুন"
         >
           <span
@@ -98,7 +98,7 @@ export const ClientsColumns = (
         <div className="flex gap-1.5 justify-end">
           <button
             className="px-3 py-1.5 rounded-lg border text-gray-700 hover:bg-white transition relative whitespace-nowrap"
-            onClick={() => openPayModal(r.id)}
+            onClick={() => openPayModal(r._id)}
             style={{
               borderImageSlice: 1,
               borderImageSource:

@@ -25,3 +25,25 @@ export const updateClient = async ({ id, name, phone }) => {
   const res = await axiosSecure.patch(`/client/update/${id}`, { name, phone });
   return res.data.data;
 };
+
+// Adjust client payment (with optional SMS)
+export const adjustClientPayment = async ({
+  id,
+  amount,
+  isSendMessage,
+  message,
+}) => {
+  const res = await axiosSecure.patch(`/client/adjust-payment/${id}`, {
+    amount,
+    isSendMessage,
+    message,
+  });
+  return res.data;
+};
+
+export const getTransactionsByClient = async ({ id, skip, limit }) => {
+  const res = await axiosSecure.get(`/client/transaction/${id}`, {
+    params: { skip, limit },
+  });
+  return res.data.data;
+};

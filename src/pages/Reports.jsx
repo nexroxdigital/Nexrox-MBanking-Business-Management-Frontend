@@ -93,7 +93,15 @@ export default function Reports() {
         </div>
 
         <div className="p-5">
-          <TableComponent data={reportData} columns={ReportColumns} />
+          <TableComponent
+            data={reportData}
+            columns={ReportColumns}
+            pagination=""
+            setPagination=""
+            pageCount=""
+            isFetching={false}
+            isLoading={false}
+          />
         </div>
       </div>
 

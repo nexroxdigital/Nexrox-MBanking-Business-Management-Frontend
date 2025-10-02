@@ -31,7 +31,7 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
 
   return (
     <>
-      <nav className="hidden md:block relative mt-6">
+      <nav className="hidden lg:block relative mt-6">
         {/* Background with glassmorphism */}
         <div className="relative backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 rounded-2xl p-2  border border-gray-200 dark:border-gray-800/20">
           {/* Floating background orb */}

@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addNewClient,
+  adjustClientPayment,
   deleteClient,
   getClients,
+  getTransactionsByClient,
   updateClient,
 } from "../api/clientApi";
 
@@ -54,6 +56,35 @@ export const useUpdateClient = () => {
     onSuccess: () => {
       // ✅ Refresh clients list after update
       queryClient.invalidateQueries(["clients"]);
+    },
+  });
+};
+
+// Hook to adjust client payment
+export const useAdjustClientPayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: adjustClientPayment,
+    onSuccess: () => {
+      // Refresh client list after payment adjustment
+      queryClient.invalidateQueries(["clients"]);
+      // You can also invalidate ["transactions"] if you show history
+      queryClient.invalidateQueries(["transactions"]);
+    },
+  });
+};
+
+import { useInfiniteQuery } from "@tanstack/react-query";
+
+export const useClientTransactions = (id) => {
+  return useInfiniteQuery({
+    queryKey: ["transactions", id],
+    queryFn: ({ pageParam = 0 }) =>
+      getTransactionsByClient({ id, skip: pageParam, limit: 10 }),
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 10) return undefined; // no more data
+      return allPages.flat().length; // next skip = how many we already loaded
     },
   });
 };
