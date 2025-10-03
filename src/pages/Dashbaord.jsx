@@ -220,13 +220,13 @@ export default function Dashboard() {
               <table className="w-full text-sm table-fixed">
                 <thead className="bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white">
                   <tr className="text-left border-0 border-b border-b-gray-400">
-                    <th className="py-2 px-4 sticky top-0 border-0 border-r border-r-gray-100">
+                    <th className="py-3 px-4  text-left sticky top-0 border-0 border-r border-r-gray-100">
                       নম্বর
                     </th>
-                    <th className="py-2 px-4 text-right border-0 border-r border-r-gray-100">
+                    <th className="py-3 px-4 text-left border-0 border-r border-r-gray-100">
                       লেনদেন
                     </th>
-                    <th className="py-2 px-4 text-right">মোট</th>
+                    <th className="py-3 px-4 text-left">মোট</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -235,7 +235,7 @@ export default function Dashboard() {
                       key={n.number}
                       className="group rounded-xl border border-gray-100 bg-white hover:shadow-sm transition"
                     >
-                      <td className="py-2 px-4 rounded-l-xl border-0 border-r border-r-gray-400 border-b border-b-gray-200">
+                      <td className="py-4 px-4 rounded-l-xl border-0 border-r border-r-gray-400 border-b border-b-gray-200">
                         <div className="flex items-center gap-2">
                           <span
                             className="inline-block w-2 h-2 rounded-full"
@@ -249,10 +249,10 @@ export default function Dashboard() {
                           </span>
                         </div>
                       </td>
-                      <td className="py-2 px-4 text-right text-gray-800 border-0 border-r border-r-gray-400 border-b border-b-gray-200">
+                      <td className="py-4 px-6 text-left text-gray-800 border-0 border-r border-r-gray-400 border-b border-b-gray-200">
                         {n.count}
                       </td>
-                      <td className="py-2 px-4 text-right rounded-r-xl border-b border-b-gray-200">
+                      <td className="py-4 px-4 text-left rounded-r-xl border-b border-b-gray-200">
                         <span
                           className="px-2.5 py-1 rounded-lg font-semibold text-gray-900"
                           style={{
