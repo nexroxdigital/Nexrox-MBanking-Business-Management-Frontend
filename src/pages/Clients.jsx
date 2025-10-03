@@ -262,6 +262,8 @@ export default function Clients() {
   }, [payModalOpen, addModalOpen]);
 
   function addPayment(clientId, amount, isSendMessage, customMessage) {
+    const prevClients = [...clients];
+
     // Optimistic UI update
     setClients((prev) =>
       prev.map((c) => {
@@ -298,7 +300,7 @@ export default function Clients() {
           });
 
           // Rollback UI if API fails
-          setClients((prev) => [...prev]);
+          setClients(prevClients);
         },
       }
     );

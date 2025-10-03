@@ -3,7 +3,8 @@ import { fmtBDT, monthKey, todayISO } from "./utils";
 
 import { CiMoneyCheck1 } from "react-icons/ci";
 import { FaListAlt } from "react-icons/fa";
-import { activityLogs } from "../data/activityLogs";
+import AllTransactions from "../components/AllTransactions/AllTransactions";
+import { useTransactions } from "../hooks/useTransaction";
 
 const sums = {
   byDay: {
@@ -112,7 +113,7 @@ export default function Dashboard() {
         {/* Modern bottom panels */}
         <div className="grid gap-8 lg:grid-cols-2">
           <NumberBalances />
-          <ActivityLog activityLogs={activityLogs} />
+          <ActivityLog />
         </div>
       </div>
 
@@ -333,7 +334,12 @@ function NumberBalances() {
   );
 }
 
-function ActivityLog({ activityLogs }) {
+function ActivityLog() {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useTransactions(6);
+
+  const allTransactions = data?.pages.flatMap((p) => p.data) || [];
+
   return (
     <div className="group relative backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 rounded-lg p-8 shadow-md border border-gray-300 border-b-transparent dark:border-gray-800/20 transition-all duration-300">
       {/* Animated background */}
@@ -341,7 +347,17 @@ function ActivityLog({ activityLogs }) {
 
       <PanelTitle title="লগ" icon={<FaListAlt />} />
 
-      <div className="mt-6 max-h-80 overflow-y-auto pr-2">
+      <AllTransactions
+        transactions={allTransactions}
+        fetchNextPage={fetchNextPage}
+        hasNextPage={hasNextPage}
+      />
+
+      {isFetchingNextPage && (
+        <p className="p-2 text-center text-gray-500">লোড হচ্ছে...</p>
+      )}
+
+      {/* <div className="mt-6 max-h-80 overflow-y-auto pr-2">
         <div className="space-y-3">
           {activityLogs
             .slice()
@@ -377,7 +393,7 @@ function ActivityLog({ activityLogs }) {
             </div>
           )}
         </div>
-      </div>
+      </div> */}
 
       {/* Floating decoration */}
       <div className="absolute -left-8 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-r from-[#009C91]/10 to-[#862C8A]/10 blur-2xl group-hover:scale-110 transition-transform duration-500" />

@@ -33,7 +33,7 @@ export default function SingleClientTransaction({ id }) {
                   নম্বর: {clientInfo[0]?.client?.phone}
                 </div>
                 <div className="text-sm text-gray-500">
-                  মোট {clientInfo.length} ট্রান্সাকশন
+                  মোট {fmtBDT(clientInfo.length)} ট্রান্সাকশন
                 </div>
               </div>
             </div>
@@ -56,11 +56,15 @@ export default function SingleClientTransaction({ id }) {
               <div className="flex items-start justify-between gap-3 pl-2">
                 <div className="text-gray-700">
                   <div className="font-medium">
-                    {new Date(txn.createdAt).toLocaleString()}
+                    {new Date(txn.createdAt).toLocaleString("bn-BD", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </div>
-                  {/* <div className="text-xs text-gray-500">
-                    কমিশন: ৳{fmtBDT(t.commission)} • {t.numberLabel}
-                  </div> */}
+
                   {txn?.note && (
                     <div className="text-xs mt-1 text-gray-600">
                       নোট: {txn?.note}
@@ -84,7 +88,9 @@ export default function SingleClientTransaction({ id }) {
           </>
         ))}
         {clientInfo.length === 0 && (
-          <li className="text-gray-700 text-center py-5">কোন ট্রান্সাকশন নেই</li>
+          <li className="text-gray-700 text-center py-5">
+            কোন ট্রান্সাকশন নেই
+          </li>
         )}
       </ul>
 

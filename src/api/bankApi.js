@@ -27,3 +27,17 @@ export const adjustBankBalance = async ({ id, amount }) => {
   const res = await axiosSecure.patch(`/bank/adjust-balance/${id}`, { amount });
   return res.data;
 };
+
+// Create a new bank transaction
+export const createBankTransaction = async (txnData) => {
+  const res = await axiosSecure.post("/bank/create-transaction", txnData);
+  return res.data;
+};
+
+// Get all bank transactions with pagination
+export const getBankTransactions = async ({ page, limit }) => {
+  const res = await axiosSecure.get("/bank/transactions", {
+    params: { page, limit },
+  });
+  return res.data;
+};

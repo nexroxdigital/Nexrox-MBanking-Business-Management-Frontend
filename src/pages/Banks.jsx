@@ -2,14 +2,18 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import { BankTxnColumns } from "../components/columns/BankTxnColumns";
+import { CardLoading } from "../components/shared/CardLoading/CardLoading";
 import TableComponent from "../components/shared/Table/Table";
 import {
   useAddNewBank,
   useAdjustBankBalance,
   useBanks,
+  useBankTransactions,
+  useCreateBankTransaction,
   useDeleteBank,
   useUpdateBank,
 } from "../hooks/useBank";
+import { useToast } from "../hooks/useToast";
 import { fmtBDT, todayISO } from "./utils";
 
 const getCurrentTime = () => {
@@ -22,6 +26,7 @@ const getCurrentTime = () => {
 };
 
 const BankTransactions = () => {
+  const { showSuccess } = useToast();
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [selectedBankId, setSelectedBankId] = useState("");
   const [balanceValue, setBalanceValue] = useState("");
@@ -30,6 +35,7 @@ const BankTransactions = () => {
   const deleteBankMutation = useDeleteBank();
   const updateBankMutation = useUpdateBank();
   const adjustBankBalanceMutation = useAdjustBankBalance();
+  const createTxnMutation = useCreateBankTransaction();
 
   const { data, isLoading, isError } = useBanks();
 
@@ -44,35 +50,26 @@ const BankTransactions = () => {
     }
   }, [data]);
 
-  const [transactions, setTransactions] = useState([
-    {
-      date: todayISO(),
-      time: getCurrentTime(),
-      bank: "ডাচ্-বাংলা ব্যাংক",
-      branch: "ঢাকা",
-      accountName: "সাকিব",
-      receiverName: "সাকিবুল হাসান",
-      amount: 50000,
-      fee: 200,
-      pay: 49800,
-    },
-    {
-      date: todayISO(),
-      time: getCurrentTime(),
-      bank: "ডাচ্-বাংলা ব্যাংক",
-      branch: "ঢাকা",
-      accountName: "সাকিব",
-      receiverName: "সাকিবুল হাসান",
-      amount: 50000,
-      fee: 200,
-      pay: 49800,
-    },
-  ]);
+  const [transactions, setTransactions] = useState([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
 
   const [showBankModal, setShowBankModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showTxnModal, setShowTxnModal] = useState(false);
   const [editId, setEditId] = useState(null);
+
+  const {
+    data: txnData,
+    isLoading: txnLoading,
+    isFetching: txnFetching,
+  } = useBankTransactions(pagination.pageIndex + 1, pagination.pageSize);
+
+  // Sync query data into local state (for optimistic UI)
+  useEffect(() => {
+    if (txnData?.data) {
+      setTransactions(txnData.data);
+    }
+  }, [txnData]);
 
   const bankForm = useForm({
     defaultValues: {
@@ -103,7 +100,9 @@ const BankTransactions = () => {
       bank: "",
       branch: "",
       senderName: "",
+      senderAccount: "",
       receiverName: "",
+      receiverAccount: "",
       amount: "",
       fee: "",
       pay: "",
@@ -232,18 +231,37 @@ const BankTransactions = () => {
   };
 
   const handleAddTransaction = (data) => {
-    setTransactions([...transactions, data]);
-    txnForm.reset({
-      date: todayISO(),
-      time: getCurrentTime(),
-      bank: "",
-      branch: "",
-      receiverName: "",
-      amount: "",
-      fee: "",
-      pay: "",
+    const optimisticTxn = {
+      ...data,
+      _id: Date.now().toString(),
+      optimistic: true,
+    };
+    const prevTransactions = [...transactions];
+
+    // Optimistic update
+    setTransactions((prev) => [...prev, optimisticTxn]);
+
+    createTxnMutation.mutate(data, {
+      onSuccess: (savedTxn) => {
+        showSuccess("লেনদেন সফলভাবে যোগ করা হয়েছে");
+        setTransactions((prev) =>
+          prev.map((t) => (t._id === optimisticTxn._id ? savedTxn : t))
+        );
+        txnForm.reset();
+        setShowTxnModal(false);
+      },
+      onError: (error) => {
+        const serverMsg =
+          error.response?.data?.message || "লেনদেন যোগ ব্যর্থ হয়েছে";
+
+        Swal.fire({
+          icon: "error",
+          title: "লেনদেন ব্যর্থ",
+          text: serverMsg,
+        });
+        setTransactions(prevTransactions);
+      },
     });
-    setShowTxnModal(false);
   };
 
   const handleAdjustBalance = () => {
@@ -293,13 +311,13 @@ const BankTransactions = () => {
   const getBranches = (bankName) => [
     ...new Set(banks.filter((b) => b.bank === bankName).map((b) => b.branch)),
   ];
-  const getSenders = (bankName, branch) => [
-    ...new Set(
-      banks
-        .filter((b) => b.bank === bankName && b.branch === branch)
-        .map((b) => b.accountName)
-    ),
-  ];
+  const getSenders = (bankName, branch) =>
+    banks
+      .filter((b) => b.bank === bankName && b.branch === branch)
+      .map((b) => ({
+        name: b.accountName,
+        account: b.accountNumber,
+      }));
 
   return (
     <div className="mt-10">
@@ -338,53 +356,65 @@ const BankTransactions = () => {
         </div>
 
         {/* Bank List */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
-          {isLoading && (
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-md hover:shadow-xl transition transform hover:-translate-y-1 font-medium relative">
-              <span className="font-bold text-2xl text-gray-900">
-                Loading...
-              </span>
-            </div>
-          )}
-          {banks.map((b, i) => (
-            <div
-              key={i}
-              className="p-5 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-md hover:shadow-xl transition transform hover:-translate-y-1 font-medium relative"
-            >
-              <span className="font-bold text-2xl text-gray-900">{b.bank}</span>
-              <span className="block text-gray-700 mt-2">শাখা: {b.branch}</span>
-              <span className="block text-gray-700">
-                অ্যাকাউন্ট: {b.accountNumber}
-              </span>
-              <span className="block text-sm text-gray-500 mt-1">
-                হোল্ডার: {b.accountName}
-              </span>
-              <span className="block text-sm text-gray-600 mt-1">
-                ব্যালেন্স: ৳{fmtBDT(b.balance)}
-              </span>
-
-              {/* Actions */}
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={() => {
-                    setEditId(b._id);
-                    editForm.reset(b);
-                    setShowEditModal(true);
-                  }}
-                  className="px-3 py-1 text-sm rounded-lg bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
-                >
-                  এডিট
-                </button>
-                <button
-                  onClick={() => handleDeleteBank(b._id)}
-                  className="px-3 py-1 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 cursor-pointer"
-                >
-                  ডিলিট
-                </button>
+        {isLoading ? (
+          <CardLoading />
+        ) : isError ? (
+          <p className="text-center text-red-500">
+            ব্যাংক লোড করতে সমস্যা হয়েছে
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+            {isLoading && (
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-md hover:shadow-xl transition transform hover:-translate-y-1 font-medium relative">
+                <span className="font-bold text-2xl text-gray-900">
+                  Loading...
+                </span>
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+            {banks.map((b, i) => (
+              <div
+                key={i}
+                className="p-5 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-md hover:shadow-xl transition transform hover:-translate-y-1 font-medium relative"
+              >
+                <span className="font-bold text-2xl text-gray-900">
+                  {b.bank}
+                </span>
+                <span className="block text-gray-700 mt-2">
+                  শাখা: {b.branch}
+                </span>
+                <span className="block text-gray-700">
+                  অ্যাকাউন্ট: {b.accountNumber}
+                </span>
+                <span className="block text-sm text-gray-500 mt-1">
+                  হোল্ডার: {b.accountName}
+                </span>
+                <span className="block text-sm text-gray-600 mt-1">
+                  ব্যালেন্স: ৳{fmtBDT(b.balance)}
+                </span>
+
+                {/* Actions */}
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setEditId(b._id);
+                      editForm.reset(b);
+                      setShowEditModal(true);
+                    }}
+                    className="px-3 py-1 text-sm rounded-lg bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                  >
+                    এডিট
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBank(b._id)}
+                    className="px-3 py-1 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 cursor-pointer"
+                  >
+                    ডিলিট
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Add Bank Modal */}
         {showBankModal && (
@@ -578,9 +608,12 @@ const BankTransactions = () => {
                 <div className="col-span-full flex gap-3">
                   <button
                     type="submit"
-                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
+                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold disabled:opacity-70"
+                    disabled={updateBankMutation.isPending}
                   >
-                    আপডেট করুন
+                    {updateBankMutation.isPending
+                      ? "অপেক্ষা করুন..."
+                      : "আপডেট করুন"}
                   </button>
                   <button
                     type="button"
@@ -651,7 +684,7 @@ const BankTransactions = () => {
         {/* Add Transaction Modal */}
         {showTxnModal && (
           <div
-            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4"
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 h-screen w-screen"
             onClick={() => setShowTxnModal(false)}
           >
             <div
@@ -732,17 +765,30 @@ const BankTransactions = () => {
                   <select
                     className="w-full border rounded-lg p-3"
                     {...txnForm.register("senderName", { required: true })}
+                    onChange={(e) => {
+                      const selected = getSenders(
+                        txnForm.watch("bank"),
+                        txnForm.watch("branch")
+                      ).find((s) => s.name === e.target.value);
+                      txnForm.setValue("senderName", selected?.name || "");
+                      txnForm.setValue(
+                        "senderAccount",
+                        selected?.account || ""
+                      );
+                    }}
                   >
                     <option value="">প্রেরক নির্বাচন করুন</option>
                     {getSenders(
                       txnForm.watch("bank"),
                       txnForm.watch("branch")
                     ).map((s, i) => (
-                      <option key={i} value={s}>
-                        {s}
+                      <option key={i} value={s.name}>
+                        {s.name}
                       </option>
                     ))}
                   </select>
+                  {/* hidden input so senderAccount goes into form data */}
+                  <input type="hidden" {...txnForm.register("senderAccount")} />
                 </div>
 
                 <div>
@@ -754,6 +800,18 @@ const BankTransactions = () => {
                     placeholder="গ্রাহক"
                     className="w-full border rounded-lg p-3"
                     {...txnForm.register("receiverName", { required: true })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    গ্রাহক একাউন্ট নম্বর
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="গ্রাহক একাউন্ট নম্বর"
+                    className="w-full border rounded-lg p-3"
+                    {...txnForm.register("receiverAccount", { required: true })}
                   />
                 </div>
 
@@ -777,7 +835,7 @@ const BankTransactions = () => {
                     type="number"
                     placeholder="ফি"
                     className="w-full border rounded-lg p-3"
-                    {...txnForm.register("fee", { required: true })}
+                    {...txnForm.register("fee")}
                   />
                 </div>
 
@@ -789,16 +847,19 @@ const BankTransactions = () => {
                     type="number"
                     placeholder="পে"
                     className="w-full border rounded-lg p-3"
-                    {...txnForm.register("pay", { required: true })}
+                    {...txnForm.register("pay")}
                   />
                 </div>
 
                 <div className="col-span-full flex gap-3">
                   <button
                     type="submit"
-                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
+                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold disabled:opacity-75"
+                    disabled={createTxnMutation.isPending}
                   >
-                    সংরক্ষণ করুন
+                    {createTxnMutation.isPending
+                      ? "সংরক্ষণ হচ্ছে..."
+                      : "সংরক্ষণ করুন"}
                   </button>
                   <button
                     type="button"
@@ -816,11 +877,11 @@ const BankTransactions = () => {
         <TableComponent
           data={transactions}
           columns={BankTxnColumns}
-          pagination=""
-          setPagination=""
-          pageCount=""
-          isFetching={false}
-          isLoading={false}
+          pagination={pagination}
+          setPagination={setPagination}
+          pageCount={txnData?.pagination?.totalPages ?? -1}
+          isFetching={txnFetching}
+          isLoading={txnLoading}
         />
       </div>
     </div>

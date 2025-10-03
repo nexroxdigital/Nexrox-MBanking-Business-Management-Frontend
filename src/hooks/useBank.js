@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addNewBank,
   adjustBankBalance,
+  createBankTransaction,
   deleteBank,
   getBanks,
+  getBankTransactions,
   updateBank,
 } from "../api/bankApi";
 
@@ -64,5 +66,30 @@ export const useAdjustBankBalance = () => {
       // Refresh bank list after balance adjustment
       queryClient.invalidateQueries(["banks"]);
     },
+  });
+};
+
+export const useCreateBankTransaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createBankTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["transactions", "banks"]);
+    },
+    onError: (error) => {
+      console.error(
+        "Error creating bank transaction:",
+        error.response?.data || error.message
+      );
+    },
+  });
+};
+
+export const useBankTransactions = (page, limit) => {
+  return useQuery({
+    queryKey: ["transactions", page, limit],
+    queryFn: () => getBankTransactions({ page, limit }),
+    keepPreviousData: true, //keeps old data while fetching new page
   });
 };
