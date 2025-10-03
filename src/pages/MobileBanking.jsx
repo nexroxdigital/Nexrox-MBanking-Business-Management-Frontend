@@ -29,7 +29,7 @@ const MobileBanking = () => {
   const { showSuccess, showError } = useToast();
   // hook to post new wallet
   const createWallet = useCreateWalletNumber();
-  // 🟢 Delete handler
+  //  Delete handler
   const deleteWallet = useDeleteWalletNumber();
 
   const { data, isLoading, isError } = useWalletNumbers();
@@ -109,8 +109,8 @@ const MobileBanking = () => {
   const [num, setNum] = useState({
     label: "",
     number: "",
-    channel: "Bkash",
-    type: "Agent",
+    channel: "",
+    type: "",
     balance: 0,
   });
 
@@ -232,7 +232,7 @@ const MobileBanking = () => {
   };
 
   function addNumber() {
-    if (!num.label.trim() || !num.number.trim() || !num.channel || !num.type) {
+    if (!num.label.trim() || !num.number || !num.channel || !num.type) {
       Swal.fire({
         icon: "error",
         title: "সব তথ্য পূরণ করুন",
@@ -242,7 +242,7 @@ const MobileBanking = () => {
     }
 
     const newWallet = {
-      label: num.label.trim(),
+      label: num.label,
       number: num.number,
       channel: num.channel,
       type: num.type,
@@ -380,7 +380,7 @@ const MobileBanking = () => {
           isLoading={false}
         />
 
-        {/* 🟢 Edit Wallet Modal */}
+        {/*  Edit Wallet Modal */}
         {showEditModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
             <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md space-y-6">
@@ -535,6 +535,8 @@ const MobileBanking = () => {
 
                     <Field label="ফোন নম্বর">
                       <input
+                        type="tel"
+                        pattern="^01[3-9][0-9]{8}$"
                         className="border border-[#6314698e] rounded-xl px-3 py-2 bg-white/90 text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#862C8A33] w-full"
                         value={num.number}
                         onChange={(e) =>
@@ -558,13 +560,11 @@ const MobileBanking = () => {
                             setNum({ ...num, channel: e.target.value })
                           }
                         >
-                          {["Bkash", "Nagad", "Rocket", "Bill Payment"].map(
-                            (c) => (
-                              <option key={c} value={c}>
-                                {c}
-                              </option>
-                            )
-                          )}
+                          {["বিকাশ", "নগদ", "রকেট", "উপায়"].map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
                         </select>
                       </Field>
 
@@ -574,10 +574,10 @@ const MobileBanking = () => {
                           className="border border-[#6314698e] rounded-xl px-3 py-1.5 bg-white/90 outline-none focus:ring-2 focus:ring-[#862C8A33]"
                           value={num.type}
                           onChange={(e) =>
-                            setNum({ ...num, kind: e.target.value })
+                            setNum({ ...num, type: e.target.value })
                           }
                         >
-                          {["Agent", "Personal"].map((c) => (
+                          {["এজেন্ট", "পার্সোনাল"].map((c) => (
                             <option key={c} value={c}>
                               {c}
                             </option>

@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { fmtBDT, monthKey, todayISO } from "./utils";
+import { daysAgo, fmtBDT, monthKey, todayISO } from "./utils";
 
 import { CiMoneyCheck1 } from "react-icons/ci";
 import { FaListAlt } from "react-icons/fa";
 import AllTransactions from "../components/AllTransactions/AllTransactions";
+import { ReportColumns } from "../components/columns/ReportColumns";
+import TableComponent from "../components/shared/Table/Table";
+import { reportData } from "../data/reportData";
 import { useTransactions } from "../hooks/useTransaction";
+import { useWalletNumbers } from "../hooks/useWallet";
 
 const sums = {
   byDay: {
@@ -17,6 +21,33 @@ const sums = {
     "2025-08": { sell: 87000, profit: 16200, due: 12000 },
   },
 };
+const numberSummary = [
+  {
+    number: "Bkash Agent 01",
+    amount: 84747,
+    count: 4,
+  },
+  {
+    number: "Bkash Agent 02",
+    amount: 65320,
+    count: 3,
+  },
+  {
+    number: "Nagad Agent 01",
+    amount: 42100,
+    count: 2,
+  },
+  {
+    number: "Rocket Agent 01",
+    amount: 37250,
+    count: 5,
+  },
+  {
+    number: "Bkash Personal 01",
+    amount: 15980,
+    count: 1,
+  },
+];
 
 export default function Dashboard() {
   const today = todayISO();
@@ -32,8 +63,10 @@ export default function Dashboard() {
   const monthSums = sums.byMonth[month] || { sell: 0, profit: 0, due: 0 };
   const daySums = sums.byDay[today] || { sell: 0, profit: 0, due: 0 };
 
+  const [range, setRange] = useState({ from: daysAgo(30), to: todayISO() });
+
   return (
-    <div className="min-h-[calc(100vh-200px)] bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
+    <div className="min-h-[calc(100vh-200px)] transition-colors duration-300">
       {/* Modern background with floating orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-[#862C8A]/20 to-[#009C91]/20 blur-3xl animate-pulse" />
@@ -44,7 +77,7 @@ export default function Dashboard() {
       <div className="relative z-10 container mx-auto py-8">
         {/* Modern header with glassmorphism effect */}
         <header className="mb-8 backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 rounded-3xl p-6 shadow-md border border-white/20 dark:border-gray-800/20">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 sm:gap-4">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-[#862C8A] to-[#009C91] bg-clip-text text-transparent">
                 ড্যাশবোর্ড
@@ -56,7 +89,8 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-3">
+
+            <div className="flex flex-col items-start sm:items-end gap-3">
               <div
                 onClick={() => setOpeningModalOpen(true)}
                 className="px-4 py-2 rounded-lg cursor-pointer bg-gradient-to-r from-[#99359fe7] to-[#028980ec] border border-[#862C8A]/20 dark:border-[#009C91]/20"
@@ -112,8 +146,8 @@ export default function Dashboard() {
 
         {/* Modern bottom panels */}
         <div className="grid gap-8 lg:grid-cols-2">
-          <NumberBalances />
           <ActivityLog />
+          <NumberBalances />
         </div>
       </div>
 
@@ -160,6 +194,133 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      <div className="grid md:grid-cols-5 gap-6">
+        {/* Number-wise Report */}
+        <div className="md:col-span-2 rounded-2xl border border-gray-300 shadow-sm overflow-hidden bg-white">
+          {/* Gradient Header */}
+          <div
+            className="px-5 py-4 flex items-center justify-between"
+            style={{
+              background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+            }}
+          >
+            <h3 className="font-semibold text-white">নম্বারভিত্তিক রিপোর্ট</h3>
+          </div>
+
+          <div className="p-5">
+            <div
+              className="overflow-x-auto"
+              style={{
+                borderImageSlice: 1,
+                borderImageSource:
+                  "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+              }}
+            >
+              <table className="w-full text-sm table-fixed">
+                <thead className="bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white">
+                  <tr className="text-left border-0 border-b border-b-gray-400">
+                    <th className="py-2 px-4 sticky top-0 border-0 border-r border-r-gray-100">
+                      নম্বর
+                    </th>
+                    <th className="py-2 px-4 text-right border-0 border-r border-r-gray-100">
+                      লেনদেন
+                    </th>
+                    <th className="py-2 px-4 text-right">মোট</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {numberSummary.map((n) => (
+                    <tr
+                      key={n.number}
+                      className="group rounded-xl border border-gray-100 bg-white hover:shadow-sm transition"
+                    >
+                      <td className="py-2 px-4 rounded-l-xl border-0 border-r border-r-gray-400 border-b border-b-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="inline-block w-2 h-2 rounded-full"
+                            style={{
+                              background:
+                                "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                            }}
+                          />
+                          <span className="truncate" title={n.number}>
+                            {n.number}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-2 px-4 text-right text-gray-800 border-0 border-r border-r-gray-400 border-b border-b-gray-200">
+                        {n.count}
+                      </td>
+                      <td className="py-2 px-4 text-right rounded-r-xl border-b border-b-gray-200">
+                        <span
+                          className="px-2.5 py-1 rounded-lg font-semibold text-gray-900"
+                          style={{
+                            background:
+                              "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
+                          }}
+                        >
+                          ৳{fmtBDT(n.amount)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {numberSummary.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={3}
+                        className="py-8 text-center text-gray-400"
+                      >
+                        <div
+                          className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                          style={{
+                            background:
+                              "linear-gradient(270deg, #862C8A33 0%, #009C9133 100%)",
+                          }}
+                        >
+                          <span className="text-2xl opacity-80">📊</span>
+                        </div>
+                        ডেটা নেই
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary (Last 30 days) */}
+        <div className="md:col-span-3 rounded-2xl border border-gray-300 shadow-sm overflow-hidden bg-white">
+          {/* Gradient Header */}
+          <div
+            className="px-5 py-4 flex items-center justify-between"
+            style={{
+              background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+            }}
+          >
+            <h3 className="font-semibold text-white">
+              সারসংক্ষেপ (শেষ ৩০ দিন)
+            </h3>
+            <span className="text-xs px-2 py-1 rounded-lg bg-white/15 text-white/90">
+              From {range.from} to {range.to}
+            </span>
+          </div>
+
+          <div className="p-5">
+            <TableComponent
+              data={reportData}
+              columns={ReportColumns}
+              pagination=""
+              setPagination=""
+              pageCount=""
+              isFetching={false}
+              isLoading={false}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -218,115 +379,86 @@ export function StatCard({ title, value, sub, icon, gradient }) {
 }
 
 function NumberBalances() {
-  const numbers = [
-    {
-      id: "num_tlsdwbq",
-      label: "Nagad Agent",
-      number: "01998376434",
-      channel: "Nagad",
-      type: "Agent",
-      balance: 640000,
-    },
-    {
-      id: "num_kjs72hf",
-      label: "Bkash Agent",
-      number: "01712345678",
-      channel: "Bkash",
-      type: "Agent",
-      balance: 450000,
-    },
-    {
-      id: "num_qwe92md",
-      label: "Rocket Personal",
-      number: "01876543210",
-      channel: "Rocket",
-      type: "Personal",
-      balance: 220000,
-    },
-    {
-      id: "num_mnb83zx",
-      label: "Nagad Personal",
-      number: "01911223344",
-      channel: "Nagad",
-      type: "Personal",
-      balance: 175000,
-    },
-    {
-      id: "num_vcx64pl",
-      label: "Bkash Personal",
-      number: "01799887766",
-      channel: "Bkash",
-      type: "Personal",
-      balance: 390000,
-    },
-  ];
+  const { data: walletNumbers, isLoading, isError } = useWalletNumbers();
+
+  if (isError)
+    return (
+      <div className="p-2 text-center text-red-500">
+        {" "}
+        Error on fetching data
+      </div>
+    );
 
   return (
     <div className="group relative backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 rounded-lg p-8 shadow-md border border-gray-300 border-b-transparent dark:border-gray-800/20 transition-all duration-300 overflow-hidden">
       {/* Header */}
       <PanelTitle title="নম্বারভিত্তিক ব্যালেন্স" icon={<CiMoneyCheck1 />} />
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full border-separate border-spacing-y-2">
-          {/* Table Header */}
-          <thead>
-            <tr className="rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700">
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 text-left rounded-l-xl">
-                লেবেল
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 text-left">
-                চ্যানেল
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 text-left">
-                টাইপ
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300  text-center rounded-r-xl">
-                ব্যালেন্স
-              </th>
-            </tr>
-          </thead>
-
-          {/* Table Rows */}
-          <tbody>
-            {numbers.map((n, index) => (
-              <tr
-                key={n.id}
-                className="rounded-xl bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-200 border border-gray-100/50 dark:border-gray-700/50 hover:shadow-lg group"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <td className="p-4 font-semibold text-gray-900 dark:text-white flex items-center gap-2 rounded-l-xl">
-                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#862C8A] to-[#009C91] opacity-60 group-hover:opacity-100 transition-opacity" />
-                  {n.label}
-                </td>
-                <td className="p-4 text-gray-600 dark:text-gray-300 font-medium">
-                  {n.channel}
-                </td>
-                <td className="p-4 text-gray-600 dark:text-gray-300 font-medium">
-                  {n.type}
-                </td>
-                <td className="p-4 text-right font-bold text-gray-900 dark:text-white rounded-r-xl">
-                  <span className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#862C8A]/10 to-[#009C91]/10">
-                    ৳{fmtBDT(n.balance || 0)}
-                  </span>
-                </td>
+      {isLoading ? (
+        <div className="p-2 text-center text-gray-500">Loading...</div>
+      ) : (
+        <div className="mt-6 overflow-x-auto">
+          <table className="w-full border-separate border-spacing-y-2">
+            {/* Table Header */}
+            <thead>
+              <tr className="rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700">
+                <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 text-left rounded-l-xl">
+                  লেবেল
+                </th>
+                <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 text-left">
+                  চ্যানেল
+                </th>
+                <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 text-left">
+                  টাইপ
+                </th>
+                <th className="p-4 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300  text-center rounded-r-xl">
+                  ব্যালেন্স
+                </th>
               </tr>
-            ))}
+            </thead>
 
-            {numbers.length === 0 && (
-              <tr>
-                <td colSpan="4" className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-[#862C8A]/20 to-[#009C91]/20 flex items-center justify-center">
-                    <span className="text-2xl opacity-60">💳</span>
-                  </div>
-                  <div className="text-gray-500 dark:text-gray-400 font-medium">
-                    কোন নম্বর যোগ করা হয়নি
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            {/* Table Rows */}
+            <tbody>
+              {walletNumbers.map((n, index) => (
+                <tr
+                  key={n._id}
+                  className="rounded-xl bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-200 border border-gray-100/50 dark:border-gray-700/50 shadow hover:shadow-lg group"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <td className="p-4 font-semibold text-gray-900 dark:text-white flex items-center gap-2 rounded-l-xl">
+                    <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#862C8A] to-[#009C91] opacity-60 group-hover:opacity-100 transition-opacity" />
+                    {n.label}
+                  </td>
+                  <td className="p-4 text-gray-600 dark:text-gray-300 font-medium">
+                    {n.channel}
+                  </td>
+                  <td className="p-4 text-gray-600 dark:text-gray-300 font-medium">
+                    {n.type}
+                  </td>
+                  <td className="p-4 text-center font-bold text-gray-900 dark:text-white rounded-r-xl">
+                    <span className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#862C8A]/10 to-[#009C91]/10">
+                      ৳{fmtBDT(n.balance || 0)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+
+              {walletNumbers.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-[#862C8A]/20 to-[#009C91]/20 flex items-center justify-center">
+                      <span className="text-2xl opacity-60">💳</span>
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 font-medium">
+                      কোন নম্বর যোগ করা হয়নি
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Floating decoration */}
       <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-gradient-to-r from-[#862C8A]/10 to-[#009C91]/10 blur-2xl group-hover:scale-110 transition-transform duration-500" />
@@ -351,49 +483,8 @@ function ActivityLog() {
         transactions={allTransactions}
         fetchNextPage={fetchNextPage}
         hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
       />
-
-      {isFetchingNextPage && (
-        <p className="p-2 text-center text-gray-500">লোড হচ্ছে...</p>
-      )}
-
-      {/* <div className="mt-6 max-h-80 overflow-y-auto pr-2">
-        <div className="space-y-3">
-          {activityLogs
-            .slice()
-            .reverse()
-            .map((l, index) => (
-              <div
-                key={l.id}
-                className="group/log flex gap-4 p-4 rounded-xl bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-200 border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md"
-                style={{ animationDelay: `${index * 30}ms` }}
-              >
-                <div className="flex-shrink-0">
-                  <div className="w-2 h-2 mt-2 rounded-full bg-gradient-to-r from-[#009C91] to-[#862C8A] group-hover/log:animate-pulse" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                    {new Date(l.ts).toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300 font-medium break-words">
-                    {l.msg}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-          {activityLogs.length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-[#009C91]/20 to-[#862C8A]/20 flex items-center justify-center">
-                <span className="text-2xl opacity-60">📝</span>
-              </div>
-              <div className="text-gray-500 dark:text-gray-400 font-medium">
-                কোন লগ নেই
-              </div>
-            </div>
-          )}
-        </div>
-      </div> */}
 
       {/* Floating decoration */}
       <div className="absolute -left-8 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-r from-[#009C91]/10 to-[#862C8A]/10 blur-2xl group-hover:scale-110 transition-transform duration-500" />
@@ -418,27 +509,6 @@ function PanelTitle({ title, icon }) {
           </span>
         </div>
       </div>
-    </div>
-  );
-}
-
-function EmptyState({ title, desc }) {
-  return (
-    <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4 text-center py-12">
-      <div className="relative">
-        <div className="h-16 w-16 rounded-3xl bg-gradient-to-r from-[#862C8A] to-[#009C91] opacity-90 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-2xl bg-white/30 animate-pulse" />
-        </div>
-        <div className="absolute -inset-2 rounded-3xl bg-gradient-to-r from-[#862C8A]/20 to-[#009C91]/20 blur-xl animate-pulse" />
-      </div>
-      <div className="text-lg font-bold text-gray-900 dark:text-white">
-        {title}
-      </div>
-      {desc && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed">
-          {desc}
-        </p>
-      )}
     </div>
   );
 }

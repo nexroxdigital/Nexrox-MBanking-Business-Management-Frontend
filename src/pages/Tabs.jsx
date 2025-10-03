@@ -1,7 +1,6 @@
 import { FaUniversity } from "react-icons/fa";
 import { HiOutlineBanknotes } from "react-icons/hi2";
 import { IoIosContacts } from "react-icons/io";
-import { LuFileText } from "react-icons/lu";
 import { MdOutlineDashboard, MdPayments, MdPhoneIphone } from "react-icons/md";
 
 function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
@@ -25,7 +24,7 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
     },
     { id: "banks", label: "ব্যাংক", icon: <FaUniversity /> },
     { id: "clients", label: "ক্লায়েন্ট", icon: <IoIosContacts /> },
-    { id: "reports", label: "রিপোর্ট", icon: <LuFileText /> },
+    // { id: "reports", label: "রিপোর্ট", icon: <LuFileText /> },
     // { id: "settings", label: "সেটিংস", icon: <LuSlidersHorizontal /> },
   ];
 
@@ -44,9 +43,9 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`
-                group relative flex items-center justify-center gap-2 px-4 py-3 sm:px-6 sm:py-3 
+                group relative flex items-center justify-center gap-2 px-4 py-3 sm:px-3 sm:py-3 
                 rounded-xl text-sm font-semibold transition-all duration-300 
-                min-w-[120px] sm:min-w-[140px] flex-1 sm:flex-none
+                min-w-[120px] xl:min-w-[130px] flex-1 sm:flex-none
                 ${
                   tab === t.id
                     ? "text-white shadow-lg transform scale-105 z-10"
@@ -85,11 +84,6 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
                   <span className="font-medium tracking-wide text-base">
                     {t.label}
                   </span>
-
-                  {/* Active indicator dot */}
-                  {tab === t.id && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse ml-1" />
-                  )}
                 </span>
 
                 {/* Ripple effect on click */}

@@ -10,7 +10,7 @@ const formatBanglaDate = (dateString) => {
   });
 };
 
-const AllTransactions = ({ transactions = [], fetchNextPage, hasNextPage }) => {
+const AllTransactions = ({ transactions = [], fetchNextPage, hasNextPage, isFetchingNextPage }) => {
   return (
     <div
       className="mt-6 max-h-[442px] overflow-y-auto pr-2"
@@ -25,7 +25,7 @@ const AllTransactions = ({ transactions = [], fetchNextPage, hasNextPage }) => {
         {transactions.slice().map((t, index) => (
           <div
             key={t._id}
-            className="group/log flex items-center gap-4 p-4 rounded-xl bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-200 border border-gray-100/50 dark:border-gray-700/50 hover:shadow-md"
+            className="group/log flex items-center gap-4 p-4 rounded-xl bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-200 border border-gray-100/50 dark:border-gray-700/50 shadow hover:shadow-md"
             style={{ animationDelay: `${index * 30}ms` }}
           >
             {/* Left indicator */}
@@ -66,6 +66,10 @@ const AllTransactions = ({ transactions = [], fetchNextPage, hasNextPage }) => {
             </div>
           </div>
         )}
+
+        {isFetchingNextPage && (
+        <p className="text-center text-gray-500">লোড হচ্ছে...</p>
+      )}
       </div>
     </div>
   );

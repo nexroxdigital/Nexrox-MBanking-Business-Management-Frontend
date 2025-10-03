@@ -59,7 +59,7 @@ export default function Reports() {
     },
   ];
 
-  const today = todayISO();
+ 
 
   return (
     <section className="grid md:grid-cols-5 gap-6 mt-10">

@@ -7,24 +7,22 @@ export const ReportColumns = [
   // Date
   columnHelper.accessor("date", {
     header: () => (
-      <span className="py-3 px-4 text-gray-100 sticky top-0 z-10  backdrop-blur">
+      <span className="py-3 px-2 text-gray-100 sticky top-0 z-10  backdrop-blur">
         তারিখ
       </span>
     ),
     cell: ({ getValue }) => (
-      <span className="block text-gray-900">{getValue()}</span>
+      <span className="block text-gray-900 px-2">{getValue()}</span>
     ),
   }),
 
   // Sell
   columnHelper.accessor("sell", {
     header: () => (
-      <span className="py-3 px-4 text-gray-100 text-right  backdrop-blur">
-        বিক্রি
-      </span>
+      <span className="py-3 px-2 text-gray-100  backdrop-blur">বিক্রি</span>
     ),
     cell: ({ getValue }) => (
-      <span className="block text-right text-gray-700">
+      <span className="block text-gray-700 px-2">
         ৳{fmtBDT(getValue())}
       </span>
     ),
@@ -33,12 +31,12 @@ export const ReportColumns = [
   // Profit
   columnHelper.accessor("profit", {
     header: () => (
-      <span className="py-3 px-4 text-gray-100 text-right backdrop-blur">
+      <span className="py-3 px-2 text-gray-100 text-right backdrop-blur">
         লাভ
       </span>
     ),
     cell: ({ getValue }) => (
-      <span className="block text-right text-green-600 font-semibold">
+      <span className="block px-2 text-green-600 font-semibold">
         ৳{fmtBDT(getValue())}
       </span>
     ),
@@ -47,13 +45,13 @@ export const ReportColumns = [
   // Due
   columnHelper.accessor("due", {
     header: () => (
-      <span className="py-3 px-4 text-gray-100 text-right backdrop-blur">
+      <span className="py-3 px-2 text-gray-100 text-right backdrop-blur">
         পাওনা
       </span>
     ),
     cell: ({ getValue }) => (
       <span
-        className="inline-block px-2.5 py-1 rounded-lg font-semibold text-gray-900"
+        className="inline-block px-2 py-1 rounded-lg font-semibold text-gray-900"
         style={{
           background: "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
         }}

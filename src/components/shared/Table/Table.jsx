@@ -27,7 +27,7 @@ const TableComponent = ({
   });
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-md">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-md">
       <table className="w-full text-sm md:text-base border border-gray-200">
         <thead className="bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white">
           {table.getHeaderGroups().map((headerGroup) => (

@@ -2,7 +2,7 @@ import { useClientTransactions } from "../../hooks/useClient";
 import { fmtBDT } from "../../pages/utils";
 
 export default function SingleClientTransaction({ id }) {
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useClientTransactions(id);
 
   const allTransactions = data?.pages.flat() || [];
@@ -87,11 +87,12 @@ export default function SingleClientTransaction({ id }) {
             </li>
           </>
         ))}
-        {clientInfo.length === 0 && (
+        {clientInfo.length < 1 && !isLoading && (
           <li className="text-gray-700 text-center py-5">
             কোন ট্রান্সাকশন নেই
           </li>
         )}
+        {isLoading && <p className="p-2 py-5 text-center">লোড হচ্ছে...</p>}
       </ul>
 
       {isFetchingNextPage && <p className="p-2 text-center">লোড হচ্ছে...</p>}
