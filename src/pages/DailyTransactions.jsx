@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
 import TableComponent from "../components/shared/Table/Table";
 import TableLoading from "../components/shared/TableLoading/TableLoading";
 import { transactionColumn } from "../components/Transactions/TransactionColumn";
-import { useGetTransactions } from "../hooks/useDailyTxn";
+import {
+  useCreateDailyTransaction,
+  useGetTransactions,
+} from "../hooks/useDailyTxn";
 import { useWalletNumbers } from "../hooks/useWallet";
-import { todayISO } from "./utils";
+import { clamp2, todayISO } from "./utils";
 
 /* ---------- helpers ---------- */
 const computeAgent = ({ taka, commissionPct }) => {
@@ -37,6 +41,8 @@ const DailyTransactions = () => {
     isLoading: walletLoading,
     isError,
   } = useWalletNumbers();
+
+  const createDailyTxnMutation = useCreateDailyTransaction();
 
   const agentWallets = walletNumbers?.filter(
     (w) => w.type.toLowerCase() === "agent"
@@ -79,7 +85,6 @@ const DailyTransactions = () => {
       channel: "",
       taka: "",
       commissionPct: "",
-      paid: "",
       commission: 0,
     },
   });
@@ -117,41 +122,65 @@ const DailyTransactions = () => {
 
   /* ---------- Save Handlers ---------- */
   const saveAgent = (data) => {
-    const { commissionAmt, total, profit } = computeAgent(data);
-    setTransactions((s) => [
-      {
-        date: data.date,
-        item: "ক্যাশ আউট (এজেন্ট)",
-        method: data.channel,
-        pay: total,
-        fee: 0,
-        commission: commissionAmt,
-        cost: 0,
-        refund: 0,
-        profit,
-      },
-      ...s,
-    ]);
+    const { total, profit } = computeAgent(data);
 
-    resetAgent({
-      date: todayISO(),
-      channel: "",
-      taka: "",
-      commissionPct: "",
-      paid: "",
-      commission: 0,
+    const wallet = walletNumbers.find((w) => w._id === data.channel);
+
+    // Create optimistic transaction
+    const optimisticTx = {
+      _id: Date.now().toString(), // temporary ID
+      date: data.date,
+      channel: wallet?.channel || "",
+      wallet_id: wallet?._id || "",
+      type: "Cash Out",
+      amount: clamp2(data.taka),
+      fee: clamp2(data.commissionPct || 0),
+      profit: clamp2(profit || 0),
+      total: clamp2(total || 0),
+      optimistic: true,
+    };
+
+    const prevTx = [...transactions];
+
+    // Optimistic UI
+    setTransactions((prev) => [optimisticTx, ...prev]);
+
+    // Call backend
+    createDailyTxnMutation.mutate(optimisticTx, {
+      onSuccess: (savedTx) => {
+        // console.log("savedTx", savedTx);
+        // Replace optimistic with server tx
+        setTransactions((prev) =>
+          prev.map((tx) => (tx._id === optimisticTx._id ? savedTx : tx))
+        );
+
+        Swal.fire({
+          icon: "success",
+          title: "লেনদেন সফল",
+          text: "ট্রানজেকশন তৈরি করা হয়েছে",
+        });
+      },
+      onError: (err) => {
+        console.error("Create txn error:", err.response?.data || err.message);
+
+        // Rollback
+        setTransactions(prevTx);
+
+        Swal.fire({
+          icon: "error",
+          title: "লেনদেন ব্যর্থ",
+          text:
+            err.response?.data?.message || "ট্রানজেকশন তৈরি করতে সমস্যা হয়েছে",
+        });
+      },
+      onSettled: () => {
+        resetAgent();
+        resetPersonal();
+        resetCash();
+        setCashItems([]);
+        setShowModal(false);
+      },
     });
-    resetPersonal({
-      date: todayISO(),
-      channel: "",
-      taka: "",
-      feePct: "",
-      paid: "",
-      refund: "",
-    });
-    resetCash({ taka: "", paid: "", profit: "", itemInput: "" });
-    setCashItems([]);
-    setShowModal(false);
   };
 
   const savePersonal = (data) => {
@@ -368,14 +397,7 @@ const DailyTransactions = () => {
                       readOnly
                     />
                   </label>
-                  <label>
-                    <span className="text-sm text-gray-600">পরিশোধ</span>
-                    <input
-                      type="number"
-                      className="w-full border rounded p-2"
-                      {...registerAgent("paid")}
-                    />
-                  </label>
+
                   <div className="col-span-full flex gap-2">
                     <button
                       type="submit"
