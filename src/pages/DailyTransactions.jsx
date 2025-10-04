@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import TableComponent from "../components/shared/Table/Table";
+import TableLoading from "../components/shared/TableLoading/TableLoading";
 import { transactionColumn } from "../components/Transactions/TransactionColumn";
-import { transactionData } from "../data/transactionData";
+import { useGetTransactions } from "../hooks/useDailyTxn";
+import { useWalletNumbers } from "../hooks/useWallet";
 import { todayISO } from "./utils";
 
 /* ---------- helpers ---------- */
@@ -30,7 +32,36 @@ const itemOptions = ["photocopy", "picture", "printing", "other"];
 
 /* ---------- Main ---------- */
 const DailyTransactions = () => {
-  const [transactions, setTransactions] = useState(transactionData);
+  const {
+    data: walletNumbers,
+    isLoading: walletLoading,
+    isError,
+  } = useWalletNumbers();
+
+  const agentWallets = walletNumbers?.filter(
+    (w) => w.type.toLowerCase() === "agent"
+  );
+  const personalWallets = walletNumbers?.filter(
+    (w) => w.type.toLowerCase() === "personal"
+  );
+
+  const [transactions, setTransactions] = useState([]);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const { data, isLoading, isFetching } = useGetTransactions(
+    pagination.pageIndex,
+    pagination.pageSize
+  );
+
+  useEffect(() => {
+    if (data?.data) {
+      setTransactions(data?.data);
+    }
+  }, [data]);
+
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState("agent");
   const [cashItems, setCashItems] = useState([]);
@@ -76,6 +107,7 @@ const DailyTransactions = () => {
     getValues: getCashValues,
   } = useForm({
     defaultValues: {
+      date: todayISO(),
       taka: "",
       paid: "",
       profit: "",
@@ -290,9 +322,9 @@ const DailyTransactions = () => {
                       {...registerAgent("channel", { required: true })}
                     >
                       <option value="">চ্যানেল নির্বাচন</option>
-                      {channelOptions.agent.map((o) => (
-                        <option key={o} value={o}>
-                          {o}
+                      {agentWallets.map((a) => (
+                        <option key={a._id} value={a._id}>
+                          {a.channel}
                         </option>
                       ))}
                     </select>
@@ -383,9 +415,9 @@ const DailyTransactions = () => {
                       {...registerPersonal("channel", { required: true })}
                     >
                       <option value="">চ্যানেল নির্বাচন</option>
-                      {channelOptions.personal.map((o) => (
-                        <option key={o} value={o}>
-                          {o}
+                      {personalWallets.map((p) => (
+                        <option key={p._id} value={p._id}>
+                          {p.channel}
                         </option>
                       ))}
                     </select>
@@ -557,6 +589,15 @@ const DailyTransactions = () => {
                   </div>
 
                   <label>
+                    <span className="text-sm text-gray-600">তারিখ</span>
+                    <input
+                      type="date"
+                      className="w-full border rounded p-2"
+                      {...registerCash("date", { required: true })}
+                    />
+                  </label>
+
+                  <label>
                     <span className="text-sm text-gray-600">টাকা</span>
                     <input
                       type="number"
@@ -608,15 +649,24 @@ const DailyTransactions = () => {
         )}
 
         {/* <TransactionTable data={transactions} /> */}
-        <TableComponent
-          data={transactions}
-          columns={transactionColumn}
-          pagination=""
-          setPagination=""
-          pageCount=""
-          isFetching={false}
-          isLoading={false}
-        />
+
+        {isLoading ? (
+          <TableLoading />
+        ) : transactions.length < 1 ? (
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+            কোনো ট্রান্সাকশন পাওয়া যায়নি
+          </div>
+        ) : (
+          <TableComponent
+            data={transactions}
+            columns={transactionColumn}
+            pagination={pagination}
+            setPagination={setPagination}
+            pageCount={data?.pagination?.totalPages ?? -1}
+            isFetching={isFetching}
+            isLoading={isLoading}
+          />
+        )}
       </div>
     </div>
   );

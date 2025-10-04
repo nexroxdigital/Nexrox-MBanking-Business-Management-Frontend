@@ -1,26 +1,57 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
 import { AllTransactionColumns } from "../components/columns/AllTransactionColumns";
 import TableComponent from "../components/shared/Table/Table";
-import { Dummytransactions } from "../data/transactions";
+import TableLoading from "../components/shared/TableLoading/TableLoading";
+import { useClientsSelect } from "../hooks/useClient";
+import {
+  useCreateDailyTransaction,
+  useGetTransactions,
+} from "../hooks/useDailyTxn";
+import { useWalletNumbers } from "../hooks/useWallet";
 import { Field } from "./Field";
-import { clamp2, daysAgo, todayISO, uid } from "./utils";
+import { clamp2, daysAgo, todayISO } from "./utils";
 
 export default function ClientTransactions() {
-  const [numbers, setNumbers] = useState([
-    { id: "n1", channel: "Bkash", kind: "Agent", label: "Agent 1" },
-    { id: "n2", channel: "Bkash", kind: "Personal", label: "Personal 1" },
-    { id: "n3", channel: "Nagad", kind: "Agent", label: "Agent 2" },
-  ]);
+  const createDailyTxnMutation = useCreateDailyTransaction();
 
-  const [clients, setClients] = useState([
-    { id: "c1", name: "Client A" },
-    { id: "c2", name: "Client B" },
-  ]);
+  const [customMessage, setCustomMessage] = useState("");
+  const {
+    data: walletNumbers,
+    isLoading: walletLoading,
+    isError,
+  } = useWalletNumbers();
 
-  const [transactions, setTransactions] = useState(Dummytransactions);
+  const {
+    data: allClients,
+    isLoading: clientLoading,
+    isError: clientError,
+  } = useClientsSelect();
+
+  const [transactions, setTransactions] = useState([]);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const { data, isLoading, isFetching } = useGetTransactions(
+    pagination.pageIndex,
+    pagination.pageSize
+  );
+
+  useEffect(() => {
+    if (data?.data) {
+      setTransactions(data?.data); // sync fetched data into state
+    }
+  }, [data]);
+
+  // console.log("transactions", transactions);
+  // console.log("data", data);
+
   // will delete
   const [newTxOpen, setNewTxOpen] = useState(false);
+
   const [filter, setFilter] = useState({
     q: "",
     channel: "",
@@ -28,30 +59,70 @@ export default function ClientTransactions() {
     dateFrom: daysAgo(30),
   });
 
-  const { register, handleSubmit, control, setValue, watch, reset } = useForm({
+  const { register, handleSubmit, setValue, watch, reset } = useForm({
     defaultValues: {
       date: todayISO(),
-      channel: "Bkash",
+      channel: "",
       type: "Cash In",
       numberType: "Agent",
-      numberId: "",
       amount: "",
       commission: "",
       clientId: "",
       note: "",
       billType: "",
-      dueAmount: "",
-      sendSms: false,
+      due: "",
+      isSendMessage: false,
       total: "",
       profit: "",
     },
   });
 
-  // 🔥 calculate profit & total inline
   const amount = parseFloat(watch("amount")) || 0;
   const commission = parseFloat(watch("commission"));
-
+  const billType = watch("billType");
   const type = watch("type");
+  const channel = watch("channel");
+  const isSendMessage = watch("isSendMessage");
+
+  const total = watch("total");
+
+  useEffect(() => {
+    if (total !== "" && !isNaN(total)) {
+      setValue("total", parseFloat(total).toFixed(2));
+    }
+  }, [total, setValue]);
+
+  const profit = watch("profit");
+
+  useEffect(() => {
+    if (profit !== "" && !isNaN(profit)) {
+      setValue("profit", parseFloat(profit).toFixed(2));
+    }
+  }, [profit, setValue]);
+
+  // calculate profit & total inline
+  useEffect(() => {
+    if (!isSendMessage) {
+      setCustomMessage("");
+      return;
+    }
+
+    if (type === "Cash Out") {
+      setCustomMessage(`${amount} টাকা ক্যাশ-আউট করা হয়েছে`);
+    } else if (type === "Cash In") {
+      setCustomMessage(`${amount} টাকা ক্যাশ-ইন করা হয়েছে`);
+    } else if (channel === "Bill Payment") {
+      setCustomMessage(`${amount} টাকা ${billType} বিল পে করা হয়েছে`);
+    }
+  }, [isSendMessage, type, channel, amount, billType]);
+
+  useEffect(() => {
+    if (channel === "Bill Payment") {
+      setValue("type", "");
+    } else {
+      setValue("billType", "");
+    }
+  }, [channel, setValue]);
 
   // set commission default only when type changes
   useEffect(() => {
@@ -62,7 +133,7 @@ export default function ClientTransactions() {
     }
   }, [type, setValue]);
 
-  // 🔥 Auto calculation with useEffect
+  // Auto calculation with useEffect
   useEffect(() => {
     let profitCalc = watch("profit");
     let totalCalc = watch("total");
@@ -82,21 +153,6 @@ export default function ClientTransactions() {
     }
   }, [amount, commission, type, setValue, watch]);
 
-  // ✅ When channel switches, enforce Bill Payment rules
-  useEffect(() => {
-    const channel = watch("channel");
-    const numberType = watch("numberType");
-
-    if (channel === "Bill Payment") {
-      // clear number fields
-      setValue("numberType", "");
-      setValue("numberId", "");
-    } else if (!numberType) {
-      // restore sensible default
-      setValue("numberType", "Agent");
-    }
-  }, [watch("channel"), watch("numberType"), setValue]);
-
   // close modal on esc
   useEffect(() => {
     const onEsc = (e) => {
@@ -111,46 +167,86 @@ export default function ClientTransactions() {
     return transactions
       .filter((t) => {
         if (filter.q) {
-          const s = `${t.channel} ${t.type} ${t.numberLabel || ""} ${
-            t.clientName || ""
-          } ${t.amount} ${t.note || ""} ${t.billType || ""}`.toLowerCase();
+          const s = `${t.channel} ${t.type} ${t.client_name || ""} ${
+            t.amount
+          } ${t.note || ""} ${t.bill_type || ""}`.toLowerCase();
           if (!s.includes(filter.q.toLowerCase())) return false;
         }
         if (filter.channel && t.channel !== filter.channel) return false;
         if (filter.type && t.type !== filter.type) return false;
         if (filter.dateFrom && t.date < filter.dateFrom) return false;
-        if (t.date > dateTo) return false; // ✅ auto-clamped to today
+        if (t.date > dateTo) return false;
         return true;
       })
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort((a, b) => {
+        if (!a.date) return 1; // push invalid dates to bottom
+        if (!b.date) return -1;
+        return b.date.localeCompare(a.date);
+      });
   }, [transactions, filter]);
 
-  const addTx = (data) => {
-    const client = clients.find((c) => c.id === data.clientId);
-    const number = numbers.find((n) => n.id === data.numberId);
+  console.log("filtered", filtered);
 
-    const tx = {
-      id: uid("tx"),
+  const addTx = (data) => {
+    const client = allClients.find((c) => c._id === data.clientId);
+    const wallet = walletNumbers.find((w) => w._id === data.channel);
+    // console.log("data", data.clientId);
+    // console.log("wallet", data.channel);
+
+    // Create optimistic transaction
+    const optimisticTx = {
+      _id: Date.now().toString(), // temporary ID
       date: data.date,
-      channel: data.channel,
+      channel: wallet?.channel || "",
+      wallet_id: wallet?._id || "",
       type: data.type || "",
-      numberType: data.numberType || "",
-      numberId: number?.id || "",
-      numberLabel: number?.label || "",
-      billType: data.channel === "Bill Payment" ? data.billType : "",
-      clientId: client?.id || "",
-      clientName: client?.name || "",
+      bill_type: data.channel === "Bill Payment" ? data.billType : "",
+      client_id: client?._id || "",
+      client_name: client?.name || "",
       amount: clamp2(data.amount),
-      commission: clamp2(data.commission || 0),
+      fee: clamp2(data.commission || 0),
       note: data.note || "",
-      dueAmount: clamp2(data.dueAmount || 0),
+      due: clamp2(data.due || 0),
       profit: clamp2(data.profit || 0),
       total: clamp2(data.total || 0),
+      isSendMessage: data.isSendMessage,
+      message: customMessage,
+      optimistic: true,
     };
 
-    console.log("Saved transaction:", tx);
-    reset(); // clear form
-    setNewTxOpen(false);
+    // Keep previous for rollback
+    const prevTx = [...transactions];
+
+    // Optimistic UI
+    setTransactions((prev) => [optimisticTx, ...prev]);
+
+    // Call backend
+    createDailyTxnMutation.mutate(optimisticTx, {
+      onSuccess: (savedTx) => {
+        console.log("savedTx", savedTx);
+        // Replace optimistic with server tx
+        setTransactions((prev) =>
+          prev.map((tx) => (tx._id === optimisticTx._id ? savedTx : tx))
+        );
+      },
+      onError: (err) => {
+        console.error("Create txn error:", err.response?.data || err.message);
+
+        // Rollback
+        setTransactions(prevTx);
+
+        Swal.fire({
+          icon: "error",
+          title: "লেনদেন ব্যর্থ",
+          text:
+            err.response?.data?.message || "ট্রানজেকশন তৈরি করতে সমস্যা হয়েছে",
+        });
+      },
+      onSettled: () => {
+        reset(); // clear form
+        setNewTxOpen(false);
+      },
+    });
   };
 
   const isBillPayment = watch("channel") === "Bill Payment";
@@ -196,9 +292,9 @@ export default function ClientTransactions() {
               }
             >
               <option value="">Channel</option>
-              {["Bkash", "Nagad", "Rocket", "Bill Payment"].map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {walletNumbers.map((c) => (
+                <option key={c._id} value={c.channel}>
+                  {c.channel}
                 </option>
               ))}
             </select>
@@ -231,15 +327,17 @@ export default function ClientTransactions() {
           </div>
 
           {/* Table */}
-          {filtered.length > 0 ? (
+          {isLoading ? (
+            <TableLoading />
+          ) : filtered.length > 0 ? (
             <TableComponent
               data={filtered}
               columns={AllTransactionColumns}
-              pagination=""
-              setPagination=""
-              pageCount=""
-              isFetching={false}
-              isLoading={false}
+              pagination={pagination}
+              setPagination={setPagination}
+              pageCount={data?.pagination?.totalPages ?? -1}
+              isFetching={isFetching}
+              isLoading={isLoading}
             />
           ) : (
             <div className="text-center py-10 text-gray-500 dark:text-gray-400">
@@ -303,17 +401,18 @@ export default function ClientTransactions() {
                       required
                     />
                   </Field>
-                  <Field label="চ্যানেল">
+                  <Field label="ওয়ালেট">
                     <select
                       {...register("channel", { required: true })}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
                     >
-                      {["Bkash", "Nagad", "Rocket", "Bill Payment"].map((c) => (
-                        <option key={c} value={c}>
-                          {c}
+                      {walletNumbers.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.channel}
                         </option>
                       ))}
+                      <option value="Bill Payment">Bill Payment</option>
                     </select>
                   </Field>
                 </div>
@@ -327,10 +426,11 @@ export default function ClientTransactions() {
                                focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
                         required
                       >
-                        <option value="">— সিলেক্ট —</option>
+                        <option value=""> — সিলেক্ট —</option>
                         <option value="Electricity">Electricity</option>
                         <option value="Internet">Internet</option>
                         <option value="Gas">Gas</option>
+                        <option value="others">Others</option>
                       </select>
                     </Field>
                   )}
@@ -381,7 +481,7 @@ export default function ClientTransactions() {
                   <Field label="টোটাল">
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       {...register("total", { required: true })}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
@@ -392,7 +492,7 @@ export default function ClientTransactions() {
                   <Field label="লাভ">
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       {...register("profit")}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
@@ -403,12 +503,13 @@ export default function ClientTransactions() {
                   <Field label="ক্লায়েন্ট">
                     <select
                       {...register("clientId")}
-                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                      className="w-full overflow-y-auto rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
                     >
+                      {clientLoading && <option value="">Loading...</option>}
                       <option value="">— সিলেক্ট —</option>
-                      {clients.map((c) => (
-                        <option key={c.id} value={c.id}>
+                      {allClients.map((c) => (
+                        <option key={c._id} value={c._id}>
                           {c.name}
                         </option>
                       ))}
@@ -419,7 +520,7 @@ export default function ClientTransactions() {
                     <input
                       type="number"
                       step="0.01"
-                      {...register("dueAmount")}
+                      {...register("due")}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
                       placeholder="বাকি টাকা"
@@ -436,21 +537,36 @@ export default function ClientTransactions() {
                   </Field>
                 </div>
 
-                {/*  SMS opt-in checkbox at the bottom */}
                 <div className="flex items-center gap-2">
                   <input
-                    id="send-sms"
+                    className="w-4 h-4 cursor-pointer accent-[#009C91]"
+                    id="message"
                     type="checkbox"
-                    {...register("sendSms")}
-                    className="h-4 w-4 rounded border-gray-300 text-[#862C8A] focus:ring-[#862C8A]"
+                    {...register("isSendMessage")}
                   />
+
                   <label
-                    htmlFor="send-sms"
-                    className="text-sm text-gray-700 dark:text-gray-300"
+                    htmlFor="message"
+                    className="text-sm text-gray-700 cursor-pointer"
                   >
                     SMS পাঠান
                   </label>
                 </div>
+
+                {isSendMessage && (
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">
+                      Message
+                    </label>
+
+                    <textarea
+                      rows="3"
+                      className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border"
+                      value={customMessage}
+                      onChange={(e) => setCustomMessage(e.target.value)}
+                    />
+                  </div>
+                )}
 
                 <div className="pt-2 flex items-center justify-end gap-2">
                   <button
@@ -460,12 +576,15 @@ export default function ClientTransactions() {
                   >
                     Cancel
                   </button>
+
                   <button
                     className="px-4 py-2 rounded-xl text-white font-semibold shadow-md transition
                              bg-gradient-to-r from-[#862C8A] to-[#009C91]
                              hover:opacity-95 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#862C8A]"
                   >
-                    সেভ করুন
+                    {createDailyTxnMutation.isPending
+                      ? "সেভ হচ্ছে..."
+                      : "সেভ করুন"}
                   </button>
                 </div>
               </form>

@@ -328,7 +328,7 @@ const BankTransactions = () => {
           <h1 className="text-lg md:text-3xl font-extrabold text-gray-900 tracking-tight">
             ব্যাংক ট্রানজেকশন
           </h1>
-          <div className="flex gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
             <button
               onClick={() => setShowBankModal(true)}
               className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#009C91] to-[#862C8A] text-white font-semibold shadow-lg hover:scale-105 transition hover:bg-gradient-to-l cursor-pointer"

@@ -5,7 +5,7 @@ import GradientButton from "../components/shared/Button/GradientButton";
 const Navbar = ({ toggleMenu, isMenuOpen }) => {
   return (
     <nav className="bg-[#f5f5f5] sticky z-50 top-0 dark:bg-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <div className="max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <a href="#" className="flex items-center space-x-3">

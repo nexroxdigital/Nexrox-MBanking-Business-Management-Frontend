@@ -317,7 +317,7 @@ const MobileRecharge = () => {
           <h1 className="text-lg md:text-3xl font-extrabold text-gray-900 tracking-tight">
             মোবাইল রিচার্জ হিস্টোরি
           </h1>
-          <div className="flex gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
             <button
               onClick={() => setShowOperatorModal(true)}
               className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold shadow-lg hover:scale-105 transition hover:bg-gradient-to-l cursor-pointer"

@@ -25,6 +25,8 @@ export default function Clients() {
     pageSize: 5,
   });
 
+  
+
   const addNewClientMutation = useAddNewClient();
   const deleteClientMutation = useDeleteClient();
 

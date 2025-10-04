@@ -24,8 +24,6 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
     },
     { id: "banks", label: "ব্যাংক", icon: <FaUniversity /> },
     { id: "clients", label: "ক্লায়েন্ট", icon: <IoIosContacts /> },
-    // { id: "reports", label: "রিপোর্ট", icon: <LuFileText /> },
-    // { id: "settings", label: "সেটিংস", icon: <LuSlidersHorizontal /> },
   ];
 
   return (
@@ -122,7 +120,7 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
       >
         <div className="relative mx-3 mt-3 backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 rounded-2xl p-2 border border-gray-200 dark:border-gray-800/20 shadow-lg">
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#862C8A]/5 to-[#009C91]/5 animate-pulse" />
-          <div className="relative flex flex-wrap gap-1 sm:gap-2">
+          <div className="relative flex flex-col flex-wrap gap-1 sm:gap-2">
             {tabs.map((t, i) => {
               const active = tab === t.id;
               return (
@@ -155,9 +153,11 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
                   {!active && (
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#862C8A]/10 to-[#009C91]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   )}
-                  <span className="relative z-10 flex items-center gap-2">
+                  <span className="relative z-10 flex items-center w-[120px] gap-2">
                     <span className="inline text-base">{t.icon}</span>
-                    <span className="font-medium tracking-wide">{t.label}</span>
+                    <span className="font-medium tracking-wide whitespace-nowrap">
+                      {t.label}
+                    </span>
                     {active && (
                       <span className="ml-1 h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse" />
                     )}

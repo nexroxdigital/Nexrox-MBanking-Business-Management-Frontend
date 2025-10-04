@@ -1,9 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   addNewClient,
   adjustClientPayment,
   deleteClient,
   getClients,
+  getClientsSelect,
   getTransactionsByClient,
   updateClient,
 } from "../api/clientApi";
@@ -30,7 +36,7 @@ export const useClients = (pageIndex, pageSize) => {
         page: pageIndex + 1, // backend is 1-based
         limit: pageSize,
       }),
-    keepPreviousData: true, // ✅ smooth pagination experience
+    keepPreviousData: true, // smooth pagination experience
   });
 };
 
@@ -75,8 +81,6 @@ export const useAdjustClientPayment = () => {
   });
 };
 
-import { useInfiniteQuery } from "@tanstack/react-query";
-
 export const useClientTransactions = (id) => {
   return useInfiniteQuery({
     queryKey: ["transactions", id],
@@ -87,5 +91,12 @@ export const useClientTransactions = (id) => {
       if (lastPage.length < 10) return undefined; // no more data
       return allPages.flat().length; // next skip = how many we already loaded
     },
+  });
+};
+
+export const useClientsSelect = () => {
+  return useQuery({
+    queryKey: ["clients"],
+    queryFn: () => getClientsSelect(),
   });
 };

@@ -6,7 +6,10 @@ const columnHelper = createColumnHelper();
 export const AllTransactionColumns = [
   columnHelper.accessor("date", {
     header: "তারিখ",
-    cell: (info) => info.getValue(),
+    cell: (info) => {
+      const value = info.getValue();
+      return value ? new Date(value).toLocaleDateString("bn-BD") : "";
+    },
   }),
   columnHelper.accessor("channel", {
     header: "চ্যানেল",
@@ -16,19 +19,11 @@ export const AllTransactionColumns = [
     header: "টাইপ",
     cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("numberType", {
-    header: "নাম্বার টাইপ",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("numberLabel", {
-    header: "নাম্বার",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("billType", {
+  columnHelper.accessor("bill_type", {
     header: "বিল টাইপ",
     cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("clientName", {
+  columnHelper.accessor("client_name", {
     header: "ক্লায়েন্ট",
     cell: (info) => info.getValue(),
   }),
@@ -38,7 +33,7 @@ export const AllTransactionColumns = [
       <span className="text-right block">৳{fmtBDT(info.getValue())}</span>
     ),
   }),
-  columnHelper.accessor("commission", {
+  columnHelper.accessor("profit", {
     header: "কমিশন",
     cell: (info) => (
       <span className="text-right block text-purple-600 font-medium">
@@ -46,16 +41,12 @@ export const AllTransactionColumns = [
       </span>
     ),
   }),
-  columnHelper.accessor("dueAmount", {
+  columnHelper.accessor("due", {
     header: "বকেয়া",
     cell: (info) => (
       <span className="text-right block text-red-600 font-semibold">
         ৳{fmtBDT(info.getValue())}
       </span>
     ),
-  }),
-  columnHelper.accessor("note", {
-    header: "নোট",
-    cell: (info) => info.getValue(),
   }),
 ];

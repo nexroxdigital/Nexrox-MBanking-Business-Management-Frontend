@@ -47,3 +47,9 @@ export const getTransactionsByClient = async ({ id, skip, limit }) => {
   });
   return res.data.data;
 };
+
+//  Get clients with skip & limit (infinite scroll)
+export const getClientsSelect = async () => {
+  const res = await axiosSecure.get("/client/select");
+  return res.data.data;
+};
