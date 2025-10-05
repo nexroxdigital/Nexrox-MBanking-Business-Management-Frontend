@@ -3,8 +3,6 @@ import {
   ArrowLeft,
   Bug,
   Home,
-  Mail,
-  MessageCircle,
   RefreshCw,
   Server,
   Wifi,
@@ -115,23 +113,6 @@ const ErrorPage = () => {
 
       {/* Main Content */}
       <div className="relative z-10 max-w-2xl mx-auto text-center">
-        {/* Error Type Selector */}
-        {/* <div className="mb-8 flex flex-wrap justify-center gap-2">
-          {Object.keys(errorTypes).map((type) => (
-            <button
-              key={type}
-              onClick={() => setErrorType(type)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                errorType === type
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
-                  : "bg-white/70 dark:bg-gray-800/70 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700"
-              }`}
-            >
-              {type === "offline" ? "Offline" : type.toUpperCase()}
-            </button>
-          ))}
-        </div> */}
-
         {/* Error Icon */}
         <div
           className={`inline-flex items-center justify-center w-32 h-32 rounded-full ${currentError.bgColor} mb-8 transform transition-all duration-500 hover:scale-110`}
@@ -167,6 +148,9 @@ const ErrorPage = () => {
           <button
             onClick={handleGoHome}
             className="group flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+            style={{
+              background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+            }}
           >
             <Home className="w-5 h-5 group-hover:animate-bounce" />
             <span>Go Home</span>
@@ -193,40 +177,9 @@ const ErrorPage = () => {
             <span>Go Back</span>
           </button>
         </div>
-
-        {/* Additional Help */}
-        <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Need Help?
-          </h3>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="mailto:support@example.com"
-              className="group flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300"
-            >
-              <Mail className="w-5 h-5 group-hover:animate-bounce" />
-              <span>Email Support</span>
-            </a>
-            <a
-              href="#"
-              className="group flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300"
-            >
-              <MessageCircle className="w-5 h-5 group-hover:animate-bounce" />
-              <span>Live Chat</span>
-            </a>
-          </div>
-        </div>
-
-        {/* Fun Quote */}
-        <div className="mt-8 text-sm text-gray-500 dark:text-gray-500 italic">
-          "The best error messages are the ones that help you learn something
-          new."
-          <br />
-          <span className="text-xs">- Every Developer Ever</span>
-        </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes spin-slow {
           from {
             transform: rotate(0deg);
