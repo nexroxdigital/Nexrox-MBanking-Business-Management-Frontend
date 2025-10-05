@@ -110,10 +110,12 @@ const MobileBanking = () => {
   const [num, setNum] = useState({
     label: "",
     number: "",
-    channel: "",
-    type: "",
+    channel: "বিকাশ",
+    type: "এজেন্ট",
     balance: 0,
   });
+
+  console.log("type", num.type);
 
   const [transactions, setTransactions] = useState([]);
   const [pagination, setPagination] = useState({
@@ -222,7 +224,8 @@ const MobileBanking = () => {
   };
 
   function addNumber() {
-    if (!num.label.trim() || !num.number || !num.channel || !num.type) {
+    console.log("num", num);
+    if (!num.label || !num.number || !num.channel || !num.type) {
       Swal.fire({
         icon: "error",
         title: "সব তথ্য পূরণ করুন",
@@ -516,7 +519,7 @@ const MobileBanking = () => {
                         onChange={(e) =>
                           setNum({ ...num, label: e.target.value })
                         }
-                        placeholder="Bkash Agent 02"
+                        placeholder="Bkash Agent"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") addNumber(); // submit on enter
                         }}
