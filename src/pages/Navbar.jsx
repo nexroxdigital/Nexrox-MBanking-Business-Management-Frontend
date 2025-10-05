@@ -1,5 +1,6 @@
 import { Lock, Menu, X } from "lucide-react";
 
+import { Link } from "react-router";
 import GradientButton from "../components/shared/Button/GradientButton";
 
 const Navbar = ({ toggleMenu, isMenuOpen }) => {
@@ -8,9 +9,9 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
       <div className="max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <a href="#" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3">
             <img className="h-14 w-32" src="/Ai.png" alt="" />
-          </a>
+          </Link>
 
           {/* Theme Toggle & Mobile Menu Button */}
           <div className="flex items-center space-x-2">
