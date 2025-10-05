@@ -95,10 +95,10 @@ export default function ClientTransactions() {
   const profit = watch("profit");
 
   useEffect(() => {
-    if (profit !== "" && !isNaN(profit)) {
+    if (profit !== "" && !isNaN(profit) && channel !== "Bill Payment") {
       setValue("profit", parseFloat(profit).toFixed(2));
     }
-  }, [profit, setValue]);
+  }, [profit, setValue, channel]);
 
   // calculate profit & total inline
   useEffect(() => {
@@ -130,28 +130,58 @@ export default function ClientTransactions() {
       setValue("commission", 3.75, { shouldValidate: true });
     } else if (type === "Cash In") {
       setValue("commission", 1.5, { shouldValidate: true });
+    } else if (channel === "Bill Payment") {
+      setValue("commission", 0);
     }
-  }, [type, setValue]);
+  }, [type, setValue, channel]);
 
   // Auto calculation with useEffect
+  // useEffect(() => {
+  //   let profitCalc = watch("profit");
+  //   let totalCalc = watch("total");
+
+  //   if (!isNaN(commission)) {
+  //     if (type === "Cash In") {
+  //       profitCalc = (amount * commission) / 100;
+  //     } else if (type === "Cash Out") {
+  //       profitCalc = (amount * commission) / 1000;
+  //     }
+  //     setValue("profit", profitCalc);
+  //   }
+
+  //   if (amount || profitCalc) {
+  //     totalCalc = amount + (parseFloat(profitCalc) || 0);
+  //     setValue("total", totalCalc);
+  //   }
+  // }, [amount, commission, type, setValue, watch]);
+
   useEffect(() => {
-    let profitCalc = watch("profit");
-    let totalCalc = watch("total");
+    const profitCalc = watch("profit");
+    const totalCalc = watch("total");
+    const channel = watch("channel");
+
+    let computedProfit = profitCalc;
+    let computedTotal = totalCalc;
 
     if (!isNaN(commission)) {
       if (type === "Cash In") {
-        profitCalc = (amount * commission) / 100;
+        computedProfit = (amount * commission) / 100;
       } else if (type === "Cash Out") {
-        profitCalc = (amount * commission) / 1000;
+        computedProfit = (amount * commission) / 1000;
       }
-      setValue("profit", profitCalc);
+      setValue("profit", computedProfit);
     }
 
-    if (amount || profitCalc) {
-      totalCalc = amount + (parseFloat(profitCalc) || 0);
-      setValue("total", totalCalc);
+    // If Bill Payment, don't include profit in total
+    if (amount) {
+      if (channel === "Bill Payment") {
+        computedTotal = amount; // exclude profit
+      } else {
+        computedTotal = amount + (parseFloat(computedProfit) || 0);
+      }
+      setValue("total", computedTotal);
     }
-  }, [amount, commission, type, setValue, watch]);
+  }, [amount, commission, type, watch, setValue]);
 
   // close modal on esc
   useEffect(() => {
@@ -185,9 +215,17 @@ export default function ClientTransactions() {
       });
   }, [transactions, filter]);
 
-  console.log("filtered", filtered);
+  // console.log("filtered", filtered);
 
   const addTx = (data) => {
+    let type = data.type;
+    if (data.channel === "Bill Payment") {
+      type = data.billType;
+    } else {
+      type = data.type;
+    }
+    // console.log("type", type);
+
     const client = allClients.find((c) => c._id === data.clientId);
     const wallet = walletNumbers.find((w) => w._id === data.channel);
     // console.log("data", data.clientId);
@@ -199,7 +237,7 @@ export default function ClientTransactions() {
       date: data.date,
       channel: wallet?.channel || null,
       wallet_id: wallet?._id || null,
-      type: data.type || null,
+      type: type || null,
       bill_type: data.channel === "Bill Payment" ? data.billType : "",
       client_id: client?._id || null,
       client_name: client?.name || null,
@@ -460,7 +498,7 @@ export default function ClientTransactions() {
                   <Field label="অ্যামাউন্ট (৳)">
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       {...register("amount", { required: true })}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
@@ -477,7 +515,7 @@ export default function ClientTransactions() {
                   >
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       {...register("commission")}
                       className={`w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                 focus:outline-none  focus:ring-2 focus:ring-[#862C8A] focus:border-transparent`}
@@ -525,7 +563,7 @@ export default function ClientTransactions() {
                   <Field label="বাকি (৳)">
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       {...register("due")}
                       className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"

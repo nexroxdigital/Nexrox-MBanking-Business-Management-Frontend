@@ -239,6 +239,7 @@ const DailyTransactions = () => {
   };
 
   const saveCash = (data) => {
+    console.log('saveCash', data.taka);
     // Create optimistic transaction
     const optimisticTx = {
       _id: Date.now().toString(),

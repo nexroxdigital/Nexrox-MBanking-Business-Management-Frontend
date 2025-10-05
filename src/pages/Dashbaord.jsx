@@ -17,6 +17,8 @@ import { useWalletNumbers } from "../hooks/useWallet";
 
 export default function Dashboard() {
   const { data, isLoading, isError } = useWalletWiseReport();
+
+  console.log("wallet report", data);
   const today = todayISO();
   const monthName = new Date().toLocaleDateString("bn-BD", { month: "long" });
   const [openingModalOpen, setOpeningModalOpen] = useState(false);
@@ -236,7 +238,7 @@ export default function Dashboard() {
                   <tbody>
                     {data.data.map((n) => (
                       <tr
-                        key={n._id}
+                        key={n?.wallet?._id}
                         className="group rounded-xl border border-gray-100 bg-white hover:shadow-sm transition"
                       >
                         <td className="py-4 px-4 rounded-l-xl border-0 border-r border-r-gray-400 border-b border-b-gray-200">
