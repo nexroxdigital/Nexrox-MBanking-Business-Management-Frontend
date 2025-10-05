@@ -20,7 +20,7 @@ export const BankTxnColumns = [
     header: "শাখা",
     cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("accountName", {
+  columnHelper.accessor("senderName", {
     header: "প্রেরক",
     cell: (info) => info.getValue(),
   }),
