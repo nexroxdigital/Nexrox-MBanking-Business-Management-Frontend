@@ -8,11 +8,13 @@ import {
   Wifi,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 const ErrorPage = () => {
   const [errorType, setErrorType] = useState("404");
   const [isAnimating, setIsAnimating] = useState(false);
   const [particles, setParticles] = useState([]);
+  const navigate = useNavigate();
 
   // Generate floating particles for background effect
   useEffect(() => {
@@ -79,11 +81,11 @@ const ErrorPage = () => {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    navigate(-1);
   };
 
   const handleGoHome = () => {
-    window.location.href = "/";
+    navigate("/");
   };
 
   return (
