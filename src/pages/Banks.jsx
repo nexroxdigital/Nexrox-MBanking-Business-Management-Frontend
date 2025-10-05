@@ -46,7 +46,7 @@ const BankTransactions = () => {
     if (Array.isArray(data)) {
       setBanks(data);
     } else {
-      setBanks([]); // fallback to empty array
+      setBanks([]);
     }
   }, [data]);
 
