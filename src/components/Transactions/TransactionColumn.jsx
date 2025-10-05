@@ -2,6 +2,13 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { fmtBDT } from "../../pages/utils";
 
 const columnHelper = createColumnHelper();
+const formatType = (typeString) => {
+  if (!typeString) return "";
+
+  const parts = typeString.split(",").map((s) => s.trim());
+  if (parts.length <= 2) return parts.join(", ");
+  return `${parts.slice(0, 2).join(", ")} ইত্যাদি`;
+};
 
 export const transactionColumn = [
   columnHelper.accessor("date", {
@@ -17,7 +24,7 @@ export const transactionColumn = [
   }),
   columnHelper.accessor("type", {
     header: "আইটেম",
-    cell: (info) => info.getValue(),
+    cell: (info) => formatType(info.getValue()),
   }),
   columnHelper.accessor("number", {
     header: "নাম্বার",

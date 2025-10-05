@@ -17,19 +17,17 @@ export const ReportColumns = [
   }),
 
   // Sell
-  columnHelper.accessor("sell", {
+  columnHelper.accessor("totalSale", {
     header: () => (
       <span className="py-3 px-2 text-gray-100  backdrop-blur">বিক্রি</span>
     ),
     cell: ({ getValue }) => (
-      <span className="block text-gray-700 px-2">
-        ৳{fmtBDT(getValue())}
-      </span>
+      <span className="block text-gray-700 px-2">৳{fmtBDT(getValue())}</span>
     ),
   }),
 
   // Profit
-  columnHelper.accessor("profit", {
+  columnHelper.accessor("totalProfit", {
     header: () => (
       <span className="py-3 px-2 text-gray-100 text-right backdrop-blur">
         লাভ
@@ -43,7 +41,7 @@ export const ReportColumns = [
   }),
 
   // Due
-  columnHelper.accessor("due", {
+  columnHelper.accessor("totalDue", {
     header: () => (
       <span className="py-3 px-2 text-gray-100 text-right backdrop-blur">
         পাওনা

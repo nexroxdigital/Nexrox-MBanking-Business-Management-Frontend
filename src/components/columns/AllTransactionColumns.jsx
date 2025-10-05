@@ -30,13 +30,13 @@ export const AllTransactionColumns = [
   columnHelper.accessor("amount", {
     header: "পরিমাণ",
     cell: (info) => (
-      <span className="text-right block">৳{fmtBDT(info.getValue())}</span>
+      <span className="text-left block">৳{fmtBDT(info.getValue())}</span>
     ),
   }),
   columnHelper.accessor("profit", {
     header: "কমিশন",
     cell: (info) => (
-      <span className="text-right block text-purple-600 font-medium">
+      <span className="block text-purple-600 font-medium">
         ৳{fmtBDT(info.getValue())}
       </span>
     ),
@@ -44,7 +44,7 @@ export const AllTransactionColumns = [
   columnHelper.accessor("due", {
     header: "বকেয়া",
     cell: (info) => (
-      <span className="text-right block text-red-600 font-semibold">
+      <span className="block text-red-600 font-semibold">
         ৳{fmtBDT(info.getValue())}
       </span>
     ),

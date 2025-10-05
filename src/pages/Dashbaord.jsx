@@ -1,69 +1,47 @@
-import { useState } from "react";
-import { daysAgo, fmtBDT, monthKey, todayISO } from "./utils";
+import { useEffect, useState } from "react";
+import { fmtBDT, todayISO } from "./utils";
 
 import { CiMoneyCheck1 } from "react-icons/ci";
 import { FaListAlt } from "react-icons/fa";
 import AllTransactions from "../components/AllTransactions/AllTransactions";
 import { ReportColumns } from "../components/columns/ReportColumns";
 import TableComponent from "../components/shared/Table/Table";
-import { reportData } from "../data/reportData";
+import {
+  useLast30DaysReport,
+  useMonthlyReport,
+  useTodaysReport,
+  useWalletWiseReport,
+} from "../hooks/useDailyTxn";
 import { useTransactions } from "../hooks/useTransaction";
 import { useWalletNumbers } from "../hooks/useWallet";
 
-const sums = {
-  byDay: {
-    "2025-09-29": { sell: 14000, profit: 2500, due: 4000 },
-    "2025-09-28": { sell: 8000, profit: 1800, due: 2000 },
-    "2025-09-27": { sell: 10000, profit: 2200, due: 3500 },
-  },
-  byMonth: {
-    "2025-09": { sell: 95000, profit: 18000, due: 15000 },
-    "2025-08": { sell: 87000, profit: 16200, due: 12000 },
-  },
-};
-const numberSummary = [
-  {
-    number: "Bkash Agent 01",
-    amount: 84747,
-    count: 4,
-  },
-  {
-    number: "Bkash Agent 02",
-    amount: 65320,
-    count: 3,
-  },
-  {
-    number: "Nagad Agent 01",
-    amount: 42100,
-    count: 2,
-  },
-  {
-    number: "Rocket Agent 01",
-    amount: 37250,
-    count: 5,
-  },
-  {
-    number: "Bkash Personal 01",
-    amount: 15980,
-    count: 1,
-  },
-];
-
 export default function Dashboard() {
+  const { data, isLoading, isError } = useWalletWiseReport();
   const today = todayISO();
+  const monthName = new Date().toLocaleDateString("bn-BD", { month: "long" });
   const [openingModalOpen, setOpeningModalOpen] = useState(false);
   const [openingCash, setOpeningCash] = useState(2000);
+  const { data: todayReport, isLoading: todayReportLoading } =
+    useTodaysReport();
+
+  const { data: monthlyTotalReport, isLoading: monthlyTotalReportLoading } =
+    useMonthlyReport();
+
+  const { data: last30DaysReport, isLoading: last30DaysReportLoading } =
+    useLast30DaysReport();
+
+  const [lastMonthSummary, setLastMonthSummary] = useState([]);
+
+  useEffect(() => {
+    if (last30DaysReport?.data) {
+      setLastMonthSummary(last30DaysReport?.data.reverse());
+    }
+  }, [last30DaysReport]);
 
   const handleSubmitOpeningBalance = (e) => {
     e.preventDefault();
     setOpeningModalOpen(false);
   };
-
-  const month = monthKey(today);
-  const monthSums = sums.byMonth[month] || { sell: 0, profit: 0, due: 0 };
-  const daySums = sums.byDay[today] || { sell: 0, profit: 0, due: 0 };
-
-  const [range, setRange] = useState({ from: daysAgo(30), to: todayISO() });
 
   return (
     <div className="min-h-[calc(100vh-200px)] transition-colors duration-300">
@@ -114,31 +92,31 @@ export default function Dashboard() {
         <div className="grid gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="আজকের বিক্রি"
-            value={`৳${fmtBDT(daySums.sell)}`}
+            value={`৳${fmtBDT(todayReport?.totals?.totalSale)}`}
             sub={today}
             icon=""
             gradient="from-emerald-500 to-teal-600"
           />
           <StatCard
-            title="আজকের লাভ/কমিশন"
-            value={`৳${fmtBDT(daySums.profit)}`}
+            title="আজকের লাভ"
+            value={`৳${fmtBDT(todayReport?.totals?.totalProfit)}`}
             sub={today}
             icon=""
             gradient="from-blue-500 to-cyan-600"
           />
           <StatCard
             title="আজকের পাওনা"
-            value={`৳${fmtBDT(daySums.due)}`}
+            value={`৳${fmtBDT(todayReport?.totals?.totalDue)}`}
             sub={today}
             icon=""
             gradient="from-amber-500 to-orange-600"
           />
           <StatCard
-            title="মাসিক সারাংশ"
-            value={`৳${fmtBDT(monthSums.sell)}`}
-            sub={`লাভ ৳${fmtBDT(monthSums.profit)} · পাওনা ৳${fmtBDT(
-              monthSums.due
-            )}`}
+            title={`মাসিক সারাংশ (${monthName})`}
+            value={`৳${fmtBDT(monthlyTotalReport?.totals?.totalSale)}`}
+            sub={`লাভ: ৳${fmtBDT(
+              monthlyTotalReport?.totals?.totalProfit
+            )} __ পাওনা: ৳${fmtBDT(monthlyTotalReport?.totals?.totalDue)}`}
             icon=""
             gradient="from-[#862C8A] to-[#009C91]"
           />
@@ -205,90 +183,117 @@ export default function Dashboard() {
               background: "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
             }}
           >
-            <h3 className="font-semibold text-white">নম্বারভিত্তিক রিপোর্ট</h3>
-          </div>
-
-          <div className="p-5">
-            <div
-              className="overflow-x-auto"
-              style={{
-                borderImageSlice: 1,
-                borderImageSource:
-                  "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-              }}
-            >
-              <table className="w-full text-sm table-fixed">
-                <thead className="bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white">
-                  <tr className="text-left border-0 border-b border-b-gray-400">
-                    <th className="py-3 px-4  text-left sticky top-0 border-0 border-r border-r-gray-100">
-                      নম্বর
-                    </th>
-                    <th className="py-3 px-4 text-left border-0 border-r border-r-gray-100">
-                      লেনদেন
-                    </th>
-                    <th className="py-3 px-4 text-left">মোট</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {numberSummary.map((n) => (
-                    <tr
-                      key={n.number}
-                      className="group rounded-xl border border-gray-100 bg-white hover:shadow-sm transition"
-                    >
-                      <td className="py-4 px-4 rounded-l-xl border-0 border-r border-r-gray-400 border-b border-b-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="inline-block w-2 h-2 rounded-full"
-                            style={{
-                              background:
-                                "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                            }}
-                          />
-                          <span className="truncate" title={n.number}>
-                            {n.number}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-left text-gray-800 border-0 border-r border-r-gray-400 border-b border-b-gray-200">
-                        {n.count}
-                      </td>
-                      <td className="py-4 px-4 text-left rounded-r-xl border-b border-b-gray-200">
-                        <span
-                          className="px-2.5 py-1 rounded-lg font-semibold text-gray-900"
-                          style={{
-                            background:
-                              "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
-                          }}
-                        >
-                          ৳{fmtBDT(n.amount)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {numberSummary.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={3}
-                        className="py-8 text-center text-gray-400"
-                      >
-                        <div
-                          className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                          style={{
-                            background:
-                              "linear-gradient(270deg, #862C8A33 0%, #009C9133 100%)",
-                          }}
-                        >
-                          <span className="text-2xl opacity-80">📊</span>
-                        </div>
-                        ডেটা নেই
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="flex flex-col gap-1 md:flex-row justify-between w-full">
+              <h3 className="font-semibold text-white">
+                নম্বারভিত্তিক রিপোর্ট
+              </h3>
+              <p className="text-white text-sm">
+                তারিখ:{" "}
+                {data?.date
+                  ? new Date(data.date).toLocaleDateString("bn-BD")
+                  : "লোড হচ্ছে..."}
+              </p>
             </div>
           </div>
+
+          {isLoading ? (
+            <div className="p-5">
+              <div className="animate-pulse flex space-x-4">
+                <div className="flex-1 space-y-6 py-1">
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="h-2 bg-gray-200 rounded col-span-2"></div>
+                      <div className="h-2 bg-gray-200 rounded col-span-1"></div>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-5">
+              <div
+                className="overflow-x-auto"
+                style={{
+                  borderImageSlice: 1,
+                  borderImageSource:
+                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                }}
+              >
+                <table className="w-full text-sm table-fixed">
+                  <thead className="bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white">
+                    <tr className="text-left border-0 border-b border-b-gray-400">
+                      <th className="py-3 px-4  text-left sticky top-0 border-0 border-r border-r-gray-100">
+                        নম্বর
+                      </th>
+                      <th className="py-3 px-4 text-left border-0 border-r border-r-gray-100">
+                        লেনদেন
+                      </th>
+                      <th className="py-3 px-4 text-left">মোট</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.data.map((n) => (
+                      <tr
+                        key={n._id}
+                        className="group rounded-xl border border-gray-100 bg-white hover:shadow-sm transition"
+                      >
+                        <td className="py-4 px-4 rounded-l-xl border-0 border-r border-r-gray-400 border-b border-b-gray-200">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="inline-block w-2 h-2 rounded-full"
+                              style={{
+                                background:
+                                  "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
+                              }}
+                            />
+                            <span className="truncate" title={n?.wallet?.label}>
+                              {n?.wallet?.label}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-left text-gray-800 border-0 border-r border-r-gray-400 border-b border-b-gray-200">
+                          {n?.txnCount}
+                        </td>
+                        <td className="py-4 px-4 text-left rounded-r-xl border-b border-b-gray-200">
+                          <span
+                            className="px-2.5 py-1 rounded-lg font-semibold text-gray-900"
+                            style={{
+                              background:
+                                "linear-gradient(270deg, #862C8A1A 0%, #009C911A 100%)",
+                            }}
+                          >
+                            ৳{fmtBDT(n?.totalTxnAmount)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {data.data.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={3}
+                          className="py-8 text-center text-gray-400"
+                        >
+                          <div
+                            className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                            style={{
+                              background:
+                                "linear-gradient(270deg, #862C8A33 0%, #009C9133 100%)",
+                            }}
+                          >
+                            <span className="text-2xl opacity-80">📊</span>
+                          </div>
+                          ডেটা নেই
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Summary (Last 30 days) */}
@@ -303,14 +308,22 @@ export default function Dashboard() {
             <h3 className="font-semibold text-white">
               সারসংক্ষেপ (শেষ ৩০ দিন)
             </h3>
-            <span className="text-xs px-2 py-1 rounded-lg bg-white/15 text-white/90">
-              From {range.from} to {range.to}
+            <span className="text-sm px-2 py-1 rounded-lg bg-white/15 text-white/90">
+              {last30DaysReport?.period?.from &&
+                new Date(last30DaysReport.period.from).toLocaleDateString(
+                  "bn-BD"
+                )}{" "}
+              থেকে{" "}
+              {last30DaysReport?.period?.to &&
+                new Date(last30DaysReport.period.to).toLocaleDateString(
+                  "bn-BD"
+                )}
             </span>
           </div>
 
           <div className="p-5">
             <TableComponent
-              data={reportData}
+              data={lastMonthSummary}
               columns={ReportColumns}
               pagination=""
               setPagination=""
@@ -419,7 +432,7 @@ function NumberBalances() {
 
             {/* Table Rows */}
             <tbody>
-              {walletNumbers.map((n, index) => (
+              {walletNumbers?.map((n, index) => (
                 <tr
                   key={n._id}
                   className="rounded-xl bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-200 border border-gray-100/50 dark:border-gray-700/50 shadow hover:shadow-lg group"

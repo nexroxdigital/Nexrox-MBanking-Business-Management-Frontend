@@ -27,11 +27,6 @@ const computePersonal = ({ taka, feePct }) => {
   return { feeAmt, total, expense, profit };
 };
 
-const channelOptions = {
-  agent: ["Bkash Agent", "Nagad Agent", "Rocket Agent"],
-  personal: ["Bkash Personal", "Nagad Personal", "Rocket Personal"],
-};
-
 const itemOptions = ["photocopy", "picture", "printing", "other"];
 
 /* ---------- Main ---------- */
@@ -43,13 +38,6 @@ const DailyTransactions = () => {
   } = useWalletNumbers();
 
   const createDailyTxnMutation = useCreateDailyTransaction();
-
-  const agentWallets = walletNumbers?.filter(
-    (w) => w.type.toLowerCase() === "agent"
-  );
-  const personalWallets = walletNumbers?.filter(
-    (w) => w.type.toLowerCase() === "personal"
-  );
 
   const [transactions, setTransactions] = useState([]);
   const [pagination, setPagination] = useState({
@@ -84,8 +72,9 @@ const DailyTransactions = () => {
       date: todayISO(),
       channel: "",
       taka: "",
-      commissionPct: "",
+      commissionPct: "4.75",
       commission: 0,
+      txn_id: "",
     },
   });
 
@@ -99,9 +88,10 @@ const DailyTransactions = () => {
       date: todayISO(),
       channel: "",
       taka: "",
-      feePct: "",
+      feePct: "1.5",
       paid: "",
       refund: "",
+      txn_id: "",
     },
   });
 
@@ -128,7 +118,7 @@ const DailyTransactions = () => {
 
     // Create optimistic transaction
     const optimisticTx = {
-      _id: Date.now().toString(), // temporary ID
+      _id: Date.now().toString(),
       date: data.date,
       channel: wallet?.channel || "",
       wallet_id: wallet?._id || "",
@@ -137,6 +127,7 @@ const DailyTransactions = () => {
       fee: clamp2(data.commissionPct || 0),
       profit: clamp2(profit || 0),
       total: clamp2(total || 0),
+      txn_id: data.txn_id,
       optimistic: true,
     };
 
@@ -185,72 +176,121 @@ const DailyTransactions = () => {
 
   const savePersonal = (data) => {
     const { feeAmt, total, expense, profit } = computePersonal(data);
-    setTransactions((s) => [
-      {
-        date: data.date,
-        item: "ক্যাশ ইন (পার্সোনাল)",
-        number: data.number,
-        method: data.channel,
-        pay: total,
-        fee: feeAmt,
-        cost: expense,
-        refund: data.refund,
-        profit,
+
+    const wallet = walletNumbers.find((w) => w._id === data.channel);
+
+    // Create optimistic transaction
+    const optimisticTx = {
+      _id: Date.now().toString(),
+      date: data.date,
+      channel: wallet?.channel || "",
+      wallet_id: wallet?._id || "",
+      type: "Cash In",
+      amount: clamp2(data.taka),
+      number: data.number,
+      fee: clamp2(data.feePct || 0),
+      profit: clamp2(profit || 0),
+      total: clamp2(total || 0),
+      txn_id: data.txn_id,
+      optimistic: true,
+    };
+
+    const prevTx = [...transactions];
+
+    // Optimistic UI
+    setTransactions((prev) => [optimisticTx, ...prev]);
+
+    // Call backend
+    createDailyTxnMutation.mutate(optimisticTx, {
+      onSuccess: (savedTx) => {
+        // console.log("savedTx", savedTx);
+        // Replace optimistic with server tx
+        setTransactions((prev) =>
+          prev.map((tx) => (tx._id === optimisticTx._id ? savedTx : tx))
+        );
+
+        Swal.fire({
+          icon: "success",
+          title: "লেনদেন সফল",
+          text: "ট্রানজেকশন তৈরি করা হয়েছে",
+        });
       },
-      ...s,
-    ]);
-    resetAgent({
-      date: todayISO(),
-      channel: "",
-      taka: "",
-      commissionPct: "",
-      paid: "",
+      onError: (err) => {
+        console.error("Create txn error:", err.response?.data || err.message);
+
+        // Rollback
+        setTransactions(prevTx);
+
+        Swal.fire({
+          icon: "error",
+          title: "লেনদেন ব্যর্থ",
+          text:
+            err.response?.data?.message || "ট্রানজেকশন তৈরি করতে সমস্যা হয়েছে",
+        });
+      },
+      onSettled: () => {
+        resetAgent();
+        resetPersonal();
+        resetCash();
+        setCashItems([]);
+        setShowModal(false);
+      },
     });
-    resetPersonal({
-      date: todayISO(),
-      channel: "",
-      taka: "",
-      feePct: "",
-      paid: "",
-      refund: "",
-    });
-    resetCash({ taka: "", paid: "", profit: "", itemInput: "" });
-    setCashItems([]);
-    setShowModal(false);
   };
 
   const saveCash = (data) => {
-    setTransactions((s) => [
-      {
-        date: todayISO(),
-        item: cashItems.join(", ") || "ক্যাশ",
-        method: "Cash",
-        pay: data.taka,
-        fee: 0,
-        cost: 0,
-        refund: 0,
-        profit: data.profit,
+    // Create optimistic transaction
+    const optimisticTx = {
+      _id: Date.now().toString(),
+      date: data.date,
+      channel: "",
+      wallet_id: null,
+      type: cashItems.join(", ") || "ক্যাশ",
+      amount: clamp2(data.taka),
+      profit: clamp2(data.profit || 0),
+      optimistic: true,
+    };
+    const prevTx = [...transactions];
+
+    // Optimistic UI
+    setTransactions((prev) => [optimisticTx, ...prev]);
+
+    // Call backend
+    createDailyTxnMutation.mutate(optimisticTx, {
+      onSuccess: (savedTx) => {
+        // console.log("savedTx", savedTx);
+        // Replace optimistic with server tx
+        setTransactions((prev) =>
+          prev.map((tx) => (tx._id === optimisticTx._id ? savedTx : tx))
+        );
+
+        Swal.fire({
+          icon: "success",
+          title: "লেনদেন সফল",
+          text: "ট্রানজেকশন তৈরি করা হয়েছে",
+        });
       },
-      ...s,
-    ]);
-    resetAgent({
-      date: todayISO(),
-      channel: "",
-      taka: "",
-      commissionPct: "",
-      paid: "",
+      onError: (err) => {
+        console.error("Create txn error:", err.response?.data || err.message);
+
+        // Rollback
+        setTransactions(prevTx);
+
+        Swal.fire({
+          icon: "error",
+          title: "লেনদেন ব্যর্থ",
+          text:
+            err.response?.data?.message || "ট্রানজেকশন তৈরি করতে সমস্যা হয়েছে",
+        });
+      },
+      onSettled: () => {
+        resetAgent();
+        resetPersonal();
+        resetCash();
+        setCashItems([]);
+        setShowModal(false);
+      },
     });
-    resetPersonal({
-      date: todayISO(),
-      channel: "",
-      taka: "",
-      feePct: "",
-      paid: "",
-      refund: "",
-    });
-    resetCash({ taka: "", paid: "", profit: "", itemInput: "" });
-    setCashItems([]);
-    setShowModal(false);
   };
 
   /* ---------- Cash Items ---------- */
@@ -351,9 +391,9 @@ const DailyTransactions = () => {
                       {...registerAgent("channel", { required: true })}
                     >
                       <option value="">চ্যানেল নির্বাচন</option>
-                      {agentWallets.map((a) => (
-                        <option key={a._id} value={a._id}>
-                          {a.channel}
+                      {walletNumbers.map((w) => (
+                        <option key={w._id} value={w._id}>
+                          {w.label}
                         </option>
                       ))}
                     </select>
@@ -374,6 +414,7 @@ const DailyTransactions = () => {
                     <input
                       type="number"
                       step="any"
+                      defaultValue="4.25"
                       className="w-full border rounded p-2"
                       {...registerAgent("commissionPct", { required: true })}
                     />
@@ -398,12 +439,23 @@ const DailyTransactions = () => {
                     />
                   </label>
 
+                  <label>
+                    <span className="text-sm text-gray-600">Txn ID</span>
+                    <input
+                      type="text"
+                      className="w-full border rounded p-2 bg-gray-50"
+                      {...registerAgent("txn_id")}
+                    />
+                  </label>
+
                   <div className="col-span-full flex gap-2">
                     <button
                       type="submit"
                       className="flex-1 py-2 rounded-md bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white"
                     >
-                      সংরক্ষণ করুন
+                      {createDailyTxnMutation.isPending
+                        ? "অপেক্ষা করুন..."
+                        : "সংরক্ষণ করুন "}
                     </button>
                     <button
                       type="button"
@@ -437,9 +489,9 @@ const DailyTransactions = () => {
                       {...registerPersonal("channel", { required: true })}
                     >
                       <option value="">চ্যানেল নির্বাচন</option>
-                      {personalWallets.map((p) => (
-                        <option key={p._id} value={p._id}>
-                          {p.channel}
+                      {walletNumbers.map((w) => (
+                        <option key={w._id} value={w._id}>
+                          {w.label}
                         </option>
                       ))}
                     </select>
@@ -470,6 +522,7 @@ const DailyTransactions = () => {
                       type="number"
                       step="any"
                       className="w-full border rounded p-2"
+                      defaultValue="1.5"
                       {...registerPersonal("feePct", { required: true })}
                     />
                   </label>
@@ -517,12 +570,22 @@ const DailyTransactions = () => {
                       {...registerPersonal("refund")}
                     />
                   </label>
+                  <label>
+                    <span className="text-sm text-gray-600">Txn ID</span>
+                    <input
+                      type="text"
+                      className="w-full border rounded p-2"
+                      {...registerPersonal("txn_id")}
+                    />
+                  </label>
                   <div className="col-span-full flex gap-2">
                     <button
                       type="submit"
                       className="flex-1 py-2 rounded-md bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white"
                     >
-                      সংরক্ষণ করুন
+                      {createDailyTxnMutation.isPending
+                        ? "অপেক্ষা করুন..."
+                        : "সংরক্ষণ করুন "}
                     </button>
                     <button
                       type="button"
@@ -654,7 +717,9 @@ const DailyTransactions = () => {
                       type="submit"
                       className="flex-1 py-2 rounded-md bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white"
                     >
-                      সংরক্ষণ করুন
+                      {createDailyTxnMutation.isPending
+                        ? "অপেক্ষা করুন..."
+                        : "সংরক্ষণ করুন "}
                     </button>
                     <button
                       type="button"

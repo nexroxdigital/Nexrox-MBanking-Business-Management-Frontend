@@ -1,47 +1,36 @@
-import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router";
+import { useState } from "react";
+import { Outlet } from "react-router";
 import { ToastContainer } from "react-toastify";
 import Footer from "./components/shared/Footer/Footer";
-import Loading from "./components/shared/Loading/Loading";
-import Navbar from "./components/shared/Navbar/Navbar";
+import Navbar from "./pages/Navbar";
 
 const Layouts = () => {
-  const { pathname } = useLocation();
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
-  // useEffect(() => {
-  //   window.scrollTo({ top: 0, behavior: "smooth" });
-  // }, [pathname]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    setLoading(true);
-
-    const timer = setTimeout(() => {
-      setLoading(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 500); // 500ms delay
-
-    return () => clearTimeout(timer);
-  }, [pathname]);
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col dark:bg-slate-900 bg-[#f5f5f5]  text-gray-900">
       {/* Navbar */}
-      <Navbar />
+      <Navbar toggleMenu={toggleMenu} isMenuOpen={isMenuOpen} />
 
-      {loading ? <Loading /> : <Outlet />}
+      <div className="max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 pb-16 flex-1">
+        <Outlet context={{ isMenuOpen, setIsMenuOpen }} />
+      </div>
 
       <Footer />
       <ToastContainer
-        position="top-right"
-        autoClose={3000}
+        position="top-center"
+        autoClose={2100}
         hideProgressBar={false}
-        newestOnTop={false}
         closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
         pauseOnHover
+        draggable
+        theme="colored"
       />
     </div>
   );

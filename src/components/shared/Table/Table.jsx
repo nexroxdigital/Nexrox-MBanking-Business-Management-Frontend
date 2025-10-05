@@ -35,11 +35,7 @@ const TableComponent = ({
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className={`p-4 font-semibold border border-gray-200 ${
-                    ["amount", "fee", "pay"].includes(header.column.id)
-                      ? "text-right"
-                      : "text-left"
-                  }`}
+                  className={`p-4 font-semibold border border-gray-200 text-left`}
                 >
                   {flexRender(
                     header.column.columnDef.header,
@@ -52,7 +48,7 @@ const TableComponent = ({
         </thead>
 
         <tbody>
-          {isLoading 
+          {isLoading
             ? // Show 5 skeleton rows
               [...Array(7)].map((_, i) => (
                 <tr key={i} className="animate-pulse">
@@ -71,11 +67,7 @@ const TableComponent = ({
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className={`p-4 border border-gray-200 ${
-                        ["amount", "fee", "pay"].includes(cell.column.id)
-                          ? "text-right"
-                          : "text-left"
-                      }`}
+                      className={`p-4 border border-gray-200 text-left`}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,

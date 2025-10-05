@@ -3,8 +3,9 @@ import { CiEdit } from "react-icons/ci";
 import { MdOutlineDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import { MobileBankingColumns } from "../components/columns/MobileBankingColumns";
-import Loading from "../components/shared/Loading/Loading";
+import { CardLoading } from "../components/shared/CardLoading/CardLoading";
 import TableComponent from "../components/shared/Table/Table";
+import { useGetTransactions } from "../hooks/useDailyTxn";
 import { useToast } from "../hooks/useToast";
 import {
   useAdjustWalletBalance,
@@ -14,7 +15,7 @@ import {
   useWalletNumbers,
 } from "../hooks/useWallet";
 import { Field } from "./Field";
-import { clamp2, todayISO } from "./utils";
+import { clamp2 } from "./utils";
 
 const getCurrentTime = () => {
   const now = new Date();
@@ -114,34 +115,23 @@ const MobileBanking = () => {
     balance: 0,
   });
 
-  const [transactions] = useState([
-    {
-      date: todayISO(),
-      sender: "017XXXXXXXX",
-      receiver: "018XXXXXXXX",
-      ref: "REF123",
-      trxId: "TRX001",
-      time: getCurrentTime(),
-      amount: 1000,
-      commission: 20,
-      pay: 980,
-      method: "ক্যাশ",
-      balance: 1200,
-    },
-    {
-      date: todayISO(),
-      sender: "017XXXXXXXX",
-      receiver: "018XXXXXXXX",
-      ref: "REF123",
-      trxId: "TRX001",
-      time: getCurrentTime(),
-      amount: 1000,
-      commission: 20,
-      pay: 980,
-      method: "ক্যাশ",
-      balance: 1300,
-    },
-  ]);
+  const [transactions, setTransactions] = useState([]);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const {
+    data: txnData,
+    isLoading: txnLoading,
+    isFetching: txnFetching,
+  } = useGetTransactions(pagination.pageIndex, pagination.pageSize);
+
+  useEffect(() => {
+    if (txnData?.data) {
+      setTransactions(txnData?.data);
+    }
+  }, [txnData]);
 
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -307,7 +297,7 @@ const MobileBanking = () => {
 
         {/* Wallets List */}
         {isLoading ? (
-          <Loading />
+          <CardLoading />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
             {wallets.map((w, i) => (
@@ -373,11 +363,11 @@ const MobileBanking = () => {
         <TableComponent
           data={transactions}
           columns={MobileBankingColumns}
-          pagination=""
-          setPagination=""
-          pageCount=""
-          isFetching={false}
-          isLoading={false}
+          pagination={pagination}
+          setPagination={setPagination}
+          pageCount={txnData?.pagination?.totalPages ?? -1}
+          isFetching={txnFetching}
+          isLoading={txnLoading}
         />
 
         {/*  Edit Wallet Modal */}
@@ -427,8 +417,8 @@ const MobileBanking = () => {
                     }
                     className="w-full border rounded-lg p-3"
                   >
-                    <option value="এজেন্ট">এজেন্ট</option>
-                    <option value="পার্সোনাল">পার্সোনাল</option>
+                    <option value="Agent">এজেন্ট</option>
+                    <option value="Personal">পার্সোনাল</option>
                   </select>
                 </div>
 

@@ -8,56 +8,55 @@ export const MobileBankingColumns = [
     header: "তারিখ",
     cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("time", {
-    header: "সময়",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("sender", {
+  columnHelper.accessor("wallet_id", {
     header: "প্রেরক",
-    cell: (info) => info.getValue(),
+    cell: (info) => info.getValue()?.label || "—",
   }),
-  columnHelper.accessor("receiver", {
+  columnHelper.accessor("client_id", {
     header: "গ্রাহক",
-    cell: (info) => info.getValue(),
+    cell: (info) => {
+      const client = info.getValue();
+      const row = info.row.original;
+
+      if (client && client.name) {
+        return client.name;
+      } else if (row.number) {
+        return row.number;
+      } else {
+        return "—";
+      }
+    },
   }),
-  columnHelper.accessor("ref", {
-    header: "রেফারেন্স",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("trxId", {
+
+  columnHelper.accessor("txn_id", {
     header: "লেনদেন আইডি",
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor("amount", {
     header: "পরিমাণ",
-    cell: (info) => (
-      <span className="text-right block">৳{fmtBDT(info.getValue())}</span>
-    ),
+    cell: (info) => <span className="block">৳{fmtBDT(info.getValue())}</span>,
   }),
-  columnHelper.accessor("commission", {
-    header: "কমিশন",
+  columnHelper.accessor("profit", {
+    header: "লাভ",
     cell: (info) => (
-      <span className="text-right block text-purple-600 font-medium">
+      <span className="block text-purple-600 font-medium">
         ৳{fmtBDT(info.getValue())}
       </span>
     ),
   }),
-  columnHelper.accessor("pay", {
-    header: "প্রদেয়",
+  columnHelper.accessor("due", {
+    header: "বকেয়া",
     cell: (info) => (
-      <span className="text-right block text-green-600 font-semibold">
+      <span className="block text-green-600 font-semibold">
         ৳{fmtBDT(info.getValue())}
       </span>
     ),
   }),
-  columnHelper.accessor("method", {
-    header: "পদ্ধতি",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("balance", {
+
+  columnHelper.accessor("wallet_balance", {
     header: "ব্যালেন্স",
     cell: (info) => (
-      <span className="text-right block text-blue-600 font-semibold">
+      <span className="block text-blue-600 font-semibold">
         ৳{fmtBDT(info.getValue())}
       </span>
     ),

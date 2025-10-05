@@ -197,15 +197,15 @@ export default function ClientTransactions() {
     const optimisticTx = {
       _id: Date.now().toString(), // temporary ID
       date: data.date,
-      channel: wallet?.channel || "",
-      wallet_id: wallet?._id || "",
-      type: data.type || "",
+      channel: wallet?.channel || null,
+      wallet_id: wallet?._id || null,
+      type: data.type || null,
       bill_type: data.channel === "Bill Payment" ? data.billType : "",
-      client_id: client?._id || "",
-      client_name: client?.name || "",
+      client_id: client?._id || null,
+      client_name: client?.name || null,
       amount: clamp2(data.amount),
       fee: clamp2(data.commission || 0),
-      note: data.note || "",
+      note: data.note || null,
       due: clamp2(data.due || 0),
       profit: clamp2(data.profit || 0),
       total: clamp2(data.total || 0),
@@ -228,6 +228,11 @@ export default function ClientTransactions() {
         setTransactions((prev) =>
           prev.map((tx) => (tx._id === optimisticTx._id ? savedTx : tx))
         );
+        Swal.fire({
+          icon: "success",
+          title: "লেনদেন সফল",
+          text: "ট্রানজেকশন তৈরি করা হয়েছে",
+        });
       },
       onError: (err) => {
         console.error("Create txn error:", err.response?.data || err.message);
@@ -292,11 +297,12 @@ export default function ClientTransactions() {
               }
             >
               <option value="">Channel</option>
-              {walletNumbers.map((c) => (
-                <option key={c._id} value={c.channel}>
-                  {c.channel}
-                </option>
-              ))}
+              {walletNumbers &&
+                walletNumbers.map((c) => (
+                  <option key={c._id} value={c.channel}>
+                    {c.channel}
+                  </option>
+                ))}
             </select>
 
             <select
@@ -409,7 +415,7 @@ export default function ClientTransactions() {
                     >
                       {walletNumbers.map((c) => (
                         <option key={c._id} value={c._id}>
-                          {c.channel}
+                          {c.label}
                         </option>
                       ))}
                       <option value="Bill Payment">Bill Payment</option>
@@ -502,7 +508,7 @@ export default function ClientTransactions() {
 
                   <Field label="ক্লায়েন্ট">
                     <select
-                      {...register("clientId")}
+                      {...register("clientId", { required: true })}
                       className="w-full overflow-y-auto rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
                     >

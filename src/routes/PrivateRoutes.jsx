@@ -1,21 +1,25 @@
-// import { Navigate, useLocation } from "react-router";
-// import Loading from "../components/Loading/Loading";
-// import useAuth from "../context/AuthContext/AuthContext";
+import { jwtDecode } from "jwt-decode";
+import { Navigate } from "react-router";
 
-// const PrivateRoutes = ({ children }) => {
-//   const { user, loading } = useAuth();
+// optional: decode and verify token expiry
+const isTokenValid = (token) => {
+  try {
+    const decoded = jwtDecode(token);
+    return decoded.exp * 1000 > Date.now();
+  } catch (err) {
+    return false;
+  }
+};
 
-//   const location = useLocation();
+const PrivateRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
 
-//   if (loading) {
-//     return <Loading />;
-//   }
+  if (!token || !isTokenValid(token)) {
+    localStorage.removeItem("token");
+    return <Navigate to="/login" replace />;
+  }
 
-//   if (!user) {
-//     return <Navigate state={location?.pathname} to="/login"></Navigate>;
-//   }
+  return children;
+};
 
-//   return children;
-// };
-
-// export default PrivateRoutes;
+export default PrivateRoute;

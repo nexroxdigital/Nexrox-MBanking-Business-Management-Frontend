@@ -18,11 +18,7 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
             {/* <ThemeToggle /> */}
 
             <div className="hidden lg:flex">
-              <GradientButton
-                label="Login"
-                onClick={() => alert("Login clicked!")}
-                icon={Lock}
-              />
+              <GradientButton label="Login" icon={Lock} />
             </div>
 
             {/* Mobile Menu Button */}

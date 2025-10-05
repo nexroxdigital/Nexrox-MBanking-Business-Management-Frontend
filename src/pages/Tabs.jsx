@@ -4,6 +4,7 @@ import { IoIosContacts } from "react-icons/io";
 import { MdOutlineDashboard, MdPayments, MdPhoneIphone } from "react-icons/md";
 
 function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
+  
   const tabs = [
     { id: "dashboard", label: "ড্যাশবোর্ড", icon: <MdOutlineDashboard /> },
     { id: "transactions", label: "লেনদেন", icon: <HiOutlineBanknotes /> },
@@ -41,9 +42,9 @@ function Tabs({ tab, setTab, isMenuOpen, setIsMenuOpen }) {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`
-                group relative flex items-center justify-center gap-2 px-4 py-3 sm:px-3 sm:py-3 
+                group relative flex items-center justify-center gap-2 px-4 py-3 
                 rounded-xl text-sm font-semibold transition-all duration-300 
-                min-w-[120px] xl:min-w-[130px] flex-1 sm:flex-none
+                 flex-1 sm:flex-none
                 ${
                   tab === t.id
                     ? "text-white shadow-lg transform scale-105 z-10"
