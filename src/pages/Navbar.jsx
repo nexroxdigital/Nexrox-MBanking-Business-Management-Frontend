@@ -134,10 +134,10 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
                         </label>
                       </div>
 
-                      <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                      {/* <h3 className="font-semibold text-gray-800 dark:text-gray-200">
                         {user?.username}
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-3">
+                      </h3> */}
+                      <p className="text-sm font-semibold capitalize text-gray-500 mb-3">
                         {user?.role || "Admin"}
                       </p>
 

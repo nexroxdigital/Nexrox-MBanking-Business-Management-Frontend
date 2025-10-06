@@ -86,7 +86,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 mt-2">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                  {today}
+                  {new Date(today).toLocaleDateString("bn-BD")}
                 </p>
               </div>
             </div>
@@ -122,21 +122,21 @@ export default function Dashboard() {
           <StatCard
             title="আজকের বিক্রি"
             value={`৳${fmtBDT(todayReport?.totals?.totalSale)}`}
-            sub={today}
+            sub={new Date(today).toLocaleDateString("bn-BD")}
             icon=""
             gradient="from-emerald-500 to-teal-600"
           />
           <StatCard
             title="আজকের লাভ"
             value={`৳${fmtBDT(todayReport?.totals?.totalProfit)}`}
-            sub={today}
+            sub={new Date(today).toLocaleDateString("bn-BD")}
             icon=""
             gradient="from-blue-500 to-cyan-600"
           />
           <StatCard
             title="আজকের পাওনা"
             value={`৳${fmtBDT(todayReport?.totals?.totalDue)}`}
-            sub={today}
+            sub={new Date(today).toLocaleDateString("bn-BD")}
             icon=""
             gradient="from-amber-500 to-orange-600"
           />
