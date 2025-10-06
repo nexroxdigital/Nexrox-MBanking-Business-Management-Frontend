@@ -8,14 +8,8 @@
     <script>
       // Prevent flash of wrong theme
       (function () {
-        const theme =
-          localStorage.getItem("theme") ||
-          (window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light");
-        if (theme === "dark") {
-          document.documentElement.classList.add("dark");
-        }
+        localStorage.removeItem("theme");
+        document.documentElement.classList.remove("dark");
       })();
     </script>
   </head>

@@ -12,13 +12,6 @@ import { MdOutlineEdit } from "react-icons/md";
 
 const Navbar = ({ toggleMenu, isMenuOpen }) => {
   const { isLoggedIn, user } = useAuth();
-  const [userImage, setUserImage] = useState(null);
-
-  useEffect(() => {
-    if (user) {
-      setUserImage(user.image);
-    }
-  }, [user]);
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef(null);
@@ -37,7 +30,6 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
       // Show preview instantly
       const previewURL = URL.createObjectURL(file);
       setPreviewImage(previewURL);
-      setUserImage(previewURL);
     }
 
     try {
@@ -106,7 +98,7 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
                   className="focus:outline-none flex items-center"
                 >
                   <img
-                    src={userImage || user?.image}
+                    src={previewImage || user?.image}
                     alt="Profile"
                     className="w-12 h-12 rounded-full border-2 border-[#009C91] hover:scale-105 transition-transform duration-200 object-cover"
                   />
