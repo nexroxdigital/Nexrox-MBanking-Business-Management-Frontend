@@ -45,6 +45,7 @@ export const useCreateWalletNumber = () => {
     // 🔄 Refetch to ensure consistency
     onSettled: () => {
       queryClient.invalidateQueries(["walletNumbers"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -65,6 +66,7 @@ export const useDeleteWalletNumber = () => {
     onSuccess: () => {
       // Refresh wallet numbers after delete
       queryClient.invalidateQueries(["walletNumbers"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -78,6 +80,7 @@ export const useEditWalletNumber = () => {
     onSuccess: () => {
       // Refresh wallet list after update
       queryClient.invalidateQueries(["walletNumbers"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -91,6 +94,7 @@ export const useAdjustWalletBalance = () => {
     onSuccess: () => {
       // Refresh wallet numbers after adjustment
       queryClient.invalidateQueries(["walletNumbers"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };

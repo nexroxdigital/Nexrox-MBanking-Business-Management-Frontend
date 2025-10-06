@@ -18,6 +18,7 @@ export const useCreateOperator = () => {
     onSuccess: () => {
       // Refresh operator list after creation (when you add fetch later)
       queryClient.invalidateQueries(["operators"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -39,6 +40,7 @@ export const useDeleteOperator = () => {
     onSuccess: () => {
       // Refresh operator list after deletion
       queryClient.invalidateQueries(["operators"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -52,6 +54,7 @@ export const useUpdateOperator = () => {
     onSuccess: () => {
       // Refresh operator list after update
       queryClient.invalidateQueries(["operators"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -65,6 +68,7 @@ export const useAdjustOperatorBalance = () => {
     onSuccess: () => {
       // Refresh operator list after balance adjustment
       queryClient.invalidateQueries(["operators"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -78,17 +82,10 @@ export const useCreateRecharge = () => {
     onSuccess: () => {
       // Refresh recharge histories after creation (when you add fetch later)
       queryClient.invalidateQueries(["rechargeRecords"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
-
-// Hook to fetch all recharge histories
-// export const useRechargeRecords = () => {
-//   return useQuery({
-//     queryKey: ["rechargeRecords"],
-//     queryFn: getRechargeRecords,
-//   });
-// };
 
 export const useRechargeRecords = (pageIndex, pageSize) => {
   return useQuery({

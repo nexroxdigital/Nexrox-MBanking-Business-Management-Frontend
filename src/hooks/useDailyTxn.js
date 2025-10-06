@@ -16,6 +16,11 @@ export const useCreateDailyTransaction = () => {
     onSuccess: () => {
       //  Invalidate if you have a query for transactions
       queryClient.invalidateQueries(["dailyTxn"]);
+      queryClient.invalidateQueries(["transactions"]);
+      queryClient.invalidateQueries(["walletReport"]);
+      queryClient.invalidateQueries(["todaysReport"]);
+      queryClient.invalidateQueries(["monthlyReport"]);
+      queryClient.invalidateQueries(["last30DaysReport"]);
     },
   });
 };

@@ -12,17 +12,30 @@ import {
   useTodaysReport,
   useWalletWiseReport,
 } from "../hooks/useDailyTxn";
+import { useOpeningCash } from "../hooks/useOpeningCash";
 import { useTransactions } from "../hooks/useTransaction";
 import { useWalletNumbers } from "../hooks/useWallet";
 
 export default function Dashboard() {
+  const [openingModalOpen, setOpeningModalOpen] = useState(false);
+  const [openingCash, setOpeningCash] = useState(0);
+
+  const {
+    data: openingCashData,
+    isLoading: openingCashLoading,
+    mutation: openingCashMutation,
+  } = useOpeningCash();
+
+  useEffect(() => {
+    if (openingCashData) {
+      setOpeningCash(openingCashData?.amount);
+    }
+  }, [openingCashData]);
+
   const { data, isLoading, isError } = useWalletWiseReport();
 
-  console.log("wallet report", data);
   const today = todayISO();
   const monthName = new Date().toLocaleDateString("bn-BD", { month: "long" });
-  const [openingModalOpen, setOpeningModalOpen] = useState(false);
-  const [openingCash, setOpeningCash] = useState(2000);
   const { data: todayReport, isLoading: todayReportLoading } =
     useTodaysReport();
 
@@ -42,7 +55,15 @@ export default function Dashboard() {
 
   const handleSubmitOpeningBalance = (e) => {
     e.preventDefault();
-    setOpeningModalOpen(false);
+
+    openingCashMutation.mutate(
+      { amount: openingCash },
+      {
+        onSettled: () => {
+          setOpeningModalOpen(false);
+        },
+      }
+    );
   };
 
   return (
@@ -80,11 +101,17 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              {openingCash > 0 && (
+              {openingCashLoading ? (
                 <div className="ml-2 font-medium text-gray-700 dark:text-gray-300">
-                  Opening Cash:{" "}
-                  <span className="font-bold">৳{fmtBDT(openingCash)}</span>
+                  <span className="font-bold">Loading...</span>
                 </div>
+              ) : (
+                openingCash > 0 && (
+                  <div className="ml-2 font-medium text-gray-700 dark:text-gray-300">
+                    Opening Cash:{" "}
+                    <span className="font-bold">৳{fmtBDT(openingCash)}</span>
+                  </div>
+                )
               )}
             </div>
           </div>
@@ -148,7 +175,7 @@ export default function Dashboard() {
             <form onSubmit={handleSubmitOpeningBalance} className="space-y-4">
               <input
                 type="number"
-                step="0.01"
+                step="any"
                 value={openingCash}
                 onChange={(e) => setOpeningCash(Number(e.target.value))}
                 className="w-full rounded-lg px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -167,7 +194,7 @@ export default function Dashboard() {
                   type="submit"
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
                 >
-                  Save
+                  {openingCashMutation.isPending ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>

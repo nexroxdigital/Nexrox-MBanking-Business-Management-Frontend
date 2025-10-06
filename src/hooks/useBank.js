@@ -16,8 +16,9 @@ export const useAddNewBank = () => {
   return useMutation({
     mutationFn: addNewBank,
     onSuccess: () => {
-      // Refresh bank list after creation (when you add a GET later)
+      // Refresh bank list
       queryClient.invalidateQueries(["banks"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -39,6 +40,7 @@ export const useDeleteBank = () => {
     onSuccess: () => {
       // Refresh bank list after deletion
       queryClient.invalidateQueries(["banks"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -52,6 +54,7 @@ export const useUpdateBank = () => {
     onSuccess: () => {
       // Refresh bank list after update
       queryClient.invalidateQueries(["banks"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -65,6 +68,7 @@ export const useAdjustBankBalance = () => {
     onSuccess: () => {
       // Refresh bank list after balance adjustment
       queryClient.invalidateQueries(["banks"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -75,7 +79,8 @@ export const useCreateBankTransaction = () => {
   return useMutation({
     mutationFn: createBankTransaction,
     onSuccess: () => {
-      queryClient.invalidateQueries(["transactions", "banks"]);
+      queryClient.invalidateQueries(["banks"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
     onError: (error) => {
       console.error(

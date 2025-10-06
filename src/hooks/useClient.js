@@ -23,6 +23,9 @@ export const useAddNewClient = () => {
     onSuccess: () => {
       // Refresh clients list after creation
       queryClient.invalidateQueries(["clients"]);
+      queryClient.invalidateQueries(["clientsSelect"]);
+      queryClient.invalidateQueries(["transactions"]);
+      queryClient.invalidateQueries(["client_transactions"]);
     },
   });
 };
@@ -47,8 +50,9 @@ export const useDeleteClient = () => {
   return useMutation({
     mutationFn: deleteClient,
     onSuccess: () => {
-      // ✅ Refresh client list after deletion
+      // Refresh client list after deletion
       queryClient.invalidateQueries(["clients"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -60,8 +64,10 @@ export const useUpdateClient = () => {
   return useMutation({
     mutationFn: updateClient,
     onSuccess: () => {
-      // ✅ Refresh clients list after update
+      // Refresh clients list after update
       queryClient.invalidateQueries(["clients"]);
+      queryClient.invalidateQueries(["client_transactions"]);
+      queryClient.invalidateQueries(["transactions"]);
     },
   });
 };
@@ -75,15 +81,15 @@ export const useAdjustClientPayment = () => {
     onSuccess: () => {
       // Refresh client list after payment adjustment
       queryClient.invalidateQueries(["clients"]);
-      // You can also invalidate ["transactions"] if you show history
       queryClient.invalidateQueries(["transactions"]);
+      queryClient.invalidateQueries(["client_transactions"]);
     },
   });
 };
 
 export const useClientTransactions = (id) => {
   return useInfiniteQuery({
-    queryKey: ["transactions", id],
+    queryKey: ["client_transactions", id],
     queryFn: ({ pageParam = 0 }) =>
       getTransactionsByClient({ id, skip: pageParam, limit: 10 }),
     enabled: !!id,
@@ -96,7 +102,7 @@ export const useClientTransactions = (id) => {
 
 export const useClientsSelect = () => {
   return useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clientsSelect"],
     queryFn: () => getClientsSelect(),
   });
 };

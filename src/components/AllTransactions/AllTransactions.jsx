@@ -1,4 +1,4 @@
-// ✅ Helper for Bangla date formatting
+// Helper for Bangla date formatting
 const formatBanglaDate = (dateString) => {
   return new Date(dateString).toLocaleString("bn-BD", {
     year: "numeric",
@@ -10,7 +10,12 @@ const formatBanglaDate = (dateString) => {
   });
 };
 
-const AllTransactions = ({ transactions = [], fetchNextPage, hasNextPage, isFetchingNextPage }) => {
+const AllTransactions = ({
+  transactions = [],
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+}) => {
   return (
     <div
       className="mt-6 max-h-[442px] overflow-y-auto pr-2"
@@ -47,11 +52,13 @@ const AllTransactions = ({ transactions = [], fetchNextPage, hasNextPage, isFetc
             </div>
 
             {/* Amount */}
-            <div className="flex-shrink-0 text-right">
-              <span className="inline-block px-3 py-1 text-sm font-bold text-gray-900 dark:text-white rounded-lg bg-gradient-to-r from-[#009C91]/10 to-[#862C8A]/10 border border-gray-200 dark:border-gray-700">
-                ৳{t.amount.toLocaleString("bn-BD")}
-              </span>
-            </div>
+            {t.amount && Number(t.amount) > 0 && (
+              <div className="flex-shrink-0 text-right">
+                <span className="inline-block px-3 py-1 text-sm font-bold text-gray-900 dark:text-white rounded-lg bg-gradient-to-r from-[#009C91]/10 to-[#862C8A]/10 border border-gray-200 dark:border-gray-700">
+                  ৳{t.amount.toLocaleString("bn-BD")}
+                </span>
+              </div>
+            )}
           </div>
         ))}
 
@@ -68,8 +75,8 @@ const AllTransactions = ({ transactions = [], fetchNextPage, hasNextPage, isFetc
         )}
 
         {isFetchingNextPage && (
-        <p className="text-center text-gray-500">লোড হচ্ছে...</p>
-      )}
+          <p className="text-center text-gray-500">লোড হচ্ছে...</p>
+        )}
       </div>
     </div>
   );
