@@ -1,6 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { jwtDecode } from "jwt-decode";
-import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import Swal from "sweetalert2";
 import { loginUser } from "../api/authApi";
@@ -41,31 +40,66 @@ export const useLogin = () => {
   });
 };
 
+// export const useAuth = () => {
+//   // Read from localStorage
+//   const token = localStorage.getItem("token");
+//   const userData = localStorage.getItem("user");
+
+//   // Parse user if exists
+//   const user = userData ? JSON.parse(userData) : null;
+
+//   // Check if token is still valid
+//   const isTokenValid = useMemo(() => {
+//     if (!token) return false;
+
+//     try {
+//       const decoded = jwtDecode(token);
+//       // Compare expiry
+//       return decoded.exp * 1000 > Date.now();
+//     } catch {
+//       return false;
+//     }
+//   }, [token]);
+
+//   // Final login state
+//   const isLoggedIn = !!(token && user && isTokenValid);
+
+//   return { isLoggedIn, user, token };
+// };
+
 export const useAuth = () => {
-  // Read from localStorage
-  const token = localStorage.getItem("token");
-  const userData = localStorage.getItem("user");
+  //React Query will manage and cache the auth state
+  const { data } = useQuery({
+    queryKey: ["auth"],
 
-  // Parse user if exists
-  const user = userData ? JSON.parse(userData) : null;
+    // Function that fetches and validates local auth info
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
+      const user = userData ? JSON.parse(userData) : null;
 
-  // Check if token is still valid
-  const isTokenValid = useMemo(() => {
-    if (!token) return false;
+      // Validate token
+      let isTokenValid = false;
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          isTokenValid = decoded.exp * 1000 > Date.now();
+        } catch {
+          isTokenValid = false;
+        }
+      }
 
-    try {
-      const decoded = jwtDecode(token);
-      // Compare expiry
-      return decoded.exp * 1000 > Date.now();
-    } catch {
-      return false;
-    }
-  }, [token]);
+      const isLoggedIn = !!(token && user && isTokenValid);
+      return { isLoggedIn, user, token };
+    },
 
-  // Final login state
-  const isLoggedIn = !!(token && user && isTokenValid);
+    // React Query options
+    // staleTime: Infinity, // don't refetch automatically
+    // cacheTime: Infinity, // persist until logout
+  });
 
-  return { isLoggedIn, user, token };
+  // Return fallback if query hasn't run yet
+  return data || { isLoggedIn: false, user: null, token: null };
 };
 
 export const useUploadToCloudinary = () => {

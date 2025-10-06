@@ -1,45 +1,3 @@
-// import { Lock, Menu, X } from "lucide-react";
-
-// import { Link } from "react-router";
-// import GradientButton from "../components/shared/Button/GradientButton";
-
-// const Navbar = ({ toggleMenu, isMenuOpen }) => {
-//   return (
-//     <nav className="bg-[#f5f5f5] sticky z-50 top-0 dark:bg-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
-//       <div className="max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">
-//         <div className="flex justify-between items-center h-16">
-//           {/* Logo */}
-//           <Link to="/" className="flex items-center space-x-3">
-//             <img className="h-14 w-32" src="/Ai.png" alt="" />
-//           </Link>
-
-//           <div className="flex items-center space-x-2">
-//             {/* login button */}
-//             <div className="hidden lg:flex">
-//               <GradientButton label="Login" icon={Lock} />
-//             </div>
-
-//             {/* Mobile Menu Button */}
-//             <button
-//               onClick={toggleMenu}
-//               className="lg:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-//               aria-label="Toggle menu"
-//             >
-//               {isMenuOpen ? (
-//                 <X className="w-6 h-6" />
-//               ) : (
-//                 <Menu className="w-6 h-6" />
-//               )}
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// };
-
-// export default Navbar;
-
 import { Lock, LogOut, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -50,12 +8,21 @@ import {
   useUploadToCloudinary,
 } from "../hooks/useAuth";
 
+import { MdOutlineEdit } from "react-icons/md";
+
 const Navbar = ({ toggleMenu, isMenuOpen }) => {
   const { isLoggedIn, user } = useAuth();
+  const [userImage, setUserImage] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      setUserImage(user.image);
+    }
+  }, [user]);
+
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef(null);
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
   const uploadImageMutation = useUploadToCloudinary();
   const updateUserImageMutation = useUpdateUserImage();
@@ -70,8 +37,9 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
       // Show preview instantly
       const previewURL = URL.createObjectURL(file);
       setPreviewImage(previewURL);
+      setUserImage(previewURL);
     }
-    setLoading(true);
+
     try {
       // Upload to Cloudinary directly
       const formData = new FormData();
@@ -97,8 +65,6 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
       });
     } catch (err) {
       console.error("Image upload failed:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -139,17 +105,11 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="focus:outline-none flex items-center"
                 >
-                  {updateUserImageMutation.isPending || loading ? (
-                    <div className="w-12 h-12 rounded-full border-2 border-[#009C91] hover:scale-105 transition-transform duration-200 flex items-center justify-center">
-                      ...
-                    </div>
-                  ) : (
-                    <img
-                      src={user?.image}
-                      alt="Profile"
-                      className="w-12 h-12 rounded-full border-2 border-[#009C91] hover:scale-105 transition-transform duration-200"
-                    />
-                  )}
+                  <img
+                    src={userImage || user?.image}
+                    alt="Profile"
+                    className="w-12 h-12 rounded-full border-2 border-[#009C91] hover:scale-105 transition-transform duration-200 object-cover"
+                  />
                 </button>
 
                 {/* Dropdown menu */}
@@ -178,20 +138,7 @@ const Navbar = ({ toggleMenu, isMenuOpen }) => {
                           htmlFor="upload-avatar"
                           className="absolute bottom-1 right-1 bg-[#009C91] text-white p-1 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-all"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15.232 5.232l3.536 3.536M9 13l6.268-6.268a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-.707.464l-4.243 1.414 1.414-4.243a2 2 0 01.464-.707z"
-                            />
-                          </svg>
+                          <MdOutlineEdit size={16} />
                         </label>
                       </div>
 
