@@ -151,7 +151,7 @@ const BankTransactions = () => {
   const handleEditBank = (data) => {
     if (!editId) return;
 
-    console.log("data", data);
+    // console.log("data", data);
 
     const updatedBank = { ...data, _id: editId };
     const prevBanks = [...banks];

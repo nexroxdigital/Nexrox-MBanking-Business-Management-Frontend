@@ -20,12 +20,13 @@ export default function Clients() {
 
   const { showError, showSuccess } = useToast();
   const [clients, setClients] = useState([]);
+
+  // console.log("in the adjust", clients);
+
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 5,
   });
-
-  
 
   const addNewClientMutation = useAddNewClient();
   const deleteClientMutation = useDeleteClient();
@@ -262,6 +263,21 @@ export default function Clients() {
     document.addEventListener("keydown", onEsc);
     return () => document.removeEventListener("keydown", onEsc);
   }, [payModalOpen, addModalOpen]);
+
+  useEffect(() => {
+    if (isSendMessage && payClientId) {
+      const client = clients.find((c) => c._id === payClientId);
+      if (!client) return;
+
+      const amountNum = Number(payAmount) || 0;
+      const newPaid = (client.paid || 0) + amountNum;
+      const newDue = Math.max(0, (client.totalSale || 0) - newPaid);
+
+      setCustomMessage(
+        `প্রিয় গ্রাহক, আপনার টাকা ৳${amountNum} সফলভাবে গ্রহণ করা হয়েছে।\nবাকি টাকা ৳${newDue}।\nধন্যবাদ।\n- এসএন আইটি পয়েন্ট।`
+      );
+    }
+  }, [payAmount, isSendMessage, payClientId, clients]);
 
   function addPayment(clientId, amount, isSendMessage, customMessage) {
     const prevClients = [...clients];
@@ -542,11 +558,22 @@ export default function Clients() {
                         checked={isSendMessage}
                         onChange={(e) => {
                           setIsSendMessage(e.target.checked);
+
+                          const client = clients.find(
+                            (c) => c._id === payClientId
+                          );
+                          if (!client) return;
+
+                          const amountNum = Number(payAmount) || 0;
+                          const newPaid = (client.paid || 0) + amountNum;
+                          const newDue = Math.max(
+                            0,
+                            (client.totalSale || 0) - newPaid
+                          );
+
                           if (e.target.checked) {
                             setCustomMessage(
-                              `প্রিয় গ্রাহক, আপনার টাকা ৳${
-                                payAmount || 0
-                              } সফলভাবে গ্রহণ করা হয়েছে। ধন্যবাদ।`
+                              `প্রিয় গ্রাহক, আপনার টাকা ৳${amountNum} সফলভাবে গ্রহণ করা হয়েছে।\nবাকি টাকা ৳${newDue}।\nধন্যবাদ।\n- এসএন আইটি পয়েন্ট।`
                             );
                           } else {
                             setCustomMessage("");
@@ -572,6 +599,7 @@ export default function Clients() {
                           className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border"
                           value={customMessage}
                           onChange={(e) => setCustomMessage(e.target.value)}
+                          style={{ whiteSpace: "pre-line" }}
                         />
                       </div>
                     )}

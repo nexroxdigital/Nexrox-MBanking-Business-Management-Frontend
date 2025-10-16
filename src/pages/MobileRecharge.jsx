@@ -146,7 +146,7 @@ const MobileRecharge = () => {
 
   // Edit operator
   const handleEditOperator = (id) => {
-    console.log("id", id);
+    // console.log("id", id);
 
     const operator = operators.find((op) => op._id === id);
     if (!operator) return;

@@ -108,11 +108,17 @@ export default function ClientTransactions() {
     }
 
     if (type === "Cash Out") {
-      setCustomMessage(`${amount} টাকা ক্যাশ-আউট করা হয়েছে`);
+      setCustomMessage(
+        `${amount} টাকা ক্যাশ-আউট করা হয়েছে।\n- এসএন আইটি পয়েন্ট।`
+      );
     } else if (type === "Cash In") {
-      setCustomMessage(`${amount} টাকা ক্যাশ-ইন করা হয়েছে`);
+      setCustomMessage(
+        `${amount} টাকা ক্যাশ-ইন করা হয়েছে।\n- এসএন আইটি পয়েন্ট।`
+      );
     } else if (channel === "Bill Payment") {
-      setCustomMessage(`${amount} টাকা ${billType} বিল পে করা হয়েছে`);
+      setCustomMessage(
+        `${amount} টাকা ${billType} বিল পে করা হয়েছে\n- এসএন আইটি পয়েন্ট।`
+      );
     }
   }, [isSendMessage, type, channel, amount, billType]);
 
@@ -261,7 +267,7 @@ export default function ClientTransactions() {
     // Call backend
     createDailyTxnMutation.mutate(optimisticTx, {
       onSuccess: (savedTx) => {
-        console.log("savedTx", savedTx);
+        // console.log("savedTx", savedTx);
         // Replace optimistic with server tx
         setTransactions((prev) =>
           prev.map((tx) => (tx._id === optimisticTx._id ? savedTx : tx))
@@ -608,6 +614,7 @@ export default function ClientTransactions() {
                       className="w-full px-3 py-2 rounded-xl bg-white/90 text-gray-900 placeholder-gray-500 outline-none border"
                       value={customMessage}
                       onChange={(e) => setCustomMessage(e.target.value)}
+                      style={{ whiteSpace: "pre-line" }}
                     />
                   </div>
                 )}

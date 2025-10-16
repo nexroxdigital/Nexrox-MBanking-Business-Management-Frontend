@@ -111,11 +111,11 @@ const MobileBanking = () => {
     label: "",
     number: "",
     channel: "বিকাশ",
-    type: "এজেন্ট",
+    type: "Agent",
     balance: 0,
   });
 
-  console.log("type", num.type);
+  // console.log("type", num.type);
 
   const [transactions, setTransactions] = useState([]);
   const [pagination, setPagination] = useState({
@@ -147,7 +147,7 @@ const MobileBanking = () => {
   };
 
   const handleUpdateMBank = () => {
-    console.log("Edit data:", editData);
+    // console.log("Edit data:", editData);
     editWallet.mutate(
       {
         id: editData._id,
@@ -224,7 +224,7 @@ const MobileBanking = () => {
   };
 
   function addNumber() {
-    console.log("num", num);
+    // console.log("num", num);
     if (!num.label || !num.number || !num.channel || !num.type) {
       Swal.fire({
         icon: "error",
@@ -570,7 +570,7 @@ const MobileBanking = () => {
                             setNum({ ...num, type: e.target.value })
                           }
                         >
-                          {["এজেন্ট", "পার্সোনাল"].map((c) => (
+                          {["Agent", "Personal"].map((c) => (
                             <option key={c} value={c}>
                               {c}
                             </option>
