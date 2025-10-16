@@ -81,10 +81,10 @@ export default function Clients() {
 
     const prevClients = [...clients];
 
-    // 🟢 Optimistic update
+    // Optimistic update
     setClients((prev) => [...prev, optimisticClient]);
 
-    // 🔄 Call backend
+    // Call backend
     addNewClientMutation.mutate(optimisticClient, {
       onSuccess: (savedClient) => {
         // Replace optimistic client with actual one from backend
