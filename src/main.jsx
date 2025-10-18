@@ -11,17 +11,6 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
-      {/* <App /> */}
     </QueryClientProvider>
   </StrictMode>
 );
-
-//  <ToastContainer
-//         position="top-center"
-//         autoClose={2100}
-//         hideProgressBar={false}
-//         closeOnClick
-//         pauseOnHover
-//         draggable
-//         theme="colored"
-//       />

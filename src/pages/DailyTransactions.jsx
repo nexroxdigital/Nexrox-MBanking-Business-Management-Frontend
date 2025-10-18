@@ -12,8 +12,14 @@ import { useWalletNumbers } from "../hooks/useWallet";
 import { clamp2, todayISO } from "./utils";
 
 /* ---------- helpers ---------- */
-const computeAgent = ({ taka, commissionPct }) => {
-  const commissionAmt = (Number(taka || 0) / 1000) * Number(commissionPct || 0);
+const computeAgent = ({ taka, commissionPct, type }) => {
+  // For Cash In: percentage (divide by 100)
+  // For Cash Out: per thousand (divide by 1000)
+  const commissionAmt =
+    type === "Cash In"
+      ? (Number(taka || 0) * Number(commissionPct || 0)) / 100
+      : (Number(taka || 0) * Number(commissionPct || 0)) / 1000;
+
   const total = Number(taka || 0) + commissionAmt;
   const profit = commissionAmt; // profit = commission
   return { commissionAmt, total, profit };
@@ -36,6 +42,12 @@ const DailyTransactions = () => {
     isLoading: walletLoading,
     isError,
   } = useWalletNumbers();
+
+  // Filter wallets by type
+  const agentWallets =
+    walletNumbers?.filter((w) => w.type.toLowerCase() === "agent") || [];
+  const personalWallets =
+    walletNumbers?.filter((w) => w.type.toLowerCase() === "personal") || [];
 
   const createDailyTxnMutation = useCreateDailyTransaction();
 
@@ -67,16 +79,28 @@ const DailyTransactions = () => {
     handleSubmit: handleAgentSubmit,
     reset: resetAgent,
     watch: watchAgent,
+    setValue: setAgentValue,
   } = useForm({
     defaultValues: {
       date: todayISO(),
       channel: "",
       taka: "",
-      commissionPct: "4.75",
+      commissionPct: "3.75",
       commission: 0,
       txn_id: "",
+      type: "Cash Out",
     },
   });
+
+  const agentType = watchAgent("type");
+
+  useEffect(() => {
+    if (agentType.toLowerCase() === "cash in") {
+      setAgentValue("commissionPct", "1.5");
+    } else if (agentType.toLowerCase() === "cash out") {
+      setAgentValue("commissionPct", "3.75");
+    }
+  }, [agentType, setAgentValue]);
 
   const {
     register: registerPersonal,
@@ -92,6 +116,7 @@ const DailyTransactions = () => {
       paid: "",
       refund: "",
       txn_id: "",
+      type: "Send Money",
     },
   });
 
@@ -99,7 +124,7 @@ const DailyTransactions = () => {
     register: registerCash,
     handleSubmit: handleCashSubmit,
     reset: resetCash,
-    getValues: getCashValues,
+    watch: watchCash,
   } = useForm({
     defaultValues: {
       date: todayISO(),
@@ -110,9 +135,28 @@ const DailyTransactions = () => {
     },
   });
 
+  // Reset forms when tab changes
+  useEffect(() => {
+    if (activeTab === "agent") {
+      resetPersonal();
+      resetCash();
+      setCashItems([]);
+    } else if (activeTab === "personal") {
+      resetAgent();
+      resetCash();
+      setCashItems([]);
+    } else if (activeTab === "cash") {
+      resetAgent();
+      resetPersonal();
+    }
+  }, [activeTab, resetAgent, resetPersonal, resetCash]);
+
   /* ---------- Save Handlers ---------- */
   const saveAgent = (data) => {
-    const { total, profit } = computeAgent(data);
+    const { total, profit } = computeAgent({
+      ...data,
+      type: data.type,
+    });
 
     const wallet = walletNumbers.find((w) => w._id === data.channel);
 
@@ -122,7 +166,7 @@ const DailyTransactions = () => {
       date: data.date,
       channel: wallet?.channel || "",
       wallet_id: wallet?._id || "",
-      type: "Cash Out",
+      type: data.type,
       amount: clamp2(data.taka),
       fee: clamp2(data.commissionPct || 0),
       profit: clamp2(profit || 0),
@@ -185,7 +229,7 @@ const DailyTransactions = () => {
       date: data.date,
       channel: wallet?.channel || "",
       wallet_id: wallet?._id || "",
-      type: "Cash In",
+      type: data.type,
       amount: clamp2(data.taka),
       number: data.number,
       fee: clamp2(data.feePct || 0),
@@ -239,18 +283,26 @@ const DailyTransactions = () => {
   };
 
   const saveCash = (data) => {
-    console.log('saveCash', data.taka);
+    // console.log("saveCash", data.taka);
+
+    // Calculate profit = paid - taka
+    const calculatedProfit = Math.max(
+      0,
+      Number(data.paid || 0) - Number(data.taka || 0)
+    );
     // Create optimistic transaction
     const optimisticTx = {
       _id: Date.now().toString(),
       date: data.date,
       channel: "",
       wallet_id: null,
-      type: cashItems.join(", ") || "ক্যাশ",
+      type: cashItems.join(", ") || "cash sale",
       amount: clamp2(data.taka),
-      profit: clamp2(data.profit || 0),
+      profit: clamp2(calculatedProfit),
+      note: `${data.paid} টাকার আইটেম বিক্রি করা হয়েছে`,
       optimistic: true,
     };
+
     const prevTx = [...transactions];
 
     // Optimistic UI
@@ -302,7 +354,7 @@ const DailyTransactions = () => {
       if (!cashItems.includes(newItem)) {
         setCashItems((s) => [...s, newItem]);
       }
-      resetCash({ ...getCashValues(), itemInput: "" });
+      resetCash({ ...watchCash(), itemInput: "" });
       return;
     }
     if (!val) return;
@@ -317,7 +369,10 @@ const DailyTransactions = () => {
   /* ---------- Watched values ---------- */
   const agentVals = watchAgent();
   const personalVals = watchPersonal();
-  const { total: agentTotal, profit: agentProfit } = computeAgent(agentVals);
+  const { total: agentTotal, profit: agentProfit } = computeAgent({
+    ...agentVals,
+    type: agentVals.type,
+  });
   const {
     total: personalTotal,
     expense: personalExpense,
@@ -392,13 +447,25 @@ const DailyTransactions = () => {
                       {...registerAgent("channel", { required: true })}
                     >
                       <option value="">চ্যানেল নির্বাচন</option>
-                      {walletNumbers.map((w) => (
+                      {agentWallets.map((w) => (
                         <option key={w._id} value={w._id}>
                           {w.label}
                         </option>
                       ))}
                     </select>
                   </label>
+
+                  <label>
+                    <span className="text-sm text-gray-600">টাইপ</span>
+                    <select
+                      className="w-full border rounded p-2"
+                      {...registerAgent("type", { required: true })}
+                    >
+                      <option value="Cash Out">Cash Out</option>
+                      <option value="Cash In">Cash In</option>
+                    </select>
+                  </label>
+
                   <label>
                     <span className="text-sm text-gray-600">টাকা</span>
                     <input
@@ -490,11 +557,22 @@ const DailyTransactions = () => {
                       {...registerPersonal("channel", { required: true })}
                     >
                       <option value="">চ্যানেল নির্বাচন</option>
-                      {walletNumbers.map((w) => (
+                      {personalWallets.map((w) => (
                         <option key={w._id} value={w._id}>
                           {w.label}
                         </option>
                       ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    <span className="text-sm text-gray-600">টাইপ</span>
+                    <select
+                      className="w-full border rounded p-2"
+                      {...registerPersonal("type", { required: true })}
+                    >
+                      <option value="Send Money">Send Money</option>
+                      <option value="Receive Money">Receive Money</option>
                     </select>
                   </label>
 
@@ -504,7 +582,7 @@ const DailyTransactions = () => {
                       type="number"
                       step="any"
                       className="w-full border rounded p-2"
-                      {...registerPersonal("number", { required: true })}
+                      {...registerPersonal("number")}
                     />
                   </label>
 
@@ -642,8 +720,8 @@ const DailyTransactions = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              addCashItem("other", getCashValues("itemInput"));
-                              setShowOtherInput(false); // hide after adding
+                              addCashItem("other", watchCash("itemInput"));
+                              setShowOtherInput(false);
                             }}
                             className="px-3 rounded-md border bg-gray-50"
                           >
@@ -684,7 +762,7 @@ const DailyTransactions = () => {
                   </label>
 
                   <label>
-                    <span className="text-sm text-gray-600">টাকা</span>
+                    <span className="text-sm text-gray-600">দাম</span>
                     <input
                       type="number"
                       step="any"
@@ -699,17 +777,22 @@ const DailyTransactions = () => {
                       type="number"
                       step="any"
                       className="w-full border rounded p-2"
-                      {...registerCash("paid")}
+                      {...registerCash("paid", { required: true })}
                     />
                   </label>
 
                   <label>
-                    <span className="text-sm text-gray-600">লাভ</span>
+                    <span className="text-sm text-gray-600">লাভ (অটো)</span>
                     <input
                       type="number"
                       step="any"
-                      className="w-full border rounded p-2"
-                      {...registerCash("profit")}
+                      className="w-full border rounded p-2 bg-gray-50"
+                      value={Math.max(
+                        0,
+                        Number(watchCash("paid") || 0) -
+                          Number(watchCash("taka") || 0)
+                      )}
+                      readOnly
                     />
                   </label>
 

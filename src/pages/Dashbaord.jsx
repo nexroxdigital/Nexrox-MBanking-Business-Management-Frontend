@@ -13,7 +13,8 @@ import {
   useWalletWiseReport,
 } from "../hooks/useDailyTxn";
 import { useOpeningCash } from "../hooks/useOpeningCash";
-import { useTransactions } from "../hooks/useTransaction";
+import { useToast } from "../hooks/useToast";
+import { useDeleteTransaction, useTransactions } from "../hooks/useTransaction";
 import { useWalletNumbers } from "../hooks/useWallet";
 
 export default function Dashboard() {
@@ -439,7 +440,7 @@ function NumberBalances() {
       {isLoading ? (
         <div className="p-2 text-center text-gray-500">Loading...</div>
       ) : (
-        <div className="mt-6 overflow-x-auto">
+        <div className="mt-6 max-h-[500px] overflow-x-auto overflow-y-auto">
           <table className="w-full border-separate border-spacing-y-2">
             {/* Table Header */}
             <thead>
@@ -509,13 +510,16 @@ function NumberBalances() {
 }
 
 function ActivityLog() {
+  const { showSuccess, showError } = useToast();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useTransactions(6);
+    useTransactions(7);
 
   const allTransactions = data?.pages.flatMap((p) => p.data) || [];
 
+  const deleteTransactionMutation = useDeleteTransaction();
+
   return (
-    <div className="group relative backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 rounded-lg p-8 shadow-md border border-gray-300 border-b-transparent dark:border-gray-800/20 transition-all duration-300">
+    <div className="group relative backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 rounded-lg p-8 shadow-md border border-gray-300 border-b-transparent dark:border-gray-800/20 transition-all duration-300 h-fit">
       {/* Animated background */}
       {/* <div className="absolute inset-0 bg-gradient-to-bl from-[#009C91]/5 to-[#862C8A]/5 group-hover:from-[#009C91]/10 group-hover:to-[#862C8A]/10 transition-all duration-500" /> */}
 
@@ -526,6 +530,7 @@ function ActivityLog() {
         fetchNextPage={fetchNextPage}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
+        onDeleteTransaction={deleteTransactionMutation.mutateAsync}
       />
 
       {/* Floating decoration */}

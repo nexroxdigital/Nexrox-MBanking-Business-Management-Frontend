@@ -23,6 +23,8 @@ export default function ClientTransactions() {
     isError,
   } = useWalletNumbers();
 
+  // console.log("walletNumbers", walletNumbers);
+
   const {
     data: allClients,
     isLoading: clientLoading,
@@ -74,6 +76,7 @@ export default function ClientTransactions() {
       isSendMessage: false,
       total: "",
       profit: "",
+      expense: "",
     },
   });
 
@@ -83,6 +86,14 @@ export default function ClientTransactions() {
   const type = watch("type");
   const channel = watch("channel");
   const isSendMessage = watch("isSendMessage");
+
+  // Get selected wallet to check its type
+  const selectedWallet = walletNumbers?.find((w) => w._id === channel);
+  const isPersonalWallet = selectedWallet?.type.toLowerCase() === "personal";
+
+  const isCashWallet = channel.toLowerCase() === "cash";
+
+  // console.log("isPersonalWallet", isPersonalWallet);
 
   const total = watch("total");
 
@@ -99,6 +110,23 @@ export default function ClientTransactions() {
       setValue("profit", parseFloat(profit).toFixed(2));
     }
   }, [profit, setValue, channel]);
+
+  // const expense = watch("expense");
+
+  // Auto-set profit = expense AND total = amount + expense for Personal wallet
+  // useEffect(() => {
+  //   if (isPersonalWallet) {
+  //     if (expense !== "" && !isNaN(expense)) {
+  //       const expenseValue = parseFloat(expense);
+  //       setValue("profit", expenseValue);
+
+  //       // total = amount + expense
+  //       if (amount) {
+  //         setValue("total", amount + expenseValue);
+  //       }
+  //     }
+  //   }
+  // }, [expense, amount, isPersonalWallet, setValue]);
 
   // calculate profit & total inline
   useEffect(() => {
@@ -132,6 +160,12 @@ export default function ClientTransactions() {
 
   // set commission default only when type changes
   useEffect(() => {
+    // Skip commission for Personal wallet
+    if (isPersonalWallet) {
+      setValue("commission", 0);
+      return;
+    }
+
     if (type === "Cash Out") {
       setValue("commission", 3.75, { shouldValidate: true });
     } else if (type === "Cash In") {
@@ -139,29 +173,14 @@ export default function ClientTransactions() {
     } else if (channel === "Bill Payment") {
       setValue("commission", 0);
     }
-  }, [type, setValue, channel]);
-
-  // Auto calculation with useEffect
-  // useEffect(() => {
-  //   let profitCalc = watch("profit");
-  //   let totalCalc = watch("total");
-
-  //   if (!isNaN(commission)) {
-  //     if (type === "Cash In") {
-  //       profitCalc = (amount * commission) / 100;
-  //     } else if (type === "Cash Out") {
-  //       profitCalc = (amount * commission) / 1000;
-  //     }
-  //     setValue("profit", profitCalc);
-  //   }
-
-  //   if (amount || profitCalc) {
-  //     totalCalc = amount + (parseFloat(profitCalc) || 0);
-  //     setValue("total", totalCalc);
-  //   }
-  // }, [amount, commission, type, setValue, watch]);
+  }, [type, setValue, channel, isPersonalWallet]);
 
   useEffect(() => {
+    // Skip calculation for Personal wallet (handled by expense field)
+    // if (isPersonalWallet) {
+    //   return;
+    // }
+
     const profitCalc = watch("profit");
     const totalCalc = watch("total");
     const channel = watch("channel");
@@ -170,24 +189,27 @@ export default function ClientTransactions() {
     let computedTotal = totalCalc;
 
     if (!isNaN(commission)) {
-      if (type === "Cash In") {
+      if (
+        type === "Cash In" ||
+        type.toLowerCase() === "send money" ||
+        type.toLowerCase() === "receive money"
+      ) {
         computedProfit = (amount * commission) / 100;
       } else if (type === "Cash Out") {
         computedProfit = (amount * commission) / 1000;
+      } else if (channel === "Bill Payment") {
+        computedProfit = commission;
       }
       setValue("profit", computedProfit);
+      setValue("expense", computedProfit);
     }
 
     // If Bill Payment, don't include profit in total
     if (amount) {
-      if (channel === "Bill Payment") {
-        computedTotal = amount; // exclude profit
-      } else {
-        computedTotal = amount + (parseFloat(computedProfit) || 0);
-      }
+      computedTotal = amount + (parseFloat(computedProfit) || 0);
       setValue("total", computedTotal);
     }
-  }, [amount, commission, type, watch, setValue]);
+  }, [amount, commission, type, watch, setValue, isPersonalWallet]);
 
   // close modal on esc
   useEffect(() => {
@@ -223,10 +245,29 @@ export default function ClientTransactions() {
 
   // console.log("filtered", filtered);
 
+  // Reset form when wallet type changes
+  useEffect(() => {
+    if (channel) {
+      setValue("amount", "");
+      setValue("commission", "");
+      setValue("expense", "");
+      setValue("total", "");
+      setValue("profit", "");
+      setValue("due", "");
+      setValue("note", "");
+      setValue("type", isPersonalWallet ? "Send Money" : "Cash In");
+      setValue("billType", "");
+    }
+  }, [channel, isPersonalWallet, setValue]);
+
   const addTx = (data) => {
+    console.log("formdata", data);
+
     let type = data.type;
     if (data.channel === "Bill Payment") {
       type = data.billType;
+    } else if (data.channel.toLowerCase() === "cash") {
+      type = "cash";
     } else {
       type = data.type;
     }
@@ -251,6 +292,7 @@ export default function ClientTransactions() {
       fee: clamp2(data.commission || 0),
       note: data.note || null,
       due: clamp2(data.due || 0),
+      expense: clamp2(data.expense || 0),
       profit: clamp2(data.profit || 0),
       total: clamp2(data.total || 0),
       isSendMessage: data.isSendMessage,
@@ -463,6 +505,7 @@ export default function ClientTransactions() {
                         </option>
                       ))}
                       <option value="Bill Payment">Bill Payment</option>
+                      <option value="Cash">Cash</option>
                     </select>
                   </Field>
                 </div>
@@ -485,18 +528,24 @@ export default function ClientTransactions() {
                     </Field>
                   )}
 
-                  {!isBillPayment && (
+                  {!isBillPayment && !isCashWallet && (
                     <Field label="টাইপ">
                       <select
                         {...register("type", { required: true })}
                         className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
                       >
-                        {["Cash In", "Cash Out"].map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
+                        {isPersonalWallet
+                          ? ["Send Money", "Receive Money"].map((t) => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))
+                          : ["Cash In", "Cash Out"].map((t) => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))}
                       </select>
                     </Field>
                   )}
@@ -514,41 +563,67 @@ export default function ClientTransactions() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Field
-                    label={
-                      type === "Cash In" ? "কমিশন (%)" : "কমিশন (প্রতি হাজারে)"
-                    }
-                  >
-                    <input
-                      type="number"
-                      step="any"
-                      {...register("commission")}
-                      className={`w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                                focus:outline-none  focus:ring-2 focus:ring-[#862C8A] focus:border-transparent`}
-                    />
-                  </Field>
+                  {/* Commission field - only show for Agent wallet */}
+                  {!isCashWallet && (
+                    <Field
+                      label={
+                        type === "Cash In" ||
+                        type === "Send Money" ||
+                        type === "Receive Money"
+                          ? "কমিশন (%)"
+                          : isBillPayment
+                          ? "কমিশন (৳)"
+                          : "কমিশন (প্রতি হাজারে)"
+                      }
+                    >
+                      <input
+                        type="number"
+                        step="any"
+                        {...register("commission")}
+                        className={`w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                                  focus:outline-none  focus:ring-2 focus:ring-[#862C8A] focus:border-transparent`}
+                      />
+                    </Field>
+                  )}
 
-                  <Field label="টোটাল">
-                    <input
-                      type="number"
-                      step="any"
-                      {...register("total", { required: true })}
-                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
-                               focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
-                      required
-                    />
-                  </Field>
+                  {/* Expense field - only show for Personal wallet */}
+                  {isPersonalWallet && (
+                    <Field label="খরচ (৳)">
+                      <input
+                        type="number"
+                        step="any"
+                        {...register("expense")}
+                        className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                 focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
+                      />
+                    </Field>
+                  )}
 
-                  <Field label="লাভ">
-                    <input
-                      type="number"
-                      step="any"
-                      {...register("profit")}
-                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                  {!isCashWallet && (
+                    <>
+                      <Field label="টোটাল">
+                        <input
+                          type="number"
+                          step="any"
+                          {...register("total", { required: true })}
+                          className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
-                      required
-                    />
-                  </Field>
+                          required
+                        />
+                      </Field>
+
+                      <Field label="লাভ">
+                        <input
+                          type="number"
+                          step="any"
+                          {...register("profit")}
+                          className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
+                          required
+                        />
+                      </Field>
+                    </>
+                  )}
 
                   <Field label="ক্লায়েন্ট">
                     <select
@@ -566,16 +641,18 @@ export default function ClientTransactions() {
                     </select>
                   </Field>
 
-                  <Field label="বাকি (৳)">
-                    <input
-                      type="number"
-                      step="any"
-                      {...register("due")}
-                      className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
+                  {!isCashWallet && (
+                    <Field label="বাকি (৳)">
+                      <input
+                        type="number"
+                        step="any"
+                        {...register("due")}
+                        className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
                                focus:outline-none focus:ring-2 focus:ring-[#009C91] focus:border-transparent"
-                      placeholder="বাকি টাকা"
-                    />
-                  </Field>
+                        placeholder="বাকি টাকা"
+                      />
+                    </Field>
+                  )}
 
                   <Field label="নোট">
                     <input
