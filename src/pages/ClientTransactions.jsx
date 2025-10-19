@@ -7,14 +7,17 @@ import TableLoading from "../components/shared/TableLoading/TableLoading";
 import { useClientsSelect } from "../hooks/useClient";
 import {
   useCreateDailyTransaction,
+  useDeleteDailyTxn,
   useGetTransactions,
 } from "../hooks/useDailyTxn";
+import { useToast } from "../hooks/useToast";
 import { useWalletNumbers } from "../hooks/useWallet";
 import { Field } from "./Field";
 import { clamp2, daysAgo, todayISO } from "./utils";
 
 export default function ClientTransactions() {
   const createDailyTxnMutation = useCreateDailyTransaction();
+  const { showSuccess, showError } = useToast();
 
   const [customMessage, setCustomMessage] = useState("");
   const {
@@ -80,6 +83,8 @@ export default function ClientTransactions() {
     },
   });
 
+  const deleteMutation = useDeleteDailyTxn();
+
   const amount = parseFloat(watch("amount")) || 0;
   const commission = parseFloat(watch("commission"));
   const billType = watch("billType");
@@ -110,23 +115,6 @@ export default function ClientTransactions() {
       setValue("profit", parseFloat(profit).toFixed(2));
     }
   }, [profit, setValue, channel]);
-
-  // const expense = watch("expense");
-
-  // Auto-set profit = expense AND total = amount + expense for Personal wallet
-  // useEffect(() => {
-  //   if (isPersonalWallet) {
-  //     if (expense !== "" && !isNaN(expense)) {
-  //       const expenseValue = parseFloat(expense);
-  //       setValue("profit", expenseValue);
-
-  //       // total = amount + expense
-  //       if (amount) {
-  //         setValue("total", amount + expenseValue);
-  //       }
-  //     }
-  //   }
-  // }, [expense, amount, isPersonalWallet, setValue]);
 
   // calculate profit & total inline
   useEffect(() => {
@@ -342,6 +330,38 @@ export default function ClientTransactions() {
 
   const isBillPayment = watch("channel") === "Bill Payment";
 
+  const handleDeleteTxn = (id) => {
+    const prev = [...transactions];
+
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "এই লেনদেনটি ডিলিট হবে!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Optimistic UI update
+        setTransactions((prev) => prev.filter((txn) => txn._id !== id));
+
+        // Call backend
+        deleteMutation.mutate(id, {
+          onError: () => {
+            //  Rollback if error
+            setTransactions(prev);
+            Swal.fire("ত্রুটি", "লেনদেন ডিলিট ব্যর্থ হয়েছে", "error");
+          },
+          onSuccess: () => {
+            showSuccess("লেনদেন সফলভাবে ডিলিট হয়েছে।");
+          },
+        });
+      }
+    });
+  };
+
   return (
     <section className="grid lg:grid-cols-5 gap-6 mt-10 relative">
       {/* All Transactions */}
@@ -424,7 +444,7 @@ export default function ClientTransactions() {
           ) : filtered.length > 0 ? (
             <TableComponent
               data={filtered}
-              columns={AllTransactionColumns}
+              columns={AllTransactionColumns(handleDeleteTxn)}
               pagination={pagination}
               setPagination={setPagination}
               pageCount={data?.pagination?.totalPages ?? -1}

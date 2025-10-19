@@ -4,6 +4,8 @@ import {
   createNewRecharge,
   createOperator,
   deleteOperator,
+  deleteRechargeTxn,
+  editRechargeTxn,
   getOperators,
   getRechargeRecords,
   updateOperator,
@@ -96,5 +98,39 @@ export const useRechargeRecords = (pageIndex, pageSize) => {
         limit: pageSize,
       }),
     keepPreviousData: true,
+  });
+};
+
+export const useDeleteRechargeTxn = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => deleteRechargeTxn(id),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries(["rechargeRecords"]);
+      queryClient.invalidateQueries(["transactions"]);
+      queryClient.invalidateQueries(["operators"]);
+    },
+
+    onError: (error) => {
+      console.error("Error deleting recharge:", error);
+    },
+  });
+};
+
+export const useEditRechargeTxn = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }) => editRechargeTxn(id, data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries(["rechargeRecords"]);
+      queryClient.invalidateQueries(["transactions"]);
+      queryClient.invalidateQueries(["operators"]);
+    },
+    onError: (err) => {
+      console.error("Error updating recharge txn:", err);
+    },
   });
 };

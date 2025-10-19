@@ -6,8 +6,10 @@ import TableLoading from "../components/shared/TableLoading/TableLoading";
 import { transactionColumn } from "../components/Transactions/TransactionColumn";
 import {
   useCreateDailyTransaction,
+  useDeleteDailyTxn,
   useGetTransactions,
 } from "../hooks/useDailyTxn";
+import { useToast } from "../hooks/useToast";
 import { useWalletNumbers } from "../hooks/useWallet";
 import { clamp2, todayISO } from "./utils";
 
@@ -72,6 +74,9 @@ const DailyTransactions = () => {
   const [activeTab, setActiveTab] = useState("agent");
   const [cashItems, setCashItems] = useState([]);
   const [showOtherInput, setShowOtherInput] = useState(false);
+
+  const deleteMutation = useDeleteDailyTxn();
+  const { showSuccess, showError } = useToast();
 
   // RHF forms
   const {
@@ -378,6 +383,39 @@ const DailyTransactions = () => {
     expense: personalExpense,
     profit: personalProfit,
   } = computePersonal(personalVals);
+
+  // Delete handler
+  const handleDeleteTxn = (id) => {
+    const prev = [...transactions];
+
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "এই লেনদেনটি ডিলিট হবে!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Optimistic UI update
+        setTransactions((prev) => prev.filter((txn) => txn._id !== id));
+
+        // Call backend
+        deleteMutation.mutate(id, {
+          onError: () => {
+            //  Rollback if error
+            setTransactions(prev);
+            Swal.fire("ত্রুটি", "লেনদেন ডিলিট ব্যর্থ হয়েছে", "error");
+          },
+          onSuccess: () => {
+            showSuccess("লেনদেন সফলভাবে ডিলিট হয়েছে।");
+          },
+        });
+      }
+    });
+  };
 
   return (
     <div className="mt-10">
@@ -830,7 +868,7 @@ const DailyTransactions = () => {
         ) : (
           <TableComponent
             data={transactions}
-            columns={transactionColumn}
+            columns={transactionColumn(handleDeleteTxn)}
             pagination={pagination}
             setPagination={setPagination}
             pageCount={data?.pagination?.totalPages ?? -1}

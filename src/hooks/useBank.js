@@ -4,6 +4,8 @@ import {
   adjustBankBalance,
   createBankTransaction,
   deleteBank,
+  deleteBankTransaction,
+  editBankTransaction,
   getBanks,
   getBankTransactions,
   updateBank,
@@ -96,5 +98,31 @@ export const useBankTransactions = (page, limit) => {
     queryKey: ["transactions", page, limit],
     queryFn: () => getBankTransactions({ page, limit }),
     keepPreviousData: true, //keeps old data while fetching new page
+  });
+};
+
+// delete transaction hook
+
+export const useDeleteBankTransaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteBankTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["banks"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+};
+
+export const useEditBankTxn = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }) => editBankTransaction(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["banks"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
   });
 };

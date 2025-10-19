@@ -41,3 +41,25 @@ export const getBankTransactions = async ({ page, limit }) => {
   });
   return res.data;
 };
+
+// delete bank txn
+
+// API Function
+export const deleteBankTransaction = async (id) => {
+  const response = await axiosSecure.delete(`/bank/delete-transaction/${id}`);
+
+  return response.data;
+};
+
+export const editBankTransaction = async (id, data) => {
+  try {
+    const response = await axiosSecure.put(
+      `/bank/edit-transaction/${id}`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    // Throw readable error
+    throw error.response?.data || { message: "Error updating transaction" };
+  }
+};

@@ -11,10 +11,13 @@ import {
   useCreateOperator,
   useCreateRecharge,
   useDeleteOperator,
+  useDeleteRechargeTxn,
+  useEditRechargeTxn,
   useOperators,
   useRechargeRecords,
   useUpdateOperator,
 } from "../hooks/useOperator";
+import { useToast } from "../hooks/useToast";
 import { todayISO } from "./utils";
 
 const MobileRecharge = () => {
@@ -38,14 +41,62 @@ const MobileRecharge = () => {
   const adjustOperatorBalanceMutation = useAdjustOperatorBalance();
   const createRechargeMutation = useCreateRecharge();
 
-  // const queryClient = useQueryClient();
-
   const deleteOperatorMutation = useDeleteOperator();
   const updateOperatorMutation = useUpdateOperator();
 
   const [operators, setOperators] = useState([]);
 
   const { data, isLoading, isError } = useOperators();
+
+  const deleteRechargeMutation = useDeleteRechargeTxn();
+
+  const { showSuccess } = useToast();
+
+  const [showEditRechargeModal, setShowEditRechargeModal] = useState(false);
+  const [editRechargeId, setEditRechargeId] = useState(null);
+
+  const editRechargeForm = useForm({
+    defaultValues: {
+      date: todayISO(),
+      senderNumber: "",
+      receiverNumber: "",
+      rechargeAmount: "",
+    },
+  });
+
+  const editRechargeMutation = useEditRechargeTxn();
+
+  const handleDeleteRecharge = (id) => {
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "এই রিচার্জ রেকর্ডটি ডিলিট হবে!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const prev = [...rechargeRecords];
+
+        // Optimistic UI update
+        setRechargeRecords((prev) => prev.filter((r) => r._id !== id));
+
+        // Call backend
+        deleteRechargeMutation.mutate(id, {
+          onError: () => {
+            // Rollback if error
+            setRechargeRecords(prev);
+            Swal.fire("ত্রুটি", "ডিলিট ব্যর্থ হয়েছে", "error");
+          },
+          onSuccess: () => {
+            showSuccess("রিচার্জ রেকর্ড সফলভাবে ডিলিট হয়েছে।");
+          },
+        });
+      }
+    });
+  };
 
   useEffect(() => {
     if (data) {
@@ -107,7 +158,7 @@ const MobileRecharge = () => {
       optimistic: true,
     };
 
-    // 🟢 Optimistic UI
+    // Optimistic UI
     setRechargeRecords((prev) => [...prev, newRecharge]);
 
     createRechargeMutation.mutate(newRecharge, {
@@ -271,7 +322,7 @@ const MobileRecharge = () => {
 
     const prev = [...operators];
 
-    // 🟢 Optimistic UI update
+    //Optimistic UI update
     setOperators((prev) =>
       prev.map((op) =>
         op._id === adjustOperatorId
@@ -280,7 +331,7 @@ const MobileRecharge = () => {
       )
     );
 
-    // 🔄 Call backend
+    // Call backend
     adjustOperatorBalanceMutation.mutate(
       { id: adjustOperatorId, amount: delta },
       {
@@ -303,6 +354,44 @@ const MobileRecharge = () => {
           setShowAdjustModal(false);
           setAdjustOperatorId("");
           setAdjustValue("");
+        },
+      }
+    );
+  };
+
+  const handleEditRecharge = (txn) => {
+    setEditRechargeId(txn._id);
+    editRechargeForm.reset({
+      date: txn.date?.split("T")[0], // format date for input type="date"
+      senderNumber: txn.senderNumber,
+      receiverNumber: txn.receiverNumber,
+      rechargeAmount: txn.rechargeAmount,
+    });
+    setShowEditRechargeModal(true);
+  };
+
+  const handleUpdateRecharge = (data) => {
+    if (!editRechargeId) return;
+
+    editRechargeMutation.mutate(
+      {
+        id: editRechargeId,
+        data: { ...data, rechargeAmount: Number(data.rechargeAmount) },
+      },
+      {
+        onSuccess: (updated) => {
+          setRechargeRecords((prev) =>
+            prev.map((r) => (r._id === updated.data._id ? updated.data : r))
+          );
+
+          showSuccess("রিচার্জ রেকর্ড আপডেট হয়েছে!");
+        },
+        onError: () => {
+          Swal.fire("ত্রুটি", "রিচার্জ আপডেট ব্যর্থ হয়েছে", "error");
+        },
+        onSettled: () => {
+          setShowEditRechargeModal(false);
+          setEditRechargeId(null);
         },
       }
     );
@@ -651,7 +740,10 @@ const MobileRecharge = () => {
         {/* Transactions Table */}
         <TableComponent
           data={rechargeRecords}
-          columns={MobileRechargeColumns}
+          columns={MobileRechargeColumns(
+            handleDeleteRecharge,
+            handleEditRecharge
+          )}
           pagination={pagination}
           setPagination={setPagination}
           pageCount={rechargeData?.pagination?.totalPages ?? -1}
@@ -659,6 +751,76 @@ const MobileRecharge = () => {
           isLoading={rechargeLoading}
         />
       </div>
+
+      {showEditRechargeModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 h-screen"
+          onClick={() => setShowEditRechargeModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md animate-fade-in space-y-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold mb-4">রিচার্জ সম্পাদনা করুন</h2>
+            <form
+              onSubmit={editRechargeForm.handleSubmit(handleUpdateRecharge)}
+              className="grid grid-cols-1 gap-4"
+            >
+              <input
+                type="date"
+                className="w-full border rounded-lg p-3"
+                {...editRechargeForm.register("date", { required: true })}
+              />
+              <select
+                className="w-full border rounded-lg p-3"
+                {...editRechargeForm.register("senderNumber", {
+                  required: true,
+                })}
+              >
+                <option value="">অপারেটর নাম্বার নির্বাচন করুন</option>
+                {operators.map((op) => (
+                  <option key={op._id} value={op.number}>
+                    {op.name} - {op.number}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="গ্রাহকের নাম্বার"
+                className="w-full border rounded-lg p-3"
+                {...editRechargeForm.register("receiverNumber", {
+                  required: true,
+                })}
+              />
+              <input
+                type="number"
+                placeholder="রিচার্জ এমাউন্ট"
+                className="w-full border rounded-lg p-3"
+                {...editRechargeForm.register("rechargeAmount", {
+                  required: true,
+                })}
+              />
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
+                >
+                  {editRechargeMutation.isPending
+                    ? "আপডেট হচ্ছে..."
+                    : "আপডেট করুন"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditRechargeModal(false)}
+                  className="flex-1 py-2 rounded-lg border"
+                >
+                  বাতিল
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

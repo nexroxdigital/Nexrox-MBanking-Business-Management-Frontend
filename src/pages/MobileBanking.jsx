@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import { MobileBankingColumns } from "../components/columns/MobileBankingColumns";
 import { CardLoading } from "../components/shared/CardLoading/CardLoading";
 import TableComponent from "../components/shared/Table/Table";
-import { useGetTransactions } from "../hooks/useDailyTxn";
+import { useDeleteDailyTxn, useGetTransactions } from "../hooks/useDailyTxn";
 import { useToast } from "../hooks/useToast";
 import {
   useAdjustWalletBalance,
@@ -45,6 +45,8 @@ const MobileBanking = () => {
   const adjustWalletBalance = useAdjustWalletBalance();
 
   const [wallets, setWallets] = useState([]);
+  
+ const deleteMutation = useDeleteDailyTxn();
 
   // sync query data into local state whenever it changes
   useEffect(() => {
@@ -118,6 +120,7 @@ const MobileBanking = () => {
   // console.log("type", num.type);
 
   const [transactions, setTransactions] = useState([]);
+
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -138,6 +141,8 @@ const MobileBanking = () => {
   const [showEditModal, setShowEditModal] = useState(false);
 
   const [editData, setEditData] = useState(null);
+
+ 
 
   const handleEditMBank = (id) => {
     const wallet = wallets.find((w) => w._id === id);
@@ -200,7 +205,7 @@ const MobileBanking = () => {
       cancelButtonText: "বাতিল",
     }).then((result) => {
       if (result.isConfirmed) {
-        // 🟢 Call mutation
+        // Call mutation
         deleteWallet.mutate(id, {
           onSuccess: () => {
             Swal.fire({
@@ -262,6 +267,39 @@ const MobileBanking = () => {
 
     setAddOpen(false);
   }
+
+  // Delete handler
+  const handleDeleteTxn = (id) => {
+    const prev = [...transactions];
+
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "এই লেনদেনটি ডিলিট হবে!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Optimistic UI update
+        setTransactions((prev) => prev.filter((txn) => txn._id !== id));
+
+        // Call backend
+        deleteMutation.mutate(id, {
+          onError: () => {
+            //  Rollback if error
+            setTransactions(prev);
+            Swal.fire("ত্রুটি", "লেনদেন ডিলিট ব্যর্থ হয়েছে", "error");
+          },
+          onSuccess: () => {
+            showSuccess("লেনদেন সফলভাবে ডিলিট হয়েছে।");
+          },
+        });
+      }
+    });
+  };
 
   return (
     <div className="mt-10">
@@ -365,7 +403,7 @@ const MobileBanking = () => {
         {/* Transactions Table */}
         <TableComponent
           data={transactions}
-          columns={MobileBankingColumns}
+          columns={MobileBankingColumns(handleDeleteTxn)}
           pagination={pagination}
           setPagination={setPagination}
           pageCount={txnData?.pagination?.totalPages ?? -1}

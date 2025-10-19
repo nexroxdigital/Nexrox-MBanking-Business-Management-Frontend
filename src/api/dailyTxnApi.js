@@ -35,3 +35,13 @@ export const getLast30DaysReport = async () => {
   const res = await axiosSecure.get("/transactions/last-30-days");
   return res.data;
 };
+
+// delete daily transaction
+export const deleteDailyTxnAPI = async (id) => {
+  try {
+    const response = await axiosSecure.delete(`/daily-txn/delete/${id}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || error.message);
+  }
+};

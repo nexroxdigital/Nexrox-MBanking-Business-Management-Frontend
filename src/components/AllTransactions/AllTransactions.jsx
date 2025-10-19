@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import Swal from "sweetalert2";
 import { useToast } from "../../hooks/useToast";
 import { useUpdateTransaction } from "../../hooks/useTransaction";
 // Helper for Bangla date formatting
@@ -28,48 +26,50 @@ const AllTransactions = ({
     useUpdateTransaction();
   const [editingTransaction, setEditingTransaction] = useState(null);
 
-  const handleDelete = async (transactionId) => {
-    const result = await Swal.fire({
-      title: "আপনি কি নিশ্চিত?",
-      text: "এই লেনদেনটি মুছে ফেলা হবে!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "হ্যাঁ, মুছে ফেলুন!",
-      cancelButtonText: "বাতিল",
-      reverseButtons: true,
-    });
+  // const handleDelete = async (transactionId) => {
+  //   const result = await Swal.fire({
+  //     title: "আপনি কি নিশ্চিত?",
+  //     text: "এই লেনদেনটি মুছে ফেলা হবে!",
+  //     icon: "warning",
+  //     showCancelButton: true,
+  //     confirmButtonColor: "#d33",
+  //     cancelButtonColor: "#3085d6",
+  //     confirmButtonText: "হ্যাঁ, মুছে ফেলুন!",
+  //     cancelButtonText: "বাতিল",
+  //     reverseButtons: true,
+  //   });
 
-    if (result.isConfirmed) {
-      try {
-        await onDeleteTransaction(transactionId);
-        showSuccess("লেনদেনটি সফলভাবে মুছে ফেলা হয়েছে");
-      } catch (error) {
-        showError("লেনদেন মুছে ফেলতে সমস্যা হয়েছে");
-      }
-    }
-  };
+  //   if (result.isConfirmed) {
+  //     try {
+  //       await onDeleteTransaction(transactionId);
+  //       showSuccess("লেনদেনটি সফলভাবে মুছে ফেলা হয়েছে");
+  //     } catch (error) {
+  //       showError("লেনদেন মুছে ফেলতে সমস্যা হয়েছে");
+  //     }
+  //   }
+  // };
 
-  const handleEdit = (transaction) => {
-    setEditingTransaction(transaction);
-  };
+  // edit
 
-  const handleSaveEdit = async (transactionId, updateData) => {
-    try {
-      await editTransaction({ transactionId, updateData });
-      setEditingTransaction(null);
-      showSuccess("লেনদেন সফলভাবে আপডেট করা হয়েছে");
-    } catch (error) {
-      showError("লেনদেন আপডেট করতে সমস্যা হয়েছে");
-    } finally {
-      setEditingTransaction(null);
-    }
-  };
+  // const handleEdit = (transaction) => {
+  //   setEditingTransaction(transaction);
+  // };
 
-  const handleCloseModal = () => {
-    setEditingTransaction(null);
-  };
+  // const handleSaveEdit = async (transactionId, updateData) => {
+  //   try {
+  //     await editTransaction({ transactionId, updateData });
+  //     setEditingTransaction(null);
+  //     showSuccess("লেনদেন সফলভাবে আপডেট করা হয়েছে");
+  //   } catch (error) {
+  //     showError("লেনদেন আপডেট করতে সমস্যা হয়েছে");
+  //   } finally {
+  //     setEditingTransaction(null);
+  //   }
+  // };
+
+  // const handleCloseModal = () => {
+  //   setEditingTransaction(null);
+  // };
 
   return (
     <div
@@ -109,8 +109,7 @@ const AllTransactions = ({
             {/* Amount */}
             {/* Amount and Delete Button */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              {/* Edit Button */}
-              <button
+              {/* <button
                 onClick={() => handleEdit(t)}
                 disabled={isEditing}
                 className="p-1 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50 opacity-0 group-hover/log:opacity-100"
@@ -122,14 +121,14 @@ const AllTransactions = ({
                   <FaEdit size={14} />
                 )}
               </button>
-              {/* Delete Button - Shows on hover */}
+              
               <button
                 onClick={() => handleDelete(t._id)}
                 className="opacity-0 group-hover/log:opacity-100 p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
                 title="লেনদেন মুছুন"
               >
                 <FaTrash size={14} />
-              </button>
+              </button> */}
 
               {t.amount && Number(t.amount) > 0 && (
                 <span className="inline-block px-3 py-1 text-sm font-bold text-gray-900 dark:text-white rounded-lg bg-gradient-to-r from-[#009C91]/10 to-[#862C8A]/10 border border-gray-200 dark:border-gray-700">
@@ -158,13 +157,13 @@ const AllTransactions = ({
       </div>
 
       {/* Edit Modal */}
-      <EditModal
+      {/* <EditModal
         transaction={editingTransaction}
         isOpen={!!editingTransaction}
         onClose={handleCloseModal}
         onSave={handleSaveEdit}
         isSaving={isEditing}
-      />
+      /> */}
     </div>
   );
 };

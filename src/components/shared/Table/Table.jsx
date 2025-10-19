@@ -28,14 +28,14 @@ const TableComponent = ({
 
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-md">
-      <table className="w-full text-sm md:text-base border border-gray-200">
+      <table className="w-full table-auto text-sm md:text-base border border-gray-200">
         <thead className="bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className={`p-4 font-semibold border border-gray-200 text-left`}
+                  className={`p-4 font-semibold border border-gray-200 text-left whitespace-nowrap`}
                 >
                   {flexRender(
                     header.column.columnDef.header,

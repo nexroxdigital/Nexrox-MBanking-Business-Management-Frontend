@@ -38,15 +38,32 @@ export const createNewRecharge = async (rechargeData) => {
   return res.data.data;
 };
 
-// Get all recharge histories
-// export const getRechargeRecords = async () => {
-//   const res = await axiosSecure.get("/operator/recharge-records");
-//   return res.data.data;
-// };
-
 export const getRechargeRecords = async ({ page, limit }) => {
   const res = await axiosSecure.get("/operator/recharge-records", {
     params: { page, limit },
   });
   return res.data;
+};
+
+// delete recharge records
+export const deleteRechargeTxn = async (id) => {
+  try {
+    const res = await axiosSecure.delete(`/operator/delete-recharge/${id}`);
+    return res.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        message: "Failed to delete recharge transaction",
+      }
+    );
+  }
+};
+
+// edit and update reacharge txn
+export const editRechargeTxn = async (id, data) => {
+  const response = await axiosSecure.put(
+    `/operator/update-recharge/${id}`,
+    data
+  );
+  return response.data;
 };

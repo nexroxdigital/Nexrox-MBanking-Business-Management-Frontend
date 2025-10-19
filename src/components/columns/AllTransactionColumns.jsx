@@ -1,9 +1,10 @@
 import { createColumnHelper } from "@tanstack/react-table";
+import { MdOutlineDelete } from "react-icons/md";
 import { fmtBDT } from "../../pages/utils";
 
 const columnHelper = createColumnHelper();
 
-export const AllTransactionColumns = [
+export const AllTransactionColumns = (handleDeleteTxn) => [
   columnHelper.accessor("date", {
     header: "তারিখ",
     cell: (info) => {
@@ -44,9 +45,21 @@ export const AllTransactionColumns = [
   columnHelper.accessor("due", {
     header: "বকেয়া",
     cell: (info) => (
-      <span className="block text-red-600 font-semibold">
+      <span className="block text-purple-600 font-semibold">
         ৳{fmtBDT(info.getValue())}
       </span>
+    ),
+  }),
+  columnHelper.display({
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => (
+      <button
+        onClick={() => handleDeleteTxn(row.original._id)}
+        className="text-red-500 hover:text-red-700"
+      >
+        <MdOutlineDelete size={20} />
+      </button>
     ),
   }),
 ];

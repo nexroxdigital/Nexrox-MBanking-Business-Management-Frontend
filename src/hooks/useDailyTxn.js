@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createDailyTransaction,
+  deleteDailyTxnAPI,
   getDailyTransactions,
   getLast30DaysReport,
   getMonthlyTransactionReport,
@@ -61,5 +62,27 @@ export const useLast30DaysReport = () => {
     queryKey: ["last30DaysReport"],
     queryFn: getLast30DaysReport,
     // staleTime: 1000 * 60 * 10,
+  });
+};
+
+export const useDeleteDailyTxn = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteDailyTxnAPI,
+    onSuccess: (_, id) => {
+      // Optimistically remove the deleted transaction from the cache
+      queryClient.setQueryData(["dailyTransactions"], (oldData) => {
+        if (!oldData) return [];
+        return oldData.filter((txn) => txn._id !== id);
+      });
+
+      queryClient.invalidateQueries(["dailyTxn"]);
+      queryClient.invalidateQueries(["transactions"]);
+      queryClient.invalidateQueries(["walletReport"]);
+      queryClient.invalidateQueries(["todaysReport"]);
+      queryClient.invalidateQueries(["monthlyReport"]);
+      queryClient.invalidateQueries(["last30DaysReport"]);
+    },
   });
 };
