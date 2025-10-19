@@ -45,8 +45,8 @@ const MobileBanking = () => {
   const adjustWalletBalance = useAdjustWalletBalance();
 
   const [wallets, setWallets] = useState([]);
-  
- const deleteMutation = useDeleteDailyTxn();
+
+  const deleteMutation = useDeleteDailyTxn();
 
   // sync query data into local state whenever it changes
   useEffect(() => {
@@ -141,8 +141,6 @@ const MobileBanking = () => {
   const [showEditModal, setShowEditModal] = useState(false);
 
   const [editData, setEditData] = useState(null);
-
- 
 
   const handleEditMBank = (id) => {
     const wallet = wallets.find((w) => w._id === id);
@@ -402,7 +400,7 @@ const MobileBanking = () => {
 
         {/* Transactions Table */}
         <TableComponent
-          data={transactions}
+          data={transactions.filter((row) => row.wallet_id)}
           columns={MobileBankingColumns(handleDeleteTxn)}
           pagination={pagination}
           setPagination={setPagination}

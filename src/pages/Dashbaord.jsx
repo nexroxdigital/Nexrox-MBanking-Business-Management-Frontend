@@ -3,6 +3,7 @@ import { fmtBDT, todayISO } from "./utils";
 
 import { CiMoneyCheck1 } from "react-icons/ci";
 import { FaListAlt } from "react-icons/fa";
+import { Link } from "react-router";
 import AllTransactions from "../components/AllTransactions/AllTransactions";
 import { ReportColumns } from "../components/columns/ReportColumns";
 import TableComponent from "../components/shared/Table/Table";
@@ -18,7 +19,6 @@ import { useDeleteTransaction, useTransactions } from "../hooks/useTransaction";
 import { useWalletNumbers } from "../hooks/useWallet";
 
 export default function Dashboard() {
-  const [openingModalOpen, setOpeningModalOpen] = useState(false);
   const [openingCash, setOpeningCash] = useState(0);
 
   const {
@@ -54,18 +54,7 @@ export default function Dashboard() {
     }
   }, [last30DaysReport]);
 
-  const handleSubmitOpeningBalance = (e) => {
-    e.preventDefault();
-
-    openingCashMutation.mutate(
-      { amount: openingCash },
-      {
-        onSettled: () => {
-          setOpeningModalOpen(false);
-        },
-      }
-    );
-  };
+  
 
   return (
     <div className="min-h-[calc(100vh-200px)] transition-colors duration-300">
@@ -93,14 +82,14 @@ export default function Dashboard() {
             </div>
 
             <div className="flex flex-col items-start sm:items-end gap-3">
-              <div
-                onClick={() => setOpeningModalOpen(true)}
+              <Link
+                to="/opening-cash"
                 className="px-4 py-2 rounded-lg cursor-pointer bg-gradient-to-r from-[#99359fe7] to-[#028980ec] border border-[#862C8A]/20 dark:border-[#009C91]/20"
               >
                 <span className="text-sm font-semibold dark:text-gray-300 text-white">
                   Add Opening Cash
                 </span>
-              </div>
+              </Link>
 
               {openingCashLoading ? (
                 <div className="ml-2 font-medium text-gray-700 dark:text-gray-300">
@@ -158,50 +147,6 @@ export default function Dashboard() {
           <NumberBalances />
         </div>
       </div>
-
-      {openingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setOpeningModalOpen(false)}
-          />
-          <div
-            className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 w-full max-w-md z-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-              Add Opening Cash
-            </h2>
-
-            <form onSubmit={handleSubmitOpeningBalance} className="space-y-4">
-              <input
-                type="number"
-                step="any"
-                value={openingCash}
-                onChange={(e) => setOpeningCash(Number(e.target.value))}
-                className="w-full rounded-lg px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                placeholder="Enter cash amount"
-                required
-              />
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOpeningModalOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
-                >
-                  {openingCashMutation.isPending ? "Saving..." : "Save"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       <div className="grid md:grid-cols-5 gap-6">
         {/* Number-wise Report */}

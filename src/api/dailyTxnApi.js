@@ -45,3 +45,12 @@ export const deleteDailyTxnAPI = async (id) => {
     throw new Error(error.response?.data?.message || error.message);
   }
 };
+
+export const editDailyTxnAPI = async ({ id, data }) => {
+  try {
+    const response = await axiosSecure.patch(`/daily-txn/edit/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || error.message);
+  }
+};
