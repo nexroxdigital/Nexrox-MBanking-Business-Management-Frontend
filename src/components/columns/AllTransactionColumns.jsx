@@ -12,9 +12,12 @@ export const AllTransactionColumns = (handleDeleteTxn) => [
       return value ? new Date(value).toLocaleDateString("bn-BD") : "";
     },
   }),
-  columnHelper.accessor("channel", {
+  columnHelper.accessor("wallet_id", {
     header: "চ্যানেল",
-    cell: (info) => info.getValue(),
+    cell: (info) => {
+      const walletId = info.getValue();
+      return walletId ? walletId.label : "—";
+    },
   }),
   columnHelper.accessor("type", {
     header: "টাইপ",

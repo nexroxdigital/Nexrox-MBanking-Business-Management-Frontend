@@ -5,11 +5,6 @@ export const fetchTodayOpeningCash = async () => {
   return res.data;
 };
 
-// export const updateOpeningCash = async ({ amount }) => {
-//   const res = await axiosSecure.post("/opening-cash/set", { amount });
-//   return res.data.data;
-// };
-
 export const updateOpeningCash = async ({ amount, denominations }) => {
   const response = await axiosSecure.post("/opening-cash/set", {
     amount,

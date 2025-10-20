@@ -1,11 +1,4 @@
-import {
-  Calculator,
-  Plus,
-  Save,
-  Trash2,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
+import { Calculator, Plus, Save, Trash2, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const OpeningCashSystem = ({
@@ -103,15 +96,9 @@ const OpeningCashSystem = ({
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div
-                className="p-3 rounded-xl"
-                style={{
-                  background:
-                    "linear-gradient(270deg, #862C8A 0%, #009C91 100%)",
-                }}
-              >
-                <Wallet className="w-8 h-8 text-white" />
+            <div className="flex items-center gap-2">
+              <div className="p-3 rounded-xl">
+                <Wallet className="w-8 h-8 text-black" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-800">
@@ -123,7 +110,7 @@ const OpeningCashSystem = ({
               </div>
             </div>
             <div className="hidden md:flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-xl border border-gray-200">
-              <TrendingUp className="w-5 h-5 text-gray-600" />
+              {/* <TrendingUp className="w-5 h-5 text-gray-600" /> */}
               <div>
                 <div className="text-xs text-gray-500">Current Balance</div>
                 <div className="text-lg font-bold text-gray-800">
@@ -188,6 +175,7 @@ const OpeningCashSystem = ({
                           className="w-28 px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg font-bold text-gray-700 focus:border-gray-400 focus:outline-none placeholder-gray-400"
                           placeholder="Value"
                           disabled={!denom.enabled}
+                          onWheel={(e) => e.target.blur()}
                         />
                       ) : (
                         <div className="w-28 px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg font-bold text-gray-700 text-center shadow-sm">
@@ -199,11 +187,13 @@ const OpeningCashSystem = ({
 
                       <input
                         type="number"
-                        value={denom.count}
-                        onChange={(e) => updateCount(index, e.target.value)}
+                        value={denom.count === 0 ? "" : denom.count} 
+                        onChange={(e) => updateCount(index, e.target.value === "" ? 0 : Number(e.target.value))} 
                         disabled={!denom.enabled}
                         className="w-28 px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg font-bold text-center text-gray-700 focus:border-gray-400 focus:outline-none disabled:opacity-50 disabled:bg-gray-100"
                         min="0"
+                        onWheel={(e) => e.target.blur()}
+                        placeholder="0"
                       />
 
                       <span className="text-gray-400 font-bold text-xl">=</span>
@@ -243,9 +233,7 @@ const OpeningCashSystem = ({
 
                 <div className="space-y-4">
                   <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
-                    <div className="text-sm text-gray-600 mb-2">
-                      Subtotal (৳5+)
-                    </div>
+                    <div className="text-sm text-gray-600 mb-2">Subtotal</div>
                     <div className="text-3xl font-bold text-gray-800">
                       ৳{subtotal.toLocaleString()}
                     </div>
@@ -264,30 +252,6 @@ const OpeningCashSystem = ({
                       </div>
                       <div className="text-4xl font-bold text-white">
                         ৳{total.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                      <div className="text-xs text-gray-600 mb-1">
-                        Active Types
-                      </div>
-                      <div className="text-xl font-bold text-gray-800">
-                        {
-                          denominations.filter((d) => d.enabled && d.count > 0)
-                            .length
-                        }
-                      </div>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                      <div className="text-xs text-gray-600 mb-1">
-                        Total Pieces
-                      </div>
-                      <div className="text-xl font-bold text-gray-800">
-                        {denominations
-                          .filter((d) => d.enabled)
-                          .reduce((sum, d) => sum + d.count, 0)}
                       </div>
                     </div>
                   </div>

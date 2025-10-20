@@ -59,7 +59,7 @@ export default function ClientTransactions() {
 
   const [filter, setFilter] = useState({
     q: "",
-    channel: "",
+    label: "",
     type: "",
     dateFrom: daysAgo(30),
   });
@@ -164,11 +164,6 @@ export default function ClientTransactions() {
   }, [type, setValue, channel, isPersonalWallet]);
 
   useEffect(() => {
-    // Skip calculation for Personal wallet (handled by expense field)
-    // if (isPersonalWallet) {
-    //   return;
-    // }
-
     const profitCalc = watch("profit");
     const totalCalc = watch("total");
     const channel = watch("channel");
@@ -231,7 +226,7 @@ export default function ClientTransactions() {
       });
   }, [transactions, filter]);
 
-  // console.log("filtered", filtered);
+  console.log("filtered", filtered);
 
   // Reset form when wallet type changes
   useEffect(() => {
@@ -249,7 +244,7 @@ export default function ClientTransactions() {
   }, [channel, isPersonalWallet, setValue]);
 
   const addTx = (data) => {
-    console.log("formdata", data);
+    // console.log("formdata", data);
 
     let type = data.type;
     if (data.channel === "Bill Payment") {
@@ -418,7 +413,13 @@ export default function ClientTransactions() {
               onChange={(e) => setFilter({ ...filter, type: e.target.value })}
             >
               <option value="">Type</option>
-              {["Cash In", "Cash Out", "Bill Payment"].map((t) => (
+              {[
+                "Cash In",
+                "Cash Out",
+                "Send Money",
+                "Receive Money",
+                "Bill Payment",
+              ].map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>

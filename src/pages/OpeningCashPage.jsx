@@ -15,8 +15,8 @@ export default function OpeningCashPage() {
   } = useOpeningCash();
 
     // DEBUG: Add console logs
-  console.log("openingCashData:", openingCashData);
-  console.log("openingCashLoading:", openingCashLoading);
+  // console.log("openingCashData:", openingCashData);
+  // console.log("openingCashLoading:", openingCashLoading);
 
   useEffect(() => {
     if (openingCashData) {
