@@ -302,7 +302,7 @@ const DailyTransactions = () => {
       channel: "",
       wallet_id: null,
       type: cashItems.join(", ") || "cash sale",
-      amount: clamp2(data.taka),
+      amount: clamp2(data.paid),
       profit: clamp2(calculatedProfit),
       note: `${data.paid} টাকার আইটেম বিক্রি করা হয়েছে`,
       optimistic: true,

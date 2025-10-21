@@ -187,8 +187,13 @@ const OpeningCashSystem = ({
 
                       <input
                         type="number"
-                        value={denom.count === 0 ? "" : denom.count} 
-                        onChange={(e) => updateCount(index, e.target.value === "" ? 0 : Number(e.target.value))} 
+                        value={denom.count === 0 ? "" : denom.count}
+                        onChange={(e) =>
+                          updateCount(
+                            index,
+                            e.target.value === "" ? 0 : Number(e.target.value)
+                          )
+                        }
                         disabled={!denom.enabled}
                         className="w-28 px-4 py-2.5 bg-white border-2 border-gray-300 rounded-lg font-bold text-center text-gray-700 focus:border-gray-400 focus:outline-none disabled:opacity-50 disabled:bg-gray-100"
                         min="0"
@@ -232,13 +237,6 @@ const OpeningCashSystem = ({
                 </div>
 
                 <div className="space-y-4">
-                  <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
-                    <div className="text-sm text-gray-600 mb-2">Subtotal</div>
-                    <div className="text-3xl font-bold text-gray-800">
-                      ৳{subtotal.toLocaleString()}
-                    </div>
-                  </div>
-
                   <div
                     className="relative overflow-hidden p-6 rounded-xl shadow-lg"
                     style={{
