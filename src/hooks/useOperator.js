@@ -3,9 +3,12 @@ import {
   adjustOperatorBalance,
   createNewRecharge,
   createOperator,
+  deleteLoadHistory,
   deleteOperator,
   deleteRechargeTxn,
+  editLoadHistory,
   editRechargeTxn,
+  getLoadHistory,
   getOperators,
   getRechargeRecords,
   updateOperator,
@@ -71,6 +74,7 @@ export const useAdjustOperatorBalance = () => {
       // Refresh operator list after balance adjustment
       queryClient.invalidateQueries(["operators"]);
       queryClient.invalidateQueries(["transactions"]);
+      queryClient.invalidateQueries(["loadHistory"]);
     },
   });
 };
@@ -131,6 +135,47 @@ export const useEditRechargeTxn = () => {
     },
     onError: (err) => {
       console.error("Error updating recharge txn:", err);
+    },
+  });
+};
+
+export const useLoadHistory = (pageIndex, pageSize) => {
+  return useQuery({
+    queryKey: ["loadHistory", pageIndex, pageSize],
+    queryFn: () =>
+      getLoadHistory({
+        page: pageIndex + 1,
+        limit: pageSize,
+      }),
+    keepPreviousData: true,
+  });
+};
+
+export const useDeleteLoadHistory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => deleteLoadHistory(id),
+    onSuccess: (_, id) => {
+      // Invalidate or update the loadHistory query
+      queryClient.invalidateQueries(["loadHistory"]);
+    },
+    onError: (error) => {
+      console.error("Delete failed:", error);
+    },
+  });
+};
+
+export const useEditLoadHistory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }) => editLoadHistory({ id, data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["loadHistory"]);
+    },
+    onError: (err) => {
+      console.error(err);
     },
   });
 };

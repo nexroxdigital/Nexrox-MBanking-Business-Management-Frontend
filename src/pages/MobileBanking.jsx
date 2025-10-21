@@ -399,15 +399,21 @@ const MobileBanking = () => {
         )}
 
         {/* Transactions Table */}
-        <TableComponent
-          data={transactions.filter((row) => row.wallet_id)}
-          columns={MobileBankingColumns(handleDeleteTxn)}
-          pagination={pagination}
-          setPagination={setPagination}
-          pageCount={txnData?.pagination?.totalPages ?? -1}
-          isFetching={txnFetching}
-          isLoading={txnLoading}
-        />
+        {transactions.length < 1 ? (
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+            কোনো ট্রান্সাকশন পাওয়া যায়নি
+          </div>
+        ) : (
+          <TableComponent
+            data={transactions.filter((row) => row.wallet_id)}
+            columns={MobileBankingColumns(handleDeleteTxn)}
+            pagination={pagination}
+            setPagination={setPagination}
+            pageCount={txnData?.pagination?.totalPages ?? -1}
+            isFetching={txnFetching}
+            isLoading={txnLoading}
+          />
+        )}
 
         {/*  Edit Wallet Modal */}
         {showEditModal && (

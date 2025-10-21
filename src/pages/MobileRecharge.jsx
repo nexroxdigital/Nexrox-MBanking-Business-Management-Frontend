@@ -3,16 +3,21 @@ import { useForm } from "react-hook-form";
 import { CiEdit } from "react-icons/ci";
 import { MdOutlineDelete } from "react-icons/md";
 import Swal from "sweetalert2";
+import { LoadHistoryColumns } from "../components/columns/LoadHistoryColumns";
 import { MobileRechargeColumns } from "../components/columns/MobileRechargeColumns";
 import { CardLoading } from "../components/shared/CardLoading/CardLoading";
 import TableComponent from "../components/shared/Table/Table";
+import TableLoading from "../components/shared/TableLoading/TableLoading";
 import {
   useAdjustOperatorBalance,
   useCreateOperator,
   useCreateRecharge,
+  useDeleteLoadHistory,
   useDeleteOperator,
   useDeleteRechargeTxn,
+  useEditLoadHistory,
   useEditRechargeTxn,
+  useLoadHistory,
   useOperators,
   useRechargeRecords,
   useUpdateOperator,
@@ -26,9 +31,16 @@ const MobileRecharge = () => {
     pageSize: 10,
   });
 
+  // Pagination state for load history
+  const [loadHistoryPagination, setLoadHistoryPagination] = useState({
+    pageIndex: 0,
+    pageSize: 5,
+  });
+
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [adjustOperatorId, setAdjustOperatorId] = useState("");
   const [adjustValue, setAdjustValue] = useState("");
+  const [adjustDate, setAdjustDate] = useState(todayISO());
 
   const {
     data: rechargeData,
@@ -36,6 +48,19 @@ const MobileRecharge = () => {
     isFetching: rechargeFetching,
     isError: rechargeError,
   } = useRechargeRecords(pagination.pageIndex, pagination.pageSize);
+
+  // load history
+
+  const {
+    data: loadHistoryData,
+    isLoading: loadHistoryLoading,
+    isFetching: loadHistoryFetching,
+  } = useLoadHistory(
+    loadHistoryPagination.pageIndex,
+    loadHistoryPagination.pageSize
+  );
+
+  const loadHistoryRecords = loadHistoryData?.data || [];
 
   const createOperatorMutation = useCreateOperator();
   const adjustOperatorBalanceMutation = useAdjustOperatorBalance();
@@ -50,10 +75,33 @@ const MobileRecharge = () => {
 
   const deleteRechargeMutation = useDeleteRechargeTxn();
 
+  const deleteLoadHistoryMutation = useDeleteLoadHistory();
+
   const { showSuccess } = useToast();
 
   const [showEditRechargeModal, setShowEditRechargeModal] = useState(false);
   const [editRechargeId, setEditRechargeId] = useState(null);
+
+  const [showEditLoadHistoryModal, setShowEditLoadHistoryModal] =
+    useState(false);
+  const [editLoadHistoryId, setEditLoadHistoryId] = useState(null);
+
+  const [rechargeRecords, setRechargeRecords] = useState([
+    {
+      date: todayISO(),
+      senderNumber: "017XXXXXXXX",
+      receiverNumber: "018XXXXXXXX",
+      rechargeAmount: 100,
+      balance: 900,
+    },
+    {
+      date: todayISO(),
+      senderNumber: "017XXXXXXXX",
+      receiverNumber: "018XXXXXXXX",
+      rechargeAmount: 100,
+      balance: 900,
+    },
+  ]);
 
   const editRechargeForm = useForm({
     defaultValues: {
@@ -64,7 +112,16 @@ const MobileRecharge = () => {
     },
   });
 
+  const editLoadHistoryForm = useForm({
+    defaultValues: {
+      date: todayISO(),
+      amount: 0,
+      operator: "",
+    },
+  });
+
   const editRechargeMutation = useEditRechargeTxn();
+  const editLoadHistoryMutation = useEditLoadHistory();
 
   const handleDeleteRecharge = (id) => {
     Swal.fire({
@@ -98,6 +155,31 @@ const MobileRecharge = () => {
     });
   };
 
+  const handleDeleteLoadHistory = (id) => {
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "এই লোড হিস্ট্রি রেকর্ডটি ডিলিট হবে!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#009C91",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "হ্যাঁ, ডিলিট করুন",
+      cancelButtonText: "বাতিল",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Call backend
+        deleteLoadHistoryMutation.mutate(id, {
+          onError: () => {
+            Swal.fire("ত্রুটি", "ডিলিট ব্যর্থ হয়েছে", "error");
+          },
+          onSuccess: () => {
+            showSuccess("লোড হিস্ট্রি রেকর্ড সফলভাবে ডিলিট হয়েছে।");
+          },
+        });
+      }
+    });
+  };
+
   useEffect(() => {
     if (data) {
       setOperators(data);
@@ -109,23 +191,6 @@ const MobileRecharge = () => {
       setRechargeRecords(rechargeData.data);
     }
   }, [rechargeData]);
-
-  const [rechargeRecords, setRechargeRecords] = useState([
-    {
-      date: todayISO(),
-      senderNumber: "017XXXXXXXX",
-      receiverNumber: "018XXXXXXXX",
-      rechargeAmount: 100,
-      balance: 900,
-    },
-    {
-      date: todayISO(),
-      senderNumber: "017XXXXXXXX",
-      receiverNumber: "018XXXXXXXX",
-      rechargeAmount: 100,
-      balance: 900,
-    },
-  ]);
 
   const [showTxnModal, setShowTxnModal] = useState(false);
   const [showOperatorModal, setShowOperatorModal] = useState(false);
@@ -333,7 +398,7 @@ const MobileRecharge = () => {
 
     // Call backend
     adjustOperatorBalanceMutation.mutate(
-      { id: adjustOperatorId, amount: delta },
+      { id: adjustOperatorId, amount: delta, date: adjustDate },
       {
         onError: () => {
           // ❌ Rollback if error
@@ -341,19 +406,14 @@ const MobileRecharge = () => {
           Swal.fire("Error", "Balance adjustment failed", "error");
         },
         onSuccess: () => {
-          Swal.fire({
-            title: "Success",
-            text: "Balance adjusted successfully!",
-            icon: "success",
-            showConfirmButton: false,
-            timer: 1500,
-          });
+          showSuccess("ব্যালেন্স সফলভাবে অ্যাড হয়েছে");
         },
         onSettled: () => {
           // Close modal and reset form
           setShowAdjustModal(false);
           setAdjustOperatorId("");
           setAdjustValue("");
+          setAdjustDate(todayISO());
         },
       }
     );
@@ -397,6 +457,38 @@ const MobileRecharge = () => {
     );
   };
 
+  const handleEditLoadHistory = (record) => {
+    setEditLoadHistoryId(record._id);
+
+    editLoadHistoryForm.reset({
+      date: record.date?.split("T")[0],
+      amount: record.amount,
+      operator: record.operator?._id,
+    });
+
+    setShowEditLoadHistoryModal(true);
+  };
+
+  const handleUpdateLoadHistory = (data) => {
+    if (!editLoadHistoryId) return;
+
+    editLoadHistoryMutation.mutate(
+      { id: editLoadHistoryId, data: { ...data, amount: Number(data.amount) } },
+      {
+        onSuccess: (updated) => {
+          showSuccess("লোড হিস্টোরি রেকর্ড আপডেট হয়েছে!");
+        },
+        onError: () => {
+          Swal.fire("ত্রুটি", "লোড হিস্টোরি আপডেট ব্যর্থ হয়েছে", "error");
+        },
+        onSettled: () => {
+          setShowEditLoadHistoryModal(false);
+          setEditLoadHistoryId(null);
+        },
+      }
+    );
+  };
+
   return (
     <div className="mt-10">
       <div className="h-1 w-full bg-gradient-to-r from-[#862C8A] to-[#009C91]" />
@@ -425,6 +517,7 @@ const MobileRecharge = () => {
                 setShowAdjustModal(true);
                 setAdjustOperatorId(operators[0]?._id || "");
                 setAdjustValue("");
+                setAdjustDate(todayISO());
               }}
               className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#009C91] to-[#862C8A] text-white font-semibold shadow-lg hover:scale-105 transition hover:bg-gradient-to-l cursor-pointer"
             >
@@ -543,9 +636,19 @@ const MobileRecharge = () => {
               className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm animate-fade-in space-y-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-bold mb-4">
-                অপারেটর ব্যালেন্স সমন্বয়
-              </h2>
+              <h2 className="text-xl font-bold mb-4">অপারেটর ব্যালেন্স লোড</h2>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  তারিখ
+                </label>
+                <input
+                  type="date"
+                  className="w-full border rounded-lg p-3"
+                  value={adjustDate}
+                  onChange={(e) => setAdjustDate(e.target.value)}
+                />
+              </div>
 
               <select
                 className="w-full border rounded-lg p-3"
@@ -752,6 +855,33 @@ const MobileRecharge = () => {
         />
       </div>
 
+      <div className="mt-10">
+        <h2 className="text-2xl font-bold mb-4">লোড হিস্টোরি</h2>
+
+        {loadHistoryLoading ? (
+          <TableLoading />
+        ) : loadHistoryRecords.length > 0 ? (
+          <TableComponent
+            data={loadHistoryRecords}
+            columns={LoadHistoryColumns(
+              handleDeleteLoadHistory,
+              handleEditLoadHistory
+            )}
+            pagination={loadHistoryPagination}
+            setPagination={setLoadHistoryPagination}
+            pageCount={loadHistoryData?.pagination?.totalPages ?? -1}
+            isFetching={loadHistoryFetching}
+            isLoading={loadHistoryLoading}
+          />
+        ) : (
+          <div>
+            <p className="text-center py-10 text-gray-500 dark:text-gray-400">
+              লোড হিস্টোরি পাওয়া যায়নি।
+            </p>
+          </div>
+        )}
+      </div>
+
       {showEditRechargeModal && (
         <div
           className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 h-screen"
@@ -812,6 +942,94 @@ const MobileRecharge = () => {
                 <button
                   type="button"
                   onClick={() => setShowEditRechargeModal(false)}
+                  className="flex-1 py-2 rounded-lg border"
+                >
+                  বাতিল
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditLoadHistoryModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 h-screen"
+          onClick={() => setShowEditLoadHistoryModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md animate-fade-in space-y-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold mb-4">
+              লোড হিস্টোরি সম্পাদনা করুন
+            </h2>
+            <form
+              onSubmit={editLoadHistoryForm.handleSubmit(
+                handleUpdateLoadHistory
+              )}
+              className="grid grid-cols-1 gap-4"
+            >
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  তারিখ
+                </label>
+                <input
+                  type="date"
+                  className="w-full border rounded-lg p-3"
+                  {...editLoadHistoryForm.register("date", { required: true })}
+                />
+              </div>
+
+              {/* Operator */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  অপারেটর
+                </label>
+                <select
+                  className="w-full border rounded-lg p-3"
+                  {...editLoadHistoryForm.register("operator", {
+                    required: true,
+                  })}
+                >
+                  <option value="">অপারেটর নির্বাচন করুন</option>
+                  {operators.map((op) => (
+                    <option key={op._id} value={op._id}>
+                      {op.name} - {op.number}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  পরিমাণ (৳)
+                </label>
+                <input
+                  type="number"
+                  placeholder="পরিমাণ (যেমন: 500 বা -200)"
+                  className="w-full border rounded-lg p-3"
+                  {...editLoadHistoryForm.register("amount", {
+                    required: true,
+                  })}
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#862C8A] to-[#009C91] text-white font-semibold"
+                >
+                  {editLoadHistoryMutation.isPending
+                    ? "আপডেট হচ্ছে..."
+                    : "আপডেট করুন"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditLoadHistoryModal(false)}
                   className="flex-1 py-2 rounded-lg border"
                 >
                   বাতিল

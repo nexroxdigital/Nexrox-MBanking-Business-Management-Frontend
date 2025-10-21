@@ -8,11 +8,22 @@ const columnHelper = createColumnHelper();
 export const BankTxnColumns = (onDelete, onEdit) => [
   columnHelper.accessor("date", {
     header: "তারিখ",
-    cell: (info) => info.getValue(),
+    cell: (info) => {
+      const value = info.getValue();
+      return value ? new Date(value).toLocaleDateString("en-GB") : "";
+    },
   }),
-  columnHelper.accessor("bank", {
+  columnHelper.accessor("type", {
+    header: "টাইপ",
+    cell: (info) => (
+      <span className="whitespace-nowrap capitalize">{info.getValue()}</span>
+    ),
+  }),
+  columnHelper.accessor("senderBank", {
     header: "ব্যাংক",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span className="whitespace-nowrap capitalize">{info.getValue()}</span>
+    ),
   }),
 
   columnHelper.accessor("method", {
@@ -20,28 +31,34 @@ export const BankTxnColumns = (onDelete, onEdit) => [
     cell: (info) => info.getValue(),
   }),
 
-  columnHelper.accessor("branch", {
+  columnHelper.accessor("senderBranch", {
     header: "শাখা",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span className="whitespace-nowrap capitalize">{info.getValue()}</span>
+    ),
   }),
   columnHelper.accessor("senderName", {
     header: "প্রেরক",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span className="whitespace-nowrap capitalize">{info.getValue()}</span>
+    ),
   }),
   columnHelper.accessor("receiverName", {
     header: "গ্রাহক",
-    cell: (info) => info.getValue(),
+    cell: (info) => <span className="capitalize">{info.getValue()}</span>,
   }),
   columnHelper.accessor("receiverBank", {
     header: "গ্রাহক ব্যাংক",
     cell: (info) => (
-      <span className="whitespace-nowrap min-w-max">{info.getValue()}</span>
+      <span className="whitespace-nowrap min-w-max capitalize">
+        {info.getValue()}
+      </span>
     ),
   }),
-  columnHelper.accessor("receiverBankBranch", {
+  columnHelper.accessor("receiverBranch", {
     header: "গ্রাহক শাখা",
     cell: (info) => (
-      <span className="whitespace-nowrap block min-w-max">
+      <span className="whitespace-nowrap block min-w-max capitalize">
         {info.getValue()}
       </span>
     ),

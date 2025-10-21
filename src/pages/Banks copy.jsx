@@ -427,7 +427,6 @@ const BankTransactions = () => {
       amount: txn.amount ?? "",
       fee: txn.fee ?? "",
       pay: txn.pay ?? "",
-      type: txn.type || "send",
     };
 
     editTxnForm.reset(formatted);
@@ -1442,12 +1441,7 @@ const BankTransactions = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">
-                লেনদেন এডিট করুন -{" "}
-                {editTxnForm.watch("type") === "send"
-                  ? "টাকা পাঠান"
-                  : "টাকা গ্রহণ করুন"}
-              </h2>
+              <h2 className="text-xl font-bold">লেনদেন এডিট করুন</h2>
               <button
                 onClick={() => {
                   setShowEditTxnModal(false);
@@ -1460,21 +1454,11 @@ const BankTransactions = () => {
               </button>
             </div>
 
-            {/* Transaction Type Display (Read-only) */}
-            <div className="mb-4 p-3 bg-gray-100 rounded-lg">
-              <span className="font-medium">লেনদেনের ধরণ: </span>
-              <span className="capitalize">
-                {editTxnForm.watch("type") === "send"
-                  ? "টাকা পাঠানো"
-                  : "টাকা গ্রহণ"}
-              </span>
-            </div>
-
             <form
               onSubmit={editTxnForm.handleSubmit(handleEditTxnSubmit)}
               className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
-              {/* Date */}
+              {/* date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   তারিখ
@@ -1486,7 +1470,7 @@ const BankTransactions = () => {
                 />
               </div>
 
-              {/* Time */}
+              {/* time */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   সময়
@@ -1498,301 +1482,127 @@ const BankTransactions = () => {
                 />
               </div>
 
-              {/* ========== SEND TRANSACTION FIELDS ========== */}
-              {editTxnForm.watch("type") === "send" && (
-                <>
-                  {/* Our Bank Details (Sender) */}
-                  <div className="col-span-full">
-                    <h3 className="text-md font-semibold text-gray-800 mb-2 border-b pb-1">
-                      আমাদের ব্যাংক তথ্য (প্রেরক)
-                    </h3>
-                  </div>
+              {/* bank */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ব্যাংক
+                </label>
+                <select
+                  className="w-full border rounded-lg p-3"
+                  {...editTxnForm.register("senderBank", { required: true })}
+                >
+                  <option value="">ব্যাংক নির্বাচন করুন</option>
+                  {bankNames.map((name, i) => (
+                    <option key={i} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ব্যাংক
-                    </label>
-                    <select
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("senderBank", {
-                        required: true,
-                      })}
-                    >
-                      <option value="">ব্যাংক নির্বাচন করুন</option>
-                      {bankNames.map((name, i) => (
-                        <option key={i} value={name}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+              {/* branch */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  শাখা
+                </label>
+                <select
+                  className="w-full border rounded-lg p-3"
+                  {...editTxnForm.register("senderBranch", { required: true })}
+                >
+                  <option value="">শাখা নির্বাচন করুন</option>
+                  {getBranches(editTxnForm.watch("senderBank")).map((branch, i) => (
+                    <option key={i} value={branch}>
+                      {branch}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      শাখা
-                    </label>
-                    <select
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("senderBranch", {
-                        required: true,
-                      })}
-                    >
-                      <option value="">শাখা নির্বাচন করুন</option>
-                      {getBranches(editTxnForm.watch("senderBank")).map(
-                        (branch, i) => (
-                          <option key={i} value={branch}>
-                            {branch}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </div>
+              {/* sender name -> populate senderAccount hidden */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  প্রেরক
+                </label>
+                <select
+                  className="w-full border rounded-lg p-3"
+                  {...editTxnForm.register("senderName", { required: true })}
+                  onChange={(e) => {
+                    const selected = getSenders(
+                      editTxnForm.watch("senderBank"),
+                      editTxnForm.watch("senderBranch")
+                    ).find((s) => s.name === e.target.value);
+                    editTxnForm.setValue("senderName", selected?.name || "");
+                    editTxnForm.setValue(
+                      "senderAccount",
+                      selected?.account || ""
+                    );
+                  }}
+                >
+                  <option value="">প্রেরক নির্বাচন করুন</option>
+                  {getSenders(
+                    editTxnForm.watch("senderBank"),
+                    editTxnForm.watch("senderBranch")
+                  ).map((s, i) => (
+                    <option key={i} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="hidden"
+                  {...editTxnForm.register("senderAccount")}
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      প্রেরক (আমাদের একাউন্ট)
-                    </label>
-                    <select
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("senderName", {
-                        required: true,
-                      })}
-                      onChange={(e) => {
-                        const selected = getSenders(
-                          editTxnForm.watch("senderBank"),
-                          editTxnForm.watch("senderBranch")
-                        ).find((s) => s.name === e.target.value);
-                        editTxnForm.setValue(
-                          "senderName",
-                          selected?.name || ""
-                        );
-                        editTxnForm.setValue(
-                          "senderAccount",
-                          selected?.account || ""
-                        );
-                      }}
-                    >
-                      <option value="">প্রেরক নির্বাচন করুন</option>
-                      {getSenders(
-                        editTxnForm.watch("senderBank"),
-                        editTxnForm.watch("senderBranch")
-                      ).map((s, i) => (
-                        <option key={i} value={s.name}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="hidden"
-                      {...editTxnForm.register("senderAccount")}
-                    />
-                  </div>
+              {/* receiverName */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  গ্রাহক
+                </label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editTxnForm.register("receiverName", { required: true })}
+                />
+              </div>
 
-                  {/* Receiver Details (External) */}
-                  <div className="col-span-full mt-4">
-                    <h3 className="text-md font-semibold text-gray-800 mb-2 border-b pb-1">
-                      গ্রাহকের তথ্য (বাহিরের)
-                    </h3>
-                  </div>
+              {/* receiverAccount */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  গ্রাহক একাউন্ট নম্বর
+                </label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editTxnForm.register("receiverAccount")}
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      গ্রাহকের নাম
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("receiverName", {
-                        required: true,
-                      })}
-                    />
-                  </div>
+              {/* receiverBank */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  গ্রাহক ব্যাংক
+                </label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editTxnForm.register("receiverBank")}
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      গ্রাহক একাউন্ট নম্বর
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("receiverAccount")}
-                    />
-                  </div>
+              {/* receiverBankBranch */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  গ্রাহক ব্যাংক শাখা
+                </label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-3"
+                  {...editTxnForm.register("receiverBranch")}
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      গ্রাহক ব্যাংক
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("receiverBank")}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      গ্রাহক ব্যাংক শাখা
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("receiverBranch")}
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* ========== RECEIVE TRANSACTION FIELDS ========== */}
-              {editTxnForm.watch("type") === "receive" && (
-                <>
-                  {/* Sender Details (External) */}
-                  <div className="col-span-full">
-                    <h3 className="text-md font-semibold text-gray-800 mb-2 border-b pb-1">
-                      প্রেরকের তথ্য (বাহিরের)
-                    </h3>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      প্রেরক ব্যাংক
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("senderBank", {
-                        required: true,
-                      })}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      প্রেরক ব্যাংক শাখা
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("senderBranch", {
-                        required: true,
-                      })}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      প্রেরকের নাম
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("senderName", {
-                        required: true,
-                      })}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      প্রেরক একাউন্ট নম্বর
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("senderAccount")}
-                    />
-                  </div>
-
-                  {/* Our Bank Details (Receiver) */}
-                  <div className="col-span-full mt-4">
-                    <h3 className="text-md font-semibold text-gray-800 mb-2 border-b pb-1">
-                      আমাদের ব্যাংক তথ্য (গ্রাহক)
-                    </h3>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ব্যাংক
-                    </label>
-                    <select
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("receiverBank", {
-                        required: true,
-                      })}
-                    >
-                      <option value="">ব্যাংক নির্বাচন করুন</option>
-                      {bankNames.map((name, i) => (
-                        <option key={i} value={name}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      শাখা
-                    </label>
-                    <select
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("receiverBranch", {
-                        required: true,
-                      })}
-                    >
-                      <option value="">শাখা নির্বাচন করুন</option>
-                      {getBranches(editTxnForm.watch("receiverBank")).map(
-                        (branch, i) => (
-                          <option key={i} value={branch}>
-                            {branch}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      গ্রাহক (আমাদের একাউন্ট)
-                    </label>
-                    <select
-                      className="w-full border rounded-lg p-3"
-                      {...editTxnForm.register("receiverName", {
-                        required: true,
-                      })}
-                      onChange={(e) => {
-                        const selected = getSenders(
-                          editTxnForm.watch("receiverBank"),
-                          editTxnForm.watch("receiverBranch")
-                        ).find((s) => s.name === e.target.value);
-                        editTxnForm.setValue(
-                          "receiverName",
-                          selected?.name || ""
-                        );
-                        editTxnForm.setValue(
-                          "receiverAccount",
-                          selected?.account || ""
-                        );
-                      }}
-                    >
-                      <option value="">গ্রাহক নির্বাচন করুন</option>
-                      {getSenders(
-                        editTxnForm.watch("receiverBank"),
-                        editTxnForm.watch("receiverBranch")
-                      ).map((s, i) => (
-                        <option key={i} value={s.name}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="hidden"
-                      {...editTxnForm.register("receiverAccount")}
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Common Fields for Both Types */}
+              {/* method */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   মেথড
@@ -1809,6 +1619,7 @@ const BankTransactions = () => {
                 </select>
               </div>
 
+              {/* amount */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   পরিমাণ
@@ -1820,6 +1631,7 @@ const BankTransactions = () => {
                 />
               </div>
 
+              {/* fee */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   ফি
@@ -1831,6 +1643,7 @@ const BankTransactions = () => {
                 />
               </div>
 
+              {/* pay */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   পে
@@ -1842,10 +1655,7 @@ const BankTransactions = () => {
                 />
               </div>
 
-              {/* Hidden type field */}
-              <input type="hidden" {...editTxnForm.register("type")} />
-
-              {/* Actions */}
+              {/* actions */}
               <div className="col-span-full flex gap-3 mt-2">
                 <button
                   type="button"

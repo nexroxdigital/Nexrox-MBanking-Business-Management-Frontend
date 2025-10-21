@@ -25,9 +25,10 @@ export const updateOperator = async ({ id, operatorData }) => {
 };
 
 // Adjust operator balance (increase or decrease)
-export const adjustOperatorBalance = async ({ id, amount }) => {
+export const adjustOperatorBalance = async ({ id, amount, date }) => {
   const res = await axiosSecure.patch(`/operator/adjust-balance/${id}`, {
     amount,
+    date,
   });
   return res.data;
 };
@@ -66,4 +67,24 @@ export const editRechargeTxn = async (id, data) => {
     data
   );
   return response.data;
+};
+
+export const getLoadHistory = async ({ page, limit }) => {
+  const res = await axiosSecure.get("/operator/load-history", {
+    params: { page, limit },
+  });
+  return res.data;
+};
+
+export const deleteLoadHistory = async (id) => {
+  const res = await axiosSecure.delete(`/operator/load-history/delete/${id}`);
+  return res.data;
+};
+
+export const editLoadHistory = async ({ id, data }) => {
+  const res = await axiosSecure.patch(
+    `/operator/load-history/edit/${id}`,
+    data
+  );
+  return res.data;
 };

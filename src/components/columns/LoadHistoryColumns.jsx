@@ -1,11 +1,11 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { CiEdit } from "react-icons/ci";
 import { MdOutlineDelete } from "react-icons/md";
 import { fmtBDT } from "../../pages/utils";
+import { CiEdit } from "react-icons/ci";
 
 const columnHelper = createColumnHelper();
 
-export const MobileRechargeColumns = (handleDelete, handleEdit) => [
+export const LoadHistoryColumns = (handleDelete, handleEdit) => [
   columnHelper.accessor("date", {
     header: "তারিখ",
     cell: (info) => {
@@ -13,31 +13,34 @@ export const MobileRechargeColumns = (handleDelete, handleEdit) => [
       return value ? new Date(value).toLocaleDateString("en-GB") : "";
     },
   }),
-  columnHelper.accessor("senderNumber", {
+  columnHelper.accessor("operator.name", {
+    header: "অপারেটর নাম",
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.accessor("operator.number", {
     header: "অপারেটর নাম্বার",
     cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("receiverNumber", {
-    header: "গ্রাহকের নাম্বার",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("rechargeAmount", {
-    header: "রিচার্জ",
+  columnHelper.accessor("amount", {
+    header: "লোড পরিমাণ",
     cell: (info) => (
-      <span className="block text-green-600 font-semibold">
+      <span
+        className={`block font-semibold ${
+          info.getValue() >= 0 ? "text-green-600" : "text-red-600"
+        }`}
+      >
         ৳{fmtBDT(info.getValue())}
       </span>
     ),
   }),
-  columnHelper.accessor("balance", {
-    header: "ব্যালেন্স",
+  columnHelper.accessor("newBalance", {
+    header: "নতুন ব্যালেন্স",
     cell: (info) => (
       <span className="block text-blue-600 font-medium">
         ৳{fmtBDT(info.getValue())}
       </span>
     ),
   }),
-
   {
     header: "Actions",
     cell: ({ row }) => (

@@ -383,7 +383,7 @@ export default function ClientTransactions() {
           {/* Filters */}
           <div className="grid md:grid-cols-5 gap-2 mb-4">
             <input
-              className="md:col-span-2 rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
+              className="md:col-span-3 rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400
                      focus:outline-none focus:ring-2 focus:ring-[#862C8A] focus:border-transparent"
               placeholder="সার্চ..."
               value={filter.q}
@@ -426,7 +426,7 @@ export default function ClientTransactions() {
               ))}
             </select>
 
-            <div className="flex">
+            {/* <div className="flex">
               <input
                 type="date"
                 className="w-full rounded-xl px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100
@@ -436,7 +436,7 @@ export default function ClientTransactions() {
                   setFilter({ ...filter, dateFrom: e.target.value })
                 }
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Table */}
